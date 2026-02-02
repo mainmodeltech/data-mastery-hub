@@ -8,6 +8,7 @@ const navigation = {
     { name: "À propos", href: "/a-propos" },
     { name: "Services", href: "/services" },
     { name: "Bootcamps", href: "/bootcamps" },
+    { name: "Alumni", href: "/alumni" },
   ],
   services: [
     { name: "Formation Power BI", href: "/services" },
