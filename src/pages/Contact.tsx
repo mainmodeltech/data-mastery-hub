@@ -15,6 +15,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -24,16 +25,27 @@ const Contact = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const form = e.currentTarget;
+    const data = new FormData(form);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const { error } = await supabase.from("contact_messages").insert({
+      first_name: data.get("firstName") as string,
+      last_name: data.get("lastName") as string,
+      email: data.get("email") as string,
+      phone: data.get("phone") as string || null,
+      company: data.get("company") as string || null,
+      subject: data.get("subject") as string || null,
+      message: data.get("message") as string,
+      status: "unread",
+    });
 
     setIsSubmitting(false);
-    setIsSubmitted(true);
-    toast({
-      title: "Message envoyé !",
-      description: "Nous vous répondrons dans les plus brefs délais.",
-    });
+    if (error) {
+      toast({ title: "Erreur lors de l'envoi", description: "Veuillez réessayer.", variant: "destructive" });
+    } else {
+      setIsSubmitted(true);
+      toast({ title: "Message envoyé !", description: "Nous vous répondrons dans les plus brefs délais." });
+    }
   };
 
   return (
