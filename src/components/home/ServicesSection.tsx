@@ -1,8 +1,17 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { BarChart3, GraduationCap, Building, Award, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
-const services = [
+const iconMap: Record<string, React.ElementType> = {
+  BarChart3,
+  GraduationCap,
+  Building,
+  Award,
+};
+
+const staticServices = [
   {
     icon: BarChart3,
     title: "Formation Power BI",
@@ -30,6 +39,29 @@ const services = [
 ];
 
 export function ServicesSection() {
+  const { data } = useQuery({
+    queryKey: ["services-home"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("id, title, description, icon_name")
+        .eq("published", true)
+        .order("display_order", { ascending: true })
+        .limit(4);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const services = data && data.length > 0
+    ? data.map(s => ({
+        icon: iconMap[s.icon_name || ""] || BarChart3,
+        title: s.title,
+        description: s.description || "",
+        href: "/services",
+      }))
+    : staticServices;
+
   return (
     <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4 lg:px-8">
