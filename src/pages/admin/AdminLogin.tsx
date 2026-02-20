@@ -4,29 +4,56 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff, UserPlus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 
 const AdminLogin = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     const { error } = await signIn(email, password);
     if (error) {
       setError("Email ou mot de passe incorrect.");
       setLoading(false);
     } else {
       navigate("/admin");
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères.");
+      setLoading(false);
+      return;
+    }
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      // Auto-login after registration
+      const { error: loginError } = await signIn(email, password);
+      if (!loginError) {
+        navigate("/admin");
+      } else {
+        setMode("login");
+        setError("Compte créé. Connectez-vous.");
+        setLoading(false);
+      }
     }
   };
 
@@ -39,7 +66,9 @@ const AdminLogin = () => {
             <img src={logo} alt="Model Technologie" className="h-14 w-auto mb-4" />
             <div className="text-center">
               <h1 className="text-xl font-bold text-foreground">Backoffice Admin</h1>
-              <p className="text-sm text-muted-foreground mt-1">Connectez-vous pour accéder au panneau d'administration</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {mode === "login" ? "Connectez-vous pour accéder au panneau d'administration" : "Créez votre compte administrateur"}
+              </p>
             </div>
           </div>
 
@@ -49,7 +78,7 @@ const AdminLogin = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={mode === "login" ? handleLogin : handleRegister} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">Adresse email</Label>
               <div className="relative">
@@ -67,7 +96,7 @@ const AdminLogin = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password">Mot de passe {mode === "register" && <span className="text-muted-foreground font-normal">(min. 8 caractères)</span>}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -90,12 +119,22 @@ const AdminLogin = () => {
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? "Connexion en cours..." : "Se connecter"}
+              {loading ? "Traitement..." : mode === "login" ? "Se connecter" : "Créer le compte"}
             </Button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-border text-center">
-            <a href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+          <div className="mt-6 pt-6 border-t border-border text-center space-y-3">
+            <button
+              onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}
+              className="text-sm text-primary hover:underline flex items-center gap-1 mx-auto"
+            >
+              {mode === "login" ? (
+                <><UserPlus className="h-3 w-3" /> Créer un compte admin</>
+              ) : (
+                "J'ai déjà un compte"
+              )}
+            </button>
+            <a href="/" className="block text-sm text-muted-foreground hover:text-primary transition-colors">
               ← Retour au site
             </a>
           </div>
