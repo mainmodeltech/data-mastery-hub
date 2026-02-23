@@ -1,8 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { BarChart3, GraduationCap, Building, Award, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+/**
+ * Section Services de la page d'accueil.
+ * Utilise le hook usePublishedServices au lieu d'appeler Supabase directement.
+ */
+
+import { Link } from 'react-router-dom';
+import { BarChart3, GraduationCap, Building, Award, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { usePublishedServices } from '@/hooks/useServices';
+import type { Service } from '@/types';
 
 const iconMap: Record<string, React.ElementType> = {
   BarChart3,
@@ -14,53 +19,46 @@ const iconMap: Record<string, React.ElementType> = {
 const staticServices = [
   {
     icon: BarChart3,
-    title: "Formation Power BI",
-    description: "Maîtrisez l'outil de référence en Business Intelligence. Des fondamentaux au niveau expert.",
-    href: "/services",
+    title: 'Formation Power BI',
+    description: "Maitrisez l'outil de reference en Business Intelligence. Des fondamentaux au niveau expert.",
+    href: '/services',
   },
   {
     icon: GraduationCap,
-    title: "Bootcamps Data",
-    description: "Programmes intensifs pour acquérir rapidement les compétences clés en analyse de données.",
-    href: "/bootcamps",
+    title: 'Bootcamps Data',
+    description: 'Programmes intensifs pour acquerir rapidement les competences cles en analyse de donnees.',
+    href: '/bootcamps',
   },
   {
     icon: Building,
-    title: "Formations Intra-entreprise",
-    description: "Programmes sur-mesure adaptés aux besoins spécifiques de votre organisation.",
-    href: "/services",
+    title: 'Formations Intra-entreprise',
+    description: 'Programmes sur-mesure adaptes aux besoins specifiques de votre organisation.',
+    href: '/services',
   },
   {
     icon: Award,
-    title: "Certification Microsoft",
-    description: "Préparation intensive aux examens de certification Microsoft Power BI Data Analyst.",
-    href: "/services",
+    title: 'Certification Microsoft',
+    description: 'Preparation intensive aux examens de certification Microsoft Power BI Data Analyst.',
+    href: '/services',
   },
 ];
 
-export function ServicesSection() {
-  const { data } = useQuery({
-    queryKey: ["services-home"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("services")
-        .select("id, title, description, icon_name")
-        .eq("published", true)
-        .order("display_order", { ascending: true })
-        .limit(4);
-      if (error) throw error;
-      return data;
-    },
-  });
+function mapServiceToDisplay(service: Service) {
+  return {
+    icon: iconMap[service.iconName || ''] || BarChart3,
+    title: service.title,
+    description: service.description || '',
+    href: '/services',
+  };
+}
 
-  const services = data && data.length > 0
-    ? data.map(s => ({
-        icon: iconMap[s.icon_name || ""] || BarChart3,
-        title: s.title,
-        description: s.description || "",
-        href: "/services",
-      }))
-    : staticServices;
+export function ServicesSection() {
+  const { data: servicesData } = usePublishedServices();
+
+  const services =
+    servicesData && servicesData.length > 0
+      ? servicesData.slice(0, 4).map(mapServiceToDisplay)
+      : staticServices;
 
   return (
     <section className="py-20 lg:py-28">
@@ -71,7 +69,7 @@ export function ServicesSection() {
               Nos domaines d'expertise
             </h2>
             <p className="text-muted-foreground text-lg">
-              Des formations professionnelles adaptées à tous les niveaux pour développer vos compétences data
+              Des formations professionnelles adaptees a tous les niveaux pour developper vos competences data
             </p>
           </div>
           <Button asChild variant="outline" size="lg">

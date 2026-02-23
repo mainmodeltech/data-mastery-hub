@@ -1,19 +1,24 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  BarChart3, 
-  GraduationCap, 
-  Building, 
-  Award, 
-  ArrowRight, 
+/**
+ * Page Services - Liste des services proposes par Model Technologie.
+ * Refactoree pour utiliser le hook usePublishedServices et les constantes centralisees.
+ */
+
+import { Link } from 'react-router-dom';
+import { Layout } from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePublishedServices } from '@/hooks/useServices';
+import { FALLBACK_SERVICES } from '@/config/constants';
+import {
+  BarChart3,
+  GraduationCap,
+  Building,
+  Award,
+  ArrowRight,
   CheckCircle,
   FileSpreadsheet,
-  Users
-} from "lucide-react";
+  Users,
+} from 'lucide-react';
 
 const iconMap: Record<string, React.ElementType> = {
   BarChart3,
@@ -24,110 +29,25 @@ const iconMap: Record<string, React.ElementType> = {
   Users,
 };
 
-const staticServices = [
-  {
-    icon: BarChart3,
-    title: "Formation Power BI",
-    description: "Maîtrisez Microsoft Power BI, l'outil de référence en Business Intelligence. Des fondamentaux à l'expertise avancée.",
-    features: [
-      "Création de tableaux de bord interactifs",
-      "DAX et modélisation de données",
-      "Connexion aux sources de données",
-      "Partage et collaboration",
-      "Bonnes pratiques de visualisation",
-    ],
-    duration: "3 à 5 jours selon le niveau",
-  },
-  {
-    icon: FileSpreadsheet,
-    title: "Excel Avancé & VBA",
-    description: "Allez au-delà des bases d'Excel. Automatisez vos tâches et créez des outils de gestion puissants.",
-    features: [
-      "Fonctions avancées (INDEX, MATCH, XLOOKUP)",
-      "Tableaux croisés dynamiques",
-      "Introduction à VBA et macros",
-      "Power Query pour l'ETL",
-      "Automatisation des reportings",
-    ],
-    duration: "2 à 3 jours",
-  },
-  {
-    icon: Building,
-    title: "Formations Intra-entreprise",
-    description: "Programmes personnalisés adaptés à vos problématiques métier et à votre contexte organisationnel.",
-    features: [
-      "Analyse de vos besoins spécifiques",
-      "Contenu sur-mesure",
-      "Exercices basés sur vos données",
-      "Sessions dans vos locaux",
-      "Suivi post-formation inclus",
-    ],
-    duration: "Sur mesure",
-  },
-  {
-    icon: Award,
-    title: "Préparation Certification Microsoft",
-    description: "Préparez et réussissez l'examen PL-300 Microsoft Power BI Data Analyst Associate.",
-    features: [
-      "Revue complète du programme d'examen",
-      "Exercices pratiques ciblés",
-      "Examens blancs commentés",
-      "Conseils et astuces pour le jour J",
-      "Taux de réussite supérieur à 90%",
-    ],
-    duration: "2 à 3 jours",
-  },
-  {
-    icon: Users,
-    title: "Coaching & Accompagnement",
-    description: "Accompagnement individuel ou en équipe pour vos projets data et la montée en compétences continue.",
-    features: [
-      "Sessions de coaching personnalisées",
-      "Revue de vos tableaux de bord",
-      "Conseils d'optimisation",
-      "Transfert de compétences",
-      "Support continu",
-    ],
-    duration: "À la demande",
-  },
-  {
-    icon: GraduationCap,
-    title: "Bootcamps Intensifs",
-    description: "Programmes courts et intensifs pour une montée en compétences rapide et efficace.",
-    features: [
-      "Format immersif sur quelques jours",
-      "Projets pratiques fil rouge",
-      "Travail en groupe",
-      "Certification de fin de bootcamp",
-      "Accès à la communauté alumni",
-    ],
-    duration: "3 à 5 jours",
-  },
-];
-
 const Services = () => {
-  const { data: servicesData, isLoading } = useQuery({
-    queryKey: ["services-page"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("services")
-        .select("*")
-        .eq("published", true)
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: servicesData, isLoading } = usePublishedServices();
 
-  const services = servicesData && servicesData.length > 0
-    ? servicesData.map(s => ({
-        icon: iconMap[s.icon_name || ""] || BarChart3,
-        title: s.title,
-        description: s.description || "",
-        features: s.features || [],
-        duration: s.duration || "",
-      }))
-    : staticServices;
+  const services =
+    servicesData && servicesData.length > 0
+      ? servicesData.map((s) => ({
+          icon: iconMap[s.iconName || ''] || BarChart3,
+          title: s.title,
+          description: s.description || '',
+          features: s.features || [],
+          duration: s.duration || '',
+        }))
+      : FALLBACK_SERVICES.map((s) => ({
+          icon: iconMap[s.icon] || BarChart3,
+          title: s.title,
+          description: s.description,
+          features: [...s.features],
+          duration: s.duration,
+        }));
 
   return (
     <Layout>
@@ -139,8 +59,8 @@ const Services = () => {
               Nos Services
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Des formations et accompagnements sur-mesure pour développer les compétences 
-              Data de vos équipes et accélérer votre transformation digitale.
+              Des formations et accompagnements sur-mesure pour developper les competences
+              Data de vos equipes et accelerer votre transformation digitale.
             </p>
           </div>
         </div>
@@ -151,7 +71,9 @@ const Services = () => {
         <div className="container mx-auto px-4 lg:px-8">
           {isLoading ? (
             <div className="grid gap-8">
-              {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-48 rounded-2xl" />
+              ))}
             </div>
           ) : (
             <div className="grid gap-8">
@@ -168,7 +90,7 @@ const Services = () => {
                       </div>
                       <span className="text-sm text-muted-foreground">{service.duration}</span>
                     </div>
-                    
+
                     <div>
                       <h3 className="font-heading text-2xl font-bold text-card-foreground mb-3">
                         {service.title}
@@ -212,9 +134,9 @@ const Services = () => {
               Un projet de formation sur-mesure ?
             </h2>
             <p className="text-primary-foreground/80 text-lg mb-8">
-              Contactez-nous pour discuter de vos besoins spécifiques et obtenir une proposition adaptée.
+              Contactez-nous pour discuter de vos besoins specifiques et obtenir une proposition adaptee.
             </p>
-            <Button asChild size="xl" variant="hero">
+            <Button asChild size="lg" variant="secondary">
               <Link to="/contact">
                 Parlons de votre projet
                 <ArrowRight className="h-5 w-5" />

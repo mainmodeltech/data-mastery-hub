@@ -1,42 +1,49 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Camera, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+/**
+ * Section Galerie de la page d'accueil.
+ * Utilise le hook usePublishedGallery.
+ */
 
-import bootcamp1 from "@/assets/gallery/bootcamp-1.jpg";
-import bootcamp2 from "@/assets/gallery/bootcamp-2.jpg";
-import bootcamp3 from "@/assets/gallery/bootcamp-3.jpg";
-import bootcamp4 from "@/assets/gallery/bootcamp-4.jpg";
+import { useState } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Camera, X } from 'lucide-react';
+import { usePublishedGallery } from '@/hooks/useGallery';
+import type { GalleryPhoto } from '@/types';
 
-const staticGalleryImages = [
-  { url: bootcamp1, caption: "Session intensive Power BI", bootcamp_name: "Participants en formation Power BI" },
-  { url: bootcamp2, caption: "Coaching individuel", bootcamp_name: "Accompagnement personnalisé" },
-  { url: bootcamp3, caption: "Promotion Data Analytics", bootcamp_name: "Équipe de participants bootcamp" },
-  { url: bootcamp4, caption: "Succès de nos apprenants", bootcamp_name: "Participante certifiée" },
+import bootcamp1 from '@/assets/gallery/bootcamp-1.jpg';
+import bootcamp2 from '@/assets/gallery/bootcamp-2.jpg';
+import bootcamp3 from '@/assets/gallery/bootcamp-3.jpg';
+import bootcamp4 from '@/assets/gallery/bootcamp-4.jpg';
+
+interface DisplayImage {
+  url: string;
+  caption: string | null;
+  bootcampName: string | null;
+}
+
+const staticGalleryImages: DisplayImage[] = [
+  { url: bootcamp1, caption: 'Session intensive Power BI', bootcampName: 'Participants en formation Power BI' },
+  { url: bootcamp2, caption: 'Coaching individuel', bootcampName: 'Accompagnement personnalise' },
+  { url: bootcamp3, caption: 'Promotion Data Analytics', bootcampName: 'Equipe de participants bootcamp' },
+  { url: bootcamp4, caption: 'Succes de nos apprenants', bootcampName: 'Participante certifiee' },
 ];
 
-type GalleryImage = { url: string; caption: string | null; bootcamp_name: string | null };
+function mapGalleryToDisplay(photo: GalleryPhoto): DisplayImage {
+  return {
+    url: photo.url,
+    caption: photo.caption,
+    bootcampName: photo.bootcampName,
+  };
+}
 
 export const GallerySection = () => {
-  const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
+  const [selectedImage, setSelectedImage] = useState<DisplayImage | null>(null);
+  const { data: galleryData, isLoading } = usePublishedGallery();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["gallery-home"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("gallery_photos")
-        .select("url, caption, bootcamp_name")
-        .eq("published", true)
-        .order("display_order", { ascending: true })
-        .limit(8);
-      if (error) throw error;
-      return data as GalleryImage[];
-    },
-  });
-
-  const images = data && data.length > 0 ? data : staticGalleryImages;
+  const images: DisplayImage[] =
+    galleryData && galleryData.length > 0
+      ? galleryData.slice(0, 8).map(mapGalleryToDisplay)
+      : staticGalleryImages;
 
   return (
     <section className="py-20 bg-muted/30">
@@ -50,13 +57,15 @@ export const GallerySection = () => {
             Galerie
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Découvrez l'ambiance de nos formations à travers les moments forts de nos bootcamps
+            Decouvrez l'ambiance de nos formations a travers les moments forts de nos bootcamps
           </p>
         </div>
 
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => <Skeleton key={i} className="aspect-square rounded-xl" />)}
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="aspect-square rounded-xl" />
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -68,8 +77,9 @@ export const GallerySection = () => {
               >
                 <img
                   src={image.url}
-                  alt={image.bootcamp_name || image.caption || "Photo bootcamp"}
+                  alt={image.bootcampName || image.caption || 'Photo bootcamp'}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -93,12 +103,12 @@ export const GallerySection = () => {
               <div className="relative">
                 <img
                   src={selectedImage.url}
-                  alt={selectedImage.bootcamp_name || selectedImage.caption || "Photo bootcamp"}
+                  alt={selectedImage.bootcampName || selectedImage.caption || 'Photo bootcamp'}
                   className="w-full h-auto max-h-[80vh] object-contain"
                 />
                 <div className="p-4 bg-background">
                   <p className="text-foreground font-medium">{selectedImage.caption}</p>
-                  <p className="text-muted-foreground text-sm">{selectedImage.bootcamp_name}</p>
+                  <p className="text-muted-foreground text-sm">{selectedImage.bootcampName}</p>
                 </div>
               </div>
             )}
