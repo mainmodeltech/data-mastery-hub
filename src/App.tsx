@@ -23,6 +23,7 @@ import AdminTemoignages from "./pages/admin/AdminTemoignages";
 import AdminAlumni from "./pages/admin/AdminAlumni";
 import AdminMessages from "./pages/admin/AdminMessages";
 import AdminGalerie from "./pages/admin/AdminGalerie";
+import AdminProjects from "./pages/admin/AdminProjects";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/admin/references" element={<ProtectedRoute><AdminReferences /></ProtectedRoute>} />
             <Route path="/admin/temoignages" element={<ProtectedRoute><AdminTemoignages /></ProtectedRoute>} />
             <Route path="/admin/alumni" element={<ProtectedRoute><AdminAlumni /></ProtectedRoute>} />
+            <Route path="/admin/projets" element={<ProtectedRoute><AdminProjects /></ProtectedRoute>} />
             <Route path="/admin/messages" element={<ProtectedRoute><AdminMessages /></ProtectedRoute>} />
             <Route path="/admin/galerie" element={<ProtectedRoute><AdminGalerie /></ProtectedRoute>} />
 

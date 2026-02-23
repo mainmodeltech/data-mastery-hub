@@ -14,126 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
-      alumni_groups: {
+      alumni: {
         Row: {
-          cohort: string
+          bootcamp_id: string | null
+          cohort: string | null
           created_at: string
-          display_order: number | null
-          group_photo_url: string | null
-          id: string
-          project_description: string | null
-          project_link: string | null
-          project_title: string
-          published: boolean | null
-          testimonial: string | null
-          updated_at: string
-          year: number
-        }
-        Insert: {
-          cohort: string
-          created_at?: string
-          display_order?: number | null
-          group_photo_url?: string | null
-          id?: string
-          project_description?: string | null
-          project_link?: string | null
-          project_title: string
-          published?: boolean | null
-          testimonial?: string | null
-          updated_at?: string
-          year: number
-        }
-        Update: {
-          cohort?: string
-          created_at?: string
-          display_order?: number | null
-          group_photo_url?: string | null
-          id?: string
-          project_description?: string | null
-          project_link?: string | null
-          project_title?: string
-          published?: boolean | null
-          testimonial?: string | null
-          updated_at?: string
-          year?: number
-        }
-        Relationships: []
-      }
-      alumni_members: {
-        Row: {
-          created_at: string
+          current_position: string | null
+          current_title: string | null
           display_order: number | null
           email: string | null
-          group_id: string
           id: string
           linkedin_url: string | null
           name: string
           phone: string | null
-          position: string | null
+          photo_url: string | null
+          published: boolean | null
+          registration_id: string | null
+          updated_at: string
+          year: number | null
         }
         Insert: {
+          bootcamp_id?: string | null
+          cohort?: string | null
           created_at?: string
+          current_position?: string | null
+          current_title?: string | null
           display_order?: number | null
           email?: string | null
-          group_id: string
           id?: string
           linkedin_url?: string | null
           name: string
           phone?: string | null
-          position?: string | null
+          photo_url?: string | null
+          published?: boolean | null
+          registration_id?: string | null
+          updated_at?: string
+          year?: number | null
         }
         Update: {
+          bootcamp_id?: string | null
+          cohort?: string | null
           created_at?: string
+          current_position?: string | null
+          current_title?: string | null
           display_order?: number | null
           email?: string | null
-          group_id?: string
           id?: string
           linkedin_url?: string | null
           name?: string
           phone?: string | null
-          position?: string | null
+          photo_url?: string | null
+          published?: boolean | null
+          registration_id?: string | null
+          updated_at?: string
+          year?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "alumni_members_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "alumni_bootcamp_id_fkey"
+            columns: ["bootcamp_id"]
             isOneToOne: false
-            referencedRelation: "alumni_groups"
+            referencedRelation: "bootcamps"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      alumni_work_photos: {
-        Row: {
-          caption: string | null
-          created_at: string
-          display_order: number | null
-          group_id: string
-          id: string
-          photo_url: string
-        }
-        Insert: {
-          caption?: string | null
-          created_at?: string
-          display_order?: number | null
-          group_id: string
-          id?: string
-          photo_url: string
-        }
-        Update: {
-          caption?: string | null
-          created_at?: string
-          display_order?: number | null
-          group_id?: string
-          id?: string
-          photo_url?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "alumni_work_photos_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "alumni_registration_id_fkey"
+            columns: ["registration_id"]
             isOneToOne: false
-            referencedRelation: "alumni_groups"
+            referencedRelation: "registrations"
             referencedColumns: ["id"]
           },
         ]
@@ -260,6 +208,139 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      project_members: {
+        Row: {
+          alumni_id: string
+          created_at: string
+          display_order: number | null
+          id: string
+          project_id: string
+          role: string | null
+        }
+        Insert: {
+          alumni_id: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          project_id: string
+          role?: string | null
+        }
+        Update: {
+          alumni_id?: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          project_id?: string
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_alumni_id_fkey"
+            columns: ["alumni_id"]
+            isOneToOne: false
+            referencedRelation: "alumni"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_screenshots: {
+        Row: {
+          caption: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          photo_url: string
+          project_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          photo_url: string
+          project_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          photo_url?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_screenshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          access_link: string | null
+          bootcamp_id: string | null
+          cohort: string | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          published: boolean | null
+          title: string
+          tools_technologies: string[] | null
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          access_link?: string | null
+          bootcamp_id?: string | null
+          cohort?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          published?: boolean | null
+          title: string
+          tools_technologies?: string[] | null
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          access_link?: string | null
+          bootcamp_id?: string | null
+          cohort?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          published?: boolean | null
+          title?: string
+          tools_technologies?: string[] | null
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_bootcamp_id_fkey"
+            columns: ["bootcamp_id"]
+            isOneToOne: false
+            referencedRelation: "bootcamps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       references: {
         Row: {

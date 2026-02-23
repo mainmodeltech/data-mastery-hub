@@ -4,255 +4,198 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Eye, EyeOff, Users, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, Linkedin, GraduationCap } from "lucide-react";
 
-interface AlumniGroup {
+interface Alumni {
   id: string;
-  cohort: string;
-  year: number;
-  project_title: string;
-  project_description: string | null;
-  project_link: string | null;
-  group_photo_url: string | null;
-  testimonial: string | null;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  current_title: string | null;
+  current_position: string | null;
+  linkedin_url: string | null;
+  photo_url: string | null;
+  cohort: string | null;
+  year: number | null;
+  bootcamp_id: string | null;
+  registration_id: string | null;
   published: boolean | null;
   display_order: number | null;
 }
 
-interface Member {
-  id?: string;
-  name: string;
-  position: string;
-  linkedin_url: string;
-  email: string;
-  phone: string;
+interface Bootcamp {
+  id: string;
+  title: string;
 }
 
-interface WorkPhoto {
-  id?: string;
-  photo_url: string;
-  caption: string;
-}
-
-const emptyForm = { cohort: "", year: new Date().getFullYear(), project_title: "", project_description: "", project_link: "", group_photo_url: "", testimonial: "", published: true, display_order: 0 };
-const emptyMember: Member = { name: "", position: "", linkedin_url: "", email: "", phone: "" };
+const emptyForm = {
+  name: "", email: "", phone: "", current_title: "", current_position: "",
+  linkedin_url: "", photo_url: "", cohort: "", year: new Date().getFullYear(),
+  bootcamp_id: "", registration_id: "", published: true, display_order: 0,
+};
 
 const AdminAlumni = () => {
   const { toast } = useToast();
-  const [groups, setGroups] = useState<AlumniGroup[]>([]);
+  const [alumni, setAlumni] = useState<Alumni[]>([]);
+  const [bootcamps, setBootcamps] = useState<Bootcamp[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editItem, setEditItem] = useState<AlumniGroup | null>(null);
+  const [editItem, setEditItem] = useState<Alumni | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [members, setMembers] = useState<Member[]>([{ ...emptyMember }]);
-  const [workPhotos, setWorkPhotos] = useState<WorkPhoto[]>([{ photo_url: "", caption: "" }]);
   const [saving, setSaving] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [groupMembers, setGroupMembers] = useState<Record<string, any[]>>({});
 
-  const fetch = async () => {
-    const { data } = await supabase.from("alumni_groups").select("*").order("year", { ascending: false });
-    setGroups(data || []);
+  const fetchData = async () => {
+    const [{ data: alumniData }, { data: bootcampsData }] = await Promise.all([
+      supabase.from("alumni").select("*").order("display_order"),
+      supabase.from("bootcamps").select("id, title").order("title"),
+    ]);
+    setAlumni(alumniData || []);
+    setBootcamps(bootcampsData || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetch(); }, []);
-
-  const fetchGroupDetails = async (groupId: string) => {
-    const [{ data: members }, { data: photos }] = await Promise.all([
-      supabase.from("alumni_members").select("*").eq("group_id", groupId).order("display_order"),
-      supabase.from("alumni_work_photos").select("*").eq("group_id", groupId).order("display_order"),
-    ]);
-    setGroupMembers(prev => ({ ...prev, [groupId]: members || [] }));
-  };
-
-  const toggleExpand = (id: string) => {
-    setExpandedId(prev => {
-      if (prev !== id) fetchGroupDetails(id);
-      return prev === id ? null : id;
-    });
-  };
+  useEffect(() => { fetchData(); }, []);
 
   const openCreate = () => {
     setEditItem(null);
     setForm(emptyForm);
-    setMembers([{ ...emptyMember }]);
-    setWorkPhotos([{ photo_url: "", caption: "" }]);
     setDialogOpen(true);
   };
 
-  const openEdit = (item: AlumniGroup) => {
+  const openEdit = (item: Alumni) => {
     setEditItem(item);
-    setForm({ cohort: item.cohort, year: item.year, project_title: item.project_title, project_description: item.project_description || "", project_link: item.project_link || "", group_photo_url: item.group_photo_url || "", testimonial: item.testimonial || "", published: item.published ?? true, display_order: item.display_order || 0 });
-    setMembers([{ ...emptyMember }]);
-    setWorkPhotos([{ photo_url: "", caption: "" }]);
+    setForm({
+      name: item.name, email: item.email || "", phone: item.phone || "",
+      current_title: item.current_title || "", current_position: item.current_position || "",
+      linkedin_url: item.linkedin_url || "", photo_url: item.photo_url || "",
+      cohort: item.cohort || "", year: item.year || new Date().getFullYear(),
+      bootcamp_id: item.bootcamp_id || "", registration_id: item.registration_id || "",
+      published: item.published ?? true, display_order: item.display_order || 0,
+    });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (!form.project_title.trim() || !form.cohort.trim()) { toast({ title: "Titre et cohorte requis", variant: "destructive" }); return; }
+    if (!form.name.trim()) { toast({ title: "Le nom est requis", variant: "destructive" }); return; }
     setSaving(true);
 
-    const payload = { cohort: form.cohort, year: form.year, project_title: form.project_title, project_description: form.project_description || null, project_link: form.project_link || null, group_photo_url: form.group_photo_url || null, testimonial: form.testimonial || null, published: form.published, display_order: form.display_order };
+    const payload = {
+      name: form.name,
+      email: form.email || null,
+      phone: form.phone || null,
+      current_title: form.current_title || null,
+      current_position: form.current_position || null,
+      linkedin_url: form.linkedin_url || null,
+      photo_url: form.photo_url || null,
+      cohort: form.cohort || null,
+      year: form.year || null,
+      bootcamp_id: form.bootcamp_id || null,
+      published: form.published,
+      display_order: form.display_order,
+    };
 
-    let groupId = editItem?.id;
     if (editItem) {
-      await supabase.from("alumni_groups").update(payload).eq("id", editItem.id);
+      await supabase.from("alumni").update(payload).eq("id", editItem.id);
     } else {
-      const { data } = await supabase.from("alumni_groups").insert(payload).select().single();
-      groupId = data?.id;
+      await supabase.from("alumni").insert(payload);
     }
 
-    if (groupId) {
-      // Save members
-      const validMembers = members.filter(m => m.name.trim());
-      if (validMembers.length > 0) {
-        if (editItem) await supabase.from("alumni_members").delete().eq("group_id", groupId);
-        await supabase.from("alumni_members").insert(validMembers.map((m, i) => ({ group_id: groupId!, name: m.name, position: m.position || null, linkedin_url: m.linkedin_url || null, email: m.email || null, phone: m.phone || null, display_order: i })));
-      }
-
-      // Save work photos
-      const validPhotos = workPhotos.filter(p => p.photo_url.trim());
-      if (validPhotos.length > 0) {
-        if (editItem) await supabase.from("alumni_work_photos").delete().eq("group_id", groupId);
-        await supabase.from("alumni_work_photos").insert(validPhotos.map((p, i) => ({ group_id: groupId!, photo_url: p.photo_url, caption: p.caption || null, display_order: i })));
-      }
-    }
-
-    toast({ title: editItem ? "Groupe mis à jour" : "Groupe créé" });
+    toast({ title: editItem ? "Alumni mis à jour" : "Alumni créé" });
     setDialogOpen(false);
-    fetch();
+    fetchData();
     setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer ce groupe alumni ?")) return;
-    await supabase.from("alumni_groups").delete().eq("id", id);
+    if (!confirm("Supprimer cet alumni ?")) return;
+    await supabase.from("alumni").delete().eq("id", id);
     toast({ title: "Supprimé" });
-    fetch();
+    fetchData();
   };
 
-  const togglePublished = async (item: AlumniGroup) => {
-    await supabase.from("alumni_groups").update({ published: !item.published }).eq("id", item.id);
-    fetch();
+  const togglePublished = async (item: Alumni) => {
+    await supabase.from("alumni").update({ published: !item.published }).eq("id", item.id);
+    fetchData();
   };
-
-  const addMember = () => setMembers(prev => [...prev, { ...emptyMember }]);
-  const removeMember = (i: number) => setMembers(prev => prev.filter((_, idx) => idx !== i));
-  const updateMember = (i: number, field: keyof Member, value: string) => setMembers(prev => prev.map((m, idx) => idx === i ? { ...m, [field]: value } : m));
-
-  const addPhoto = () => setWorkPhotos(prev => [...prev, { photo_url: "", caption: "" }]);
-  const removePhoto = (i: number) => setWorkPhotos(prev => prev.filter((_, idx) => idx !== i));
-  const updatePhoto = (i: number, field: keyof WorkPhoto, value: string) => setWorkPhotos(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p));
 
   return (
     <AdminLayout title="Alumni">
       <div className="flex items-center justify-between mb-6">
-        <p className="text-muted-foreground">{groups.length} groupe(s)</p>
-        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Ajouter un groupe</Button>
+        <p className="text-muted-foreground">{alumni.length} alumni</p>
+        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Ajouter un alumni</Button>
       </div>
 
       {loading ? <div className="text-center py-12 text-muted-foreground">Chargement...</div> : (
-        <div className="space-y-4">
-          {groups.map((item) => (
-            <div key={item.id} className="bg-card border border-border rounded-xl overflow-hidden">
-              <div className="p-5 flex items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="font-semibold text-foreground">{item.project_title}</span>
-                    <Badge variant="secondary">{item.cohort}</Badge>
-                    <Badge variant={item.published ? "default" : "outline"}>{item.published ? "Publié" : "Brouillon"}</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-1">{item.project_description}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => toggleExpand(item.id)} title="Voir les détails">
-                    {expandedId === item.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => togglePublished(item)}>{item.published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(item)}><Edit className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              </div>
-              {expandedId === item.id && groupMembers[item.id] && (
-                <div className="px-5 pb-5 border-t border-border pt-4">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2"><Users className="h-3 w-3" />Membres</p>
-                  <div className="grid sm:grid-cols-2 gap-2">
-                    {groupMembers[item.id].map((m: any) => (
-                      <div key={m.id} className="bg-muted rounded-lg p-3 text-sm">
-                        <p className="font-medium text-foreground">{m.name}</p>
-                        <p className="text-muted-foreground">{m.position}</p>
-                      </div>
-                    ))}
-                  </div>
+        <div className="space-y-3">
+          {alumni.map((item) => (
+            <div key={item.id} className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+              {item.photo_url ? (
+                <img src={item.photo_url} alt={item.name} className="w-12 h-12 rounded-full object-cover" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-primary" />
                 </div>
               )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="font-semibold text-foreground">{item.name}</span>
+                  {item.cohort && <Badge variant="secondary">{item.cohort}</Badge>}
+                  <Badge variant={item.published ? "default" : "outline"}>{item.published ? "Publié" : "Brouillon"}</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {[item.current_position, item.current_title].filter(Boolean).join(" • ") || "Aucun poste renseigné"}
+                </p>
+                {item.linkedin_url && (
+                  <a href={item.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1">
+                    <Linkedin className="h-3 w-3" /> LinkedIn
+                  </a>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => togglePublished(item)}>{item.published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
+                <Button variant="ghost" size="icon" onClick={() => openEdit(item)}><Edit className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+              </div>
             </div>
           ))}
-          {groups.length === 0 && <div className="text-center py-16 text-muted-foreground">Aucun groupe alumni.</div>}
+          {alumni.length === 0 && <div className="text-center py-16 text-muted-foreground">Aucun alumni enregistré.</div>}
         </div>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editItem ? "Modifier le groupe" : "Nouveau groupe alumni"}</DialogTitle></DialogHeader>
-          <div className="space-y-5 mt-4">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editItem ? "Modifier l'alumni" : "Nouvel alumni"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2"><Label>Nom complet *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Cohorte *</Label><Input value={form.cohort} onChange={e => setForm({...form, cohort: e.target.value})} placeholder="Cohorte 2024" /></div>
+              <div className="space-y-2"><Label>Email</Label><Input value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
+              <div className="space-y-2"><Label>Téléphone</Label><Input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Titre actuel</Label><Input value={form.current_title} onChange={e => setForm({...form, current_title: e.target.value})} placeholder="Ex: Data Analyst" /></div>
+              <div className="space-y-2"><Label>Poste actuel</Label><Input value={form.current_position} onChange={e => setForm({...form, current_position: e.target.value})} placeholder="Ex: Analyste Junior" /></div>
+            </div>
+            <div className="space-y-2"><Label>LinkedIn URL</Label><Input value={form.linkedin_url} onChange={e => setForm({...form, linkedin_url: e.target.value})} placeholder="https://linkedin.com/in/..." /></div>
+            <div className="space-y-2"><Label>Photo (URL)</Label><Input value={form.photo_url} onChange={e => setForm({...form, photo_url: e.target.value})} placeholder="https://..." /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Cohorte</Label><Input value={form.cohort} onChange={e => setForm({...form, cohort: e.target.value})} placeholder="Cohorte 2024" /></div>
               <div className="space-y-2"><Label>Année</Label><Input type="number" value={form.year} onChange={e => setForm({...form, year: Number(e.target.value)})} /></div>
             </div>
-            <div className="space-y-2"><Label>Titre du projet *</Label><Input value={form.project_title} onChange={e => setForm({...form, project_title: e.target.value})} /></div>
-            <div className="space-y-2"><Label>Description du projet</Label><Textarea value={form.project_description} onChange={e => setForm({...form, project_description: e.target.value})} rows={3} /></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Lien du projet</Label><Input value={form.project_link} onChange={e => setForm({...form, project_link: e.target.value})} placeholder="https://" /></div>
-              <div className="space-y-2"><Label>Photo de groupe (URL)</Label><Input value={form.group_photo_url} onChange={e => setForm({...form, group_photo_url: e.target.value})} placeholder="https://..." /></div>
-            </div>
-            <div className="space-y-2"><Label>Témoignage</Label><Textarea value={form.testimonial} onChange={e => setForm({...form, testimonial: e.target.value})} rows={3} /></div>
-
-            {/* Members */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Membres du groupe</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addMember}><Plus className="h-3 w-3 mr-1" />Ajouter</Button>
+            {bootcamps.length > 0 && (
+              <div className="space-y-2">
+                <Label>Bootcamp complété</Label>
+                <Select value={form.bootcamp_id} onValueChange={v => setForm({...form, bootcamp_id: v})}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner un bootcamp" /></SelectTrigger>
+                  <SelectContent>
+                    {bootcamps.map(b => <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-              {members.map((m, i) => (
-                <div key={i} className="bg-muted rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Membre {i + 1}</span>
-                    {members.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removeMember(i)} className="h-6 w-6"><Trash2 className="h-3 w-3" /></Button>}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input placeholder="Nom *" value={m.name} onChange={e => updateMember(i, "name", e.target.value)} />
-                    <Input placeholder="Poste actuel" value={m.position} onChange={e => updateMember(i, "position", e.target.value)} />
-                    <Input placeholder="Email" value={m.email} onChange={e => updateMember(i, "email", e.target.value)} />
-                    <Input placeholder="Téléphone" value={m.phone} onChange={e => updateMember(i, "phone", e.target.value)} />
-                    <Input placeholder="LinkedIn URL" value={m.linkedin_url} onChange={e => updateMember(i, "linkedin_url", e.target.value)} className="col-span-2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Work Photos */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Photos de travaux (URLs)</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addPhoto}><Plus className="h-3 w-3 mr-1" />Ajouter</Button>
-              </div>
-              {workPhotos.map((p, i) => (
-                <div key={i} className="flex gap-2 items-start">
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <Input placeholder="URL de l'image *" value={p.photo_url} onChange={e => updatePhoto(i, "photo_url", e.target.value)} className="col-span-2" />
-                    <Input placeholder="Légende (optionnel)" value={p.caption} onChange={e => updatePhoto(i, "caption", e.target.value)} className="col-span-2" />
-                  </div>
-                  {workPhotos.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => removePhoto(i)} className="mt-1"><Trash2 className="h-4 w-4" /></Button>}
-                </div>
-              ))}
-            </div>
-
+            )}
             <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.published} onChange={e => setForm({...form, published: e.target.checked})} className="w-4 h-4" /><span className="text-sm">Publié</span></label>
             <div className="flex gap-3 pt-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1">{saving ? "Sauvegarde..." : "Sauvegarder"}</Button>

@@ -57,7 +57,7 @@ const AdminDashboard = () => {
         supabase.from("services").select("*", { count: "exact", head: true }),
         supabase.from("references").select("*", { count: "exact", head: true }),
         supabase.from("testimonials").select("*", { count: "exact", head: true }),
-        supabase.from("alumni_groups").select("*", { count: "exact", head: true }),
+        supabase.from("alumni").select("*", { count: "exact", head: true }),
         supabase.from("gallery_photos").select("*", { count: "exact", head: true }),
         supabase.from("contact_messages").select("*", { count: "exact", head: true }),
         supabase.from("contact_messages").select("*", { count: "exact", head: true }).eq("status", "unread"),
