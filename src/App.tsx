@@ -29,7 +29,7 @@ const About = lazy(() => import('./pages/About'));
 const Services = lazy(() => import('./pages/Services'));
 const Bootcamps = lazy(() => import('./pages/Bootcamps'));
 const Alumni = lazy(() => import('./pages/Alumni'));
-const References = lazy(() => import('./pages/References'));
+const Orientation = lazy(() => import('./pages/Orientation'));
 const Contact = lazy(() => import('./pages/Contact'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -96,7 +96,7 @@ const App = () => (
                 <Route path="/services" element={<Services />} />
                 <Route path="/bootcamps" element={<Bootcamps />} />
                 <Route path="/alumni" element={<Alumni />} />
-                <Route path="/references" element={<References />} />
+                <Route path="/orientation" element={<Orientation />} />
                 <Route path="/contact" element={<Contact />} />
 
                 {/* Backoffice admin */}
