@@ -13,7 +13,7 @@ export const SERVICE_KEYS = {
   detail: (id: string) => ['services', id] as const,
 };
 
-/** Hook pour recuperer les services publies (site public) */
+/** Hook pour recuperer les services publies (liste plate, triee par displayOrder) */
 export function usePublishedServices() {
   return useQuery({
     queryKey: SERVICE_KEYS.published,
@@ -23,8 +23,8 @@ export function usePublishedServices() {
   });
 }
 
-/** Hook pour recuperer tous les services (admin) */
-export function useAllServices(page?: number, size?: number) {
+/** Hook pour recuperer tous les services (admin, pagine) */
+export function useAllServices(page = 0, size = 20) {
   return useQuery({
     queryKey: [...SERVICE_KEYS.all, { page, size }],
     queryFn: () => serviceService.getAll(page, size),
@@ -40,6 +40,7 @@ export function useCreateService() {
     mutationFn: (data: CreateServiceDTO) => serviceService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SERVICE_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: SERVICE_KEYS.published });
     },
   });
 }
@@ -53,6 +54,7 @@ export function useUpdateService() {
       serviceService.update(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: SERVICE_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: SERVICE_KEYS.published });
       queryClient.invalidateQueries({ queryKey: SERVICE_KEYS.detail(id) });
     },
   });
@@ -66,6 +68,7 @@ export function useDeleteService() {
     mutationFn: (id: string) => serviceService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SERVICE_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: SERVICE_KEYS.published });
     },
   });
 }

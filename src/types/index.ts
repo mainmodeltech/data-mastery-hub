@@ -177,6 +177,22 @@ export interface ContactMessage {
   updatedAt: string;
 }
 
+
+export interface ContactMessage {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  subject: string | null;
+  message: string;
+  status: ContactMessageStatus;
+  notes: string | null;
+  createdAt: string;
+}
+
+
 /** Photo de galerie */
 export interface GalleryPhoto {
   id: string;
@@ -226,12 +242,16 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+/** Format Spring Data Page<T> */
 export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
+  content: T[];
+  totalElements: number;
   totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
 }
 
 export interface ApiError {

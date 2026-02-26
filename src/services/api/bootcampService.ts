@@ -1,6 +1,7 @@
 /**
  * Service API pour les Bootcamps.
- * Abstraction entre les composants UI et le backend.
+ * Routes publiques : /bootcamps (lecture seule, published + not deleted)
+ * Routes admin : /admin/bootcamps (CRUD complet)
  */
 
 import { httpClient } from '@/services/httpClient';
@@ -11,32 +12,40 @@ import type {
   PaginatedResponse,
 } from '@/types';
 
-const BASE_PATH = '/bootcamps';
+const PUBLIC_PATH = '/bootcamps';
+const ADMIN_PATH = '/admin/bootcamps';
 
 export const bootcampService = {
-  /** Recuperer tous les bootcamps publies (site public) */
-  getPublished: () =>
-    httpClient.get<Bootcamp[]>(`${BASE_PATH}/published`),
+  /** Recuperer les bootcamps publies (site public) */
+  getPublished: (page = 0, size = 20) =>
+    httpClient.get<PaginatedResponse<Bootcamp>>(PUBLIC_PATH, {
+      params: { page, size },
+      skipAuth: true,
+    }),
 
-  /** Recuperer tous les bootcamps (admin) */
-  getAll: (page?: number, size?: number) =>
-    httpClient.get<PaginatedResponse<Bootcamp>>(BASE_PATH, {
+  /** Recuperer un bootcamp publie par ID (site public) */
+  getPublishedById: (id: string) =>
+    httpClient.get<Bootcamp>(`${PUBLIC_PATH}/${id}`, { skipAuth: true }),
+
+  /** Recuperer tous les bootcamps non supprimes (admin) */
+  getAll: (page = 0, size = 20) =>
+    httpClient.get<PaginatedResponse<Bootcamp>>(ADMIN_PATH, {
       params: { page, size },
     }),
 
-  /** Recuperer un bootcamp par ID */
+  /** Recuperer un bootcamp par ID (admin) */
   getById: (id: string) =>
-    httpClient.get<Bootcamp>(`${BASE_PATH}/${id}`),
+    httpClient.get<Bootcamp>(`${ADMIN_PATH}/${id}`),
 
   /** Creer un nouveau bootcamp (admin) */
   create: (data: CreateBootcampDTO) =>
-    httpClient.post<Bootcamp>(BASE_PATH, data),
+    httpClient.post<Bootcamp>(ADMIN_PATH, data),
 
   /** Mettre a jour un bootcamp (admin) */
   update: (id: string, data: UpdateBootcampDTO) =>
-    httpClient.put<Bootcamp>(`${BASE_PATH}/${id}`, data),
+    httpClient.put<Bootcamp>(`${ADMIN_PATH}/${id}`, data),
 
-  /** Supprimer un bootcamp (admin) */
+  /** Supprimer un bootcamp - soft delete (admin) */
   delete: (id: string) =>
-    httpClient.delete<void>(`${BASE_PATH}/${id}`),
+    httpClient.delete<void>(`${ADMIN_PATH}/${id}`),
 };

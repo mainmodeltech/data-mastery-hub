@@ -1,12 +1,12 @@
 /**
  * Hooks React Query pour les Bootcamps.
  * Separe les concerns : les composants n'ont plus besoin de connaitre
- * la source de donnees (Supabase, API REST, mock...).
+ * la source de donnees.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bootcampService } from '@/services/api';
-import type { CreateBootcampDTO, UpdateBootcampDTO } from '@/types';
+import type { Bootcamp, CreateBootcampDTO, UpdateBootcampDTO } from '@/types';
 import { QUERY_CONFIG } from '@/config/constants';
 
 /** Cles de cache React Query */
@@ -16,18 +16,21 @@ export const BOOTCAMP_KEYS = {
   detail: (id: string) => ['bootcamps', id] as const,
 };
 
-/** Hook pour recuperer les bootcamps publies (site public) */
+/** Hook pour recuperer les bootcamps publies (site public) - renvoie Bootcamp[] */
 export function usePublishedBootcamps() {
   return useQuery({
     queryKey: BOOTCAMP_KEYS.published,
-    queryFn: () => bootcampService.getPublished(),
+    queryFn: async (): Promise<Bootcamp[]> => {
+      const page = await bootcampService.getPublished();
+      return page.content;
+    },
     staleTime: QUERY_CONFIG.staleTime,
     gcTime: QUERY_CONFIG.gcTime,
   });
 }
 
-/** Hook pour recuperer tous les bootcamps (admin) */
-export function useBootcamps(page?: number, size?: number) {
+/** Hook pour recuperer tous les bootcamps (admin) - renvoie PaginatedResponse */
+export function useBootcamps(page = 0, size = 20) {
   return useQuery({
     queryKey: [...BOOTCAMP_KEYS.all, { page, size }],
     queryFn: () => bootcampService.getAll(page, size),
@@ -52,6 +55,7 @@ export function useCreateBootcamp() {
     mutationFn: (data: CreateBootcampDTO) => bootcampService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BOOTCAMP_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: BOOTCAMP_KEYS.published });
     },
   });
 }
@@ -65,6 +69,7 @@ export function useUpdateBootcamp() {
       bootcampService.update(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: BOOTCAMP_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: BOOTCAMP_KEYS.published });
       queryClient.invalidateQueries({ queryKey: BOOTCAMP_KEYS.detail(id) });
     },
   });
@@ -78,6 +83,7 @@ export function useDeleteBootcamp() {
     mutationFn: (id: string) => bootcampService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BOOTCAMP_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: BOOTCAMP_KEYS.published });
     },
   });
 }

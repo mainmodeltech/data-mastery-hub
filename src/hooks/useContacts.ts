@@ -4,8 +4,10 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { contactService } from '@/services/api';
-import type { CreateContactMessageDTO, ContactMessageStatus } from '@/types';
+import type {CreateContactMessageDTO, ContactMessageStatus, ContactMessage} from '@/types';
 import { QUERY_CONFIG } from '@/config/constants';
+import {useToast} from "@/hooks/use-toast.ts";
+
 
 export const CONTACT_KEYS = {
   all: ['contact-messages'] as const,
@@ -20,11 +22,22 @@ export function useSendContactMessage() {
 }
 
 /** Hook pour recuperer tous les messages (admin) */
-export function useContactMessages(page?: number, size?: number, status?: ContactMessageStatus) {
+// export function useContactMessages(page?: number, size?: number, status?: ContactMessageStatus) {
+//   return useQuery({
+//     queryKey: [...CONTACT_KEYS.all, { page, size, status }],
+//     queryFn: () => contactService.getAll(page, size, status),
+//     staleTime: QUERY_CONFIG.staleTime,
+//   });
+// }
+
+export function useContactMessages() {
   return useQuery({
-    queryKey: [...CONTACT_KEYS.all, { page, size, status }],
-    queryFn: () => contactService.getAll(page, size, status),
-    staleTime: QUERY_CONFIG.staleTime,
+    queryKey: MESSAGE_KEYS.all,
+    queryFn: async () => {
+      const response = await contactService.getAll();
+      // Si ton backend renvoie un Page<T>, on déballe ici
+      return Array.isArray(response) ? response : response.content;
+    },
   });
 }
 
@@ -41,6 +54,27 @@ export function useUpdateContactStatus() {
   });
 }
 
+export function useUpdateMessageStatus() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: ContactMessageStatus }) =>
+        contactService.updateStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MESSAGE_KEYS.all });
+      toast({ title: "Statut mis à jour" });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le statut",
+        variant: "destructive"
+      });
+    }
+  });
+}
+
 /** Hook pour supprimer un message */
 export function useDeleteContactMessage() {
   const queryClient = useQueryClient();
@@ -52,3 +86,7 @@ export function useDeleteContactMessage() {
     },
   });
 }
+
+export const MESSAGE_KEYS = {
+  all: ['contact-messages'] as const,
+};
