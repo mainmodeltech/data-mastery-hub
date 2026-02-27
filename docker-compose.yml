@@ -9,8 +9,6 @@ services:
     container_name: model-tech-demo-frontend
     environment:
       VITE_API_URL: https://api.model-technologie.com/api
-    ports:
-      - "80:80"
     networks:
       - dokploy-network
     restart: unless-stopped
