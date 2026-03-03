@@ -37,7 +37,7 @@ export function HeroSection() {
                   style={{ animationDelay: "0.1s" }}
               >
                 <MapPin className="h-3.5 w-3.5 text-accent" />
-                <span className="text-accent text-sm font-medium tracking-wide">Dakar, Sénégal · Depuis 2022</span>
+                <span className="text-accent text-sm font-medium tracking-wide">Dakar, Sénégal · Depuis 2023</span>
               </div>
 
               {/* Headline */}
@@ -75,7 +75,7 @@ export function HeroSection() {
                   className="text-lg md:text-xl text-background/65 mb-10 leading-relaxed max-w-xl opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.3s" }}
               >
-                Les bootcamps intensifs qui ont lancé +100 carrières data à Dakar.
+                Les bootcamps intensifs qui ont lancé +30 carrières data à Dakar.
                 Power BI, SQL & Python — du zéro à l'emploi.
               </p>
 
