@@ -75,7 +75,7 @@ export function HeroSection() {
                   className="text-lg md:text-xl text-background/65 mb-10 leading-relaxed max-w-xl opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.3s" }}
               >
-                Les bootcamps intensifs qui ont lancé +150 carrières data à Dakar.
+                Les bootcamps intensifs qui ont lancé +100 carrières data à Dakar.
                 Power BI, SQL & Python — du zéro à l'emploi.
               </p>
 
@@ -98,7 +98,7 @@ export function HeroSection() {
                     asChild
                     size="lg"
                     variant="outline"
-                    className="border-background/30 text-background hover:bg-background/10 hover:border-background/50 font-semibold px-8 py-4 h-auto text-base group"
+                    className="border-background/30 text-accent hover:bg-background/10 hover:border-background/50 font-semibold px-8 py-4 h-auto text-base group"
                 >
                   <Link to="/orientation">
                     <Compass className="h-5 w-5 mr-2 group-hover:rotate-45 transition-transform duration-300" />
@@ -113,8 +113,8 @@ export function HeroSection() {
                   style={{ animationDelay: "0.5s" }}
               >
                 {[
-                  { icon: Star, text: "150+ alumni placés" },
-                  { icon: null, text: "3 ans d'expérience" },
+                  { icon: Star, text: "30+ alumni placés" },
+                  { icon: null, text: "4 ans d'expérience" },
                   { icon: null, text: "Dakar, Sénégal" },
                 ].map((badge, i) => (
                     <div key={i} className="flex items-center gap-2 text-background/50 text-sm">
@@ -181,7 +181,7 @@ export function HeroSection() {
                     {[
                       { value: "94%", label: "Taux de placement" },
                       { value: "12 sem.", label: "Durée bootcamp" },
-                      { value: "+150", label: "Alumni actifs" },
+                      { value: "+25", label: "Alumni actifs" },
                     ].map((s) => (
                         <div key={s.label} className="text-center p-3 rounded-xl bg-background/5 border border-background/10">
                           <div className="text-accent font-bold text-lg font-heading">{s.value}</div>

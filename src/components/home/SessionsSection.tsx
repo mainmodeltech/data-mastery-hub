@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Calendar, Clock, Users, ArrowRight, AlertCircle, BarChart3, Database, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {COMPANY} from "@/config/constants.ts";
 
 const sessions = [
     {
@@ -11,16 +12,16 @@ const sessions = [
         iconBg: "bg-accent/10",
         tag: "Places disponibles",
         tagColor: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
-        startDate: "10 Mars 2025",
-        endDate: "2 Mai 2025",
+        startDate: "28 Mars 2025",
+        endDate: "09 Mai 2025",
         duration: "8 semaines",
         schedule: "Soirs & Week-ends",
-        format: "Présentiel · Dakar",
-        placesTotal: 12,
-        placesFilled: 8,
-        placesLeft: 4,
+        format: "En Ligne et/ou Présentiel · Dakar",
+        placesTotal: 15,
+        placesFilled: 0,
+        placesLeft: 15,
         urgency: false,
-        price: "350 000 FCFA",
+        price: "150 000 FCFA",
         href: "/bootcamps/powerbi",
     },
     {
@@ -30,16 +31,16 @@ const sessions = [
         iconBg: "bg-primary/10",
         tag: "Dernières places",
         tagColor: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
-        startDate: "17 Mars 2025",
-        endDate: "9 Juin 2025",
-        duration: "12 semaines",
+        startDate: "25 Mars 2025",
+        endDate: "30 Juin 2025",
+        duration: "10 semaines",
         schedule: "Soirs & Week-ends",
-        format: "Présentiel · Dakar",
-        placesTotal: 10,
-        placesFilled: 8,
-        placesLeft: 2,
+        format: "En ligne et/ou Présentiel · Dakar",
+        placesTotal: 15,
+        placesFilled: 0,
+        placesLeft: 15,
         urgency: true,
-        price: "450 000 FCFA",
+        price: "100 000 FCFA",
         href: "/bootcamps/data-analyst",
     },
 ];
@@ -191,9 +192,9 @@ export function SessionsSection() {
                                 asChild
                                 size="lg"
                                 variant="outline"
-                                className="border-white/40 text-white hover:bg-white/15"
+                                className="border-white/40 text-white bg-black/80 hover:bg-black/80"
                             >
-                                <a href="https://wa.me/221770000000" target="_blank" rel="noopener noreferrer">
+                                <a href={COMPANY.whatsappUrl} target="_blank" rel="noopener noreferrer">
                                     <MessageCircle className="h-4 w-4 mr-2" />
                                     WhatsApp
                                 </a>

@@ -4,10 +4,10 @@ import { Users, Briefcase, GraduationCap, Building } from "lucide-react";
 const stats = [
     {
         icon: Users,
-        value: 150,
+        value: 30,
         suffix: "+",
         label: "Alumni formés",
-        sublabel: "depuis 2022",
+        sublabel: "depuis 2023",
         color: "text-accent",
         bg: "bg-accent/10",
     },
@@ -31,9 +31,9 @@ const stats = [
     },
     {
         icon: Building,
-        value: 20,
+        value: 10,
         suffix: "+",
-        label: "Entreprises partenaires",
+        label: "Entreprises impactées",
         sublabel: "recrutent nos alumni",
         color: "text-primary",
         bg: "bg-primary/10",

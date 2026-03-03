@@ -15,7 +15,7 @@ const Index = () => {
             <BootcampsSection />
             <OrientationTeaser />
             <TestimonialsSection />
-            <B2BSection />
+            {/*<B2BSection />*/}
             <SessionsSection />
         </Layout>
     );

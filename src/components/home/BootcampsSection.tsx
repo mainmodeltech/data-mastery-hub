@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 const bootcamps = [
     {
         id: "powerbi",
-        badge: "Bestseller",
+        badge: "New",
         badgeColor: "bg-accent text-white",
         icon: BarChart3,
         iconBg: "bg-accent/10",
@@ -19,22 +19,23 @@ const bootcamps = [
             "Maîtrisez Power BI et Excel pour créer des tableaux de bord professionnels, automatiser vos rapports et piloter la performance de votre entreprise.",
         duration: "8 semaines",
         level: "Débutant → Confirmé",
-        audience: "12 apprenants max",
-        price: "À partir de 350 000 FCFA",
-        tools: ["Power BI", "Excel", "DAX", "Power Query", "SharePoint"],
+        audience: "15 apprenants max",
+        price: "À partir de 150 000 FCFA",
+        tools: ["Power BI", "Excel", "DAX", "Power Query", "Power BI Service"],
         outcomes: [
             "Créer des dashboards interactifs",
+            "Modélisez vos données",
             "Automatiser les rapports mensuels",
             "Maîtriser le langage DAX",
             "Préparer la certification PL-300",
         ],
         profiles: ["Contrôleurs de gestion", "Responsables RH", "Managers", "Commerciaux"],
-        href: "/bootcamps/powerbi",
+        href: "/bootcamps",
         highlighted: false,
     },
     {
         id: "data-analyst",
-        badge: "Complet",
+        badge: "Best Seller",
         badgeColor: "bg-primary text-white",
         icon: Database,
         iconBg: "bg-primary/10",
@@ -45,19 +46,20 @@ const bootcamps = [
         subtitle: "SQL, Python & Visualisation",
         description:
             "Devenez Data Analyst full-stack : collectez, nettoyez, analysez et visualisez des données réelles avec les outils utilisés dans les meilleures entreprises.",
-        duration: "12 semaines",
+        duration: "10 semaines",
         level: "Débutant → Opérationnel",
-        audience: "10 apprenants max",
-        price: "À partir de 450 000 FCFA",
+        audience: "15 apprenants max",
+        price: "À partir de 100 000 FCFA",
         tools: ["Python", "SQL", "Power BI", "Pandas", "Matplotlib", "PostgreSQL"],
         outcomes: [
+            "Collecter des données",
             "Interroger des bases de données SQL",
             "Analyser des données avec Python",
             "Visualiser et storyteller avec les données",
             "Réaliser un projet data end-to-end",
         ],
-        profiles: ["Reconversions professionnelles", "Développeurs", "Financiers", "Diplômés récents"],
-        href: "/bootcamps/data-analyst",
+        profiles: ["Reconversions professionnelles", "Novices", "Financiers", "Diplômés récents"],
+        href: "/bootcamps",
         highlighted: true,
     },
 ];
@@ -75,11 +77,11 @@ export function BootcampsSection() {
                     </div>
                     <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
                         2 bootcamps pour{" "}
-                        <span className="text-primary">décrocher votre premier poste</span>
+                        <span className="text-primary">ajouter une nouvelle compétence</span>
                         <br />en data
                     </h2>
                     <p className="text-muted-foreground text-lg">
-                        Des programmes intensifs construits avec les entreprises qui recrutent à Dakar.
+                        Des programmes intensifs construits pour les entreprises qui recrutent à Dakar.
                     </p>
                 </div>
 

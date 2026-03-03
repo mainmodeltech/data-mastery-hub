@@ -14,7 +14,7 @@ export const COMPANY = {
   address: 'Dakar, Senegal',
   phone: '+221 78 631 04 32',
   phoneRaw: '+221786310432',
-  email: 'contact@model-technologie.com',
+  email: 'admin@model-technologie.com',
   whatsappUrl: 'https://wa.me/221786310432',
   social: {
     linkedin: 'https://www.linkedin.com/company/model-technologie/?viewAsMember=true',
@@ -40,10 +40,10 @@ export const STATS = {
 export const PUBLIC_NAVIGATION = [
   { name: 'Accueil', href: '/' },
   { name: 'A propos', href: '/a-propos' },
-  { name: 'Services', href: '/services' },
+  // { name: 'Services', href: '/services' },
   { name: 'Bootcamps', href: '/bootcamps' },
   { name: 'Alumni', href: '/alumni' },
-  { name: 'References', href: '/references' },
+  // { name: 'References', href: '/references' },
   { name: 'Contact', href: '/contact' },
 ] as const;
 
@@ -61,10 +61,10 @@ export const ADMIN_NAVIGATION = [
 ] as const;
 
 export const FOOTER_SERVICES = [
-  { name: 'Formation Power BI', href: '/services' },
+  { name: 'Formation Power BI', href: '/bootcamps' },
   { name: 'Bootcamps Data', href: '/bootcamps' },
-  { name: 'Formation Intra-entreprise', href: '/services' },
-  { name: 'Certification Microsoft', href: '/services' },
+  // { name: 'Formation Intra-entreprise', href: '/services' },
+  // { name: 'Certification Microsoft', href: '/services' },
 ] as const;
 
 // ============================================================

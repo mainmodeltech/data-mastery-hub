@@ -11,6 +11,7 @@ import {
   BarChart3, Database, ChevronLeft, ChevronRight, X,
   Briefcase, Wrench, Quote, Trophy, Clock, Play, Pause
 } from "lucide-react";
+import {COMPANY} from "@/config/constants.ts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -194,9 +195,9 @@ const staticProjects: Project[] = [
 ];
 
 const impactStats = [
-  { value: "150+", label: "Alumni certifiés", icon: GraduationCap, color: "text-accent" },
+  { value: "30+", label: "Alumni certifiés", icon: GraduationCap, color: "text-accent" },
   { value: "90%", label: "En poste en 3 mois", icon: TrendingUp, color: "text-primary" },
-  { value: "25+", label: "Entreprises recrutent", icon: Building2, color: "text-accent" },
+  { value: "10+", label: "Entreprises recrutent", icon: Building2, color: "text-accent" },
   { value: "4.9/5", label: "Note moyenne", icon: Star, color: "text-primary" },
 ];
 
@@ -752,7 +753,7 @@ const AlumniPage = () => {
             <div className="max-w-3xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/15 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                 <Trophy className="h-3.5 w-3.5" />
-                150+ alumni · 90% en poste en 3 mois
+                30+ alumni · 90% en poste en 3 mois
               </div>
               <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
                 Leurs réussites parlent
@@ -770,8 +771,8 @@ const AlumniPage = () => {
                     <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="border-background/20 text-background hover:bg-background/10">
-                  <Link to="/services">
+                <Button asChild variant="outline" className="border-background/20 text-accent hover:bg-background/10">
+                  <Link to="/contact">
                     <Building2 className="h-4 w-4 mr-2" />
                     Recruter nos alumni
                   </Link>
@@ -845,7 +846,7 @@ const AlumniPage = () => {
             <div className="text-center max-w-2xl mx-auto mb-16">
               <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
                 <Briefcase className="h-3.5 w-3.5 text-primary" />
-                Le travail parle d'ui-même
+                Le travail parle de lui même
               </div>
               <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
                 Projets réalisés en bootcamp
@@ -877,7 +878,7 @@ const AlumniPage = () => {
                 <p className="text-sm text-muted-foreground">Nos alumni peuvent réaliser ce type de projet pour vous. Contactez-nous pour un devis gratuit.</p>
               </div>
               <Button asChild className="bg-primary hover:bg-primary/90 text-white font-bold flex-shrink-0">
-                <Link to="/services">
+                <Link to="/contact">
                   Demander un devis
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Link>
@@ -945,7 +946,7 @@ const AlumniPage = () => {
                         <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Link>
                     </Button>
-                    <Button asChild variant="outline" className="w-full border-background/20 text-background hover:bg-background/10">
+                    <Button asChild variant="outline" className="w-full border-background/20 text-accent hover:bg-background/10">
                       <Link to="/orientation">
                         <Zap className="h-4 w-4 mr-2 text-accent" />
                         Quiz d'orientation (2 min)
@@ -979,13 +980,13 @@ const AlumniPage = () => {
                   </p>
                   <div className="space-y-3">
                     <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white font-bold group">
-                      <Link to="/services">
+                      <Link to="/contact">
                         Découvrir nos services B2B
                         <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Link>
                     </Button>
                     <a
-                        href="https://wa.me/221770000000"
+                        href={COMPANY.whatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors"

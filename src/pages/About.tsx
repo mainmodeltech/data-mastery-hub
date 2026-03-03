@@ -8,30 +8,32 @@ import {
   CheckCircle, Linkedin, MessageCircle, Star, Zap,
   BookOpen, Globe
 } from "lucide-react";
+import {COMPANY} from "@/config/constants.ts";
+import {useState} from "react";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const timeline = [
   {
-    year: "2022",
+    year: "2023",
     label: "Fondation",
-    desc: "Création de Model Technologie à Dakar, avec une première promotion de 8 apprenants Power BI.",
+    desc: "Création de Model Technologie à Dakar, avec une première promotion de 6 apprenants.",
     icon: "🚀",
   },
   {
-    year: "2023",
+    year: "2024",
     label: "Expansion",
-    desc: "Lancement du bootcamp Data Analyst SQL/Python. 60+ apprenants formés. Premiers partenariats entreprises.",
+    desc: "Lancement du bootcamp Data Analyst SQL/Python. 15+ apprenants formés. Premiers partenariats entreprises.",
     icon: "📈",
   },
   {
-    year: "2024",
+    year: "2025",
     label: "Maturité",
-    desc: "150+ alumni en poste. Lancement des services B2B : consulting et placement. 20+ clients entreprises.",
+    desc: "30+ alumni en poste. Consolidation des acquis: structuration de l'équipe et des formateurs.",
     icon: "🏆",
   },
   {
-    year: "2025",
+    year: "2026",
     label: "Référence régionale",
     desc: "Ambition : devenir la référence data en Afrique francophone de l'Ouest. Expansion prévue.",
     icon: "🌍",
@@ -51,14 +53,14 @@ const values = [
     iconBg: "bg-accent/15",
     iconColor: "text-accent",
     title: "Pragmatisme",
-    desc: "100% des exercices sont basés sur des données réelles. Vous sortez avec un portfolio, pas juste un certificat.",
+    desc: "100% des exercices sont basés sur des données très proches de la réalité. Vous sortez avec un portfolio, pas juste un certificat.",
   },
   {
     icon: Heart,
     iconBg: "bg-primary/15",
     iconColor: "text-primary",
     title: "Proximité",
-    desc: "Des promotions volontairement limitées (10-12 apprenants) pour un suivi individualisé et une vraie communauté.",
+    desc: "Des promotions volontairement limitées (10-20 apprenants) pour un suivi individualisé et une vraie communauté.",
   },
   {
     icon: Award,
@@ -76,61 +78,65 @@ const team = [
     role: "Fondateur & Directeur",
     desc: "Expert en data analytics avec plus de 10 ans d'expérience en banque et conseil en transformation digitale.",
     gradient: "from-primary to-accent",
-    linkedin: "#",
+    linkedin: "https://www.linkedin.com/in/lionnel-code/",
     tags: ["Power BI", "Stratégie", "Banque & Finance"],
   },
   {
     initials: "PM",
-    name: "Primaël",
-    role: "Directeur Administratif & Financier",
+    name: "Primaël KOUADIO",
+    role: "Responsable Administratif & Financier",
     desc: "Garant de la structure opérationnelle et financière. Pilote la croissance et les partenariats stratégiques.",
     gradient: "from-accent to-primary",
-    linkedin: "#",
+    linkedin: "https://www.linkedin.com/in/attowla-prima%C3%ABl-armand-othniel-kouadio-515261212/",
     tags: ["Finance", "Administration", "Partenariats"],
   },
   {
     initials: "ZN",
-    name: "Zeinab",
+    name: "Zeinab TRAORÉ",
     role: "Responsable Marketing & Communication",
     desc: "Architecte de la présence digitale de Model Technologie. Pilote la communauté alumni et les partenariats.",
     gradient: "from-primary/80 to-accent/80",
-    linkedin: "#",
+    linkedin: "https://www.linkedin.com/in/ze%C3%AFnab-traore-b46a34249/",
     tags: ["Marketing Digital", "Community", "Contenu"],
   },
   {
     initials: "CD",
-    name: "Cédric",
+    name: "Cédric ZAGBA",
     role: "Formateur Power BI & Excel",
-    desc: "Certifié Microsoft PL-300. Formateur principal du bootcamp Power BI avec une approche ultra-pratique.",
+    desc: "Formateur principal du bootcamp Power BI avec une approche ultra-pratique.",
     gradient: "from-accent/90 to-primary/90",
-    linkedin: "#",
+    linkedin: "https://www.linkedin.com/in/aboubacar-gohoun-c%C3%A9dric-zagba-89219616a/",
     tags: ["Power BI", "DAX", "Excel Avancé"],
   },
   {
     initials: "MK",
-    name: "Mardochée",
+    name: "Mardochée K. GBANBAN",
     role: "Formateur SQL & Python",
     desc: "Data Analyst senior avec expérience en fintech. Formateur principal du bootcamp Data Analyst.",
     gradient: "from-primary to-primary/70",
-    linkedin: "#",
+    linkedin: "https://www.linkedin.com/in/mardocheekg/",
     tags: ["Python", "SQL", "Data Engineering"],
   },
 ];
 
 const stats = [
   { value: "3", label: "ans d'existence", icon: Star },
-  { value: "150+", label: "alumni formés", icon: GraduationCap },
+  { value: "30+", label: "alumni formés", icon: GraduationCap },
   { value: "90%", label: "en poste en 3 mois", icon: TrendingUp },
-  { value: "20+", label: "entreprises clientes", icon: Building2 },
+  { value: "02", label: "entreprises partenaires", icon: Building2 },
 ];
 
 const partners = [
-  { name: "BICIS", sector: "Banque" },
-  { name: "Baobab", sector: "Microfinance" },
-  { name: "Wave", sector: "Fintech" },
-  { name: "Sonatel", sector: "Télécoms" },
-  { name: "CBAO", sector: "Banque" },
-  { name: "BHS", sector: "Habitat" },
+  { name: "CESAG", sector: "Business School" },
+  { name: "KPMG", sector: "Audit" },
+  { name: "INTOUCH", sector: "Finetech" },
+  { name: "CETUD", sector: "Transport" },
+  { name: "AFIKA BANK", sector: "Banque" },
+  { name: "SONATEL", sector: "Télécoms" },
+  { name: "Forvis Mazars", sector: "Consulting" },
+  { name: "WAVE", sector: "Finetech" },
+  { name: "BDK", sector: "Banque" },
+  { name: "SGSN", sector: "Banque" },
 ];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -160,7 +166,7 @@ const About = () => {
               <div>
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/15 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                   <MapPin className="h-3.5 w-3.5" />
-                  Dakar, Sénégal · Depuis 2022
+                  Dakar, Sénégal · Depuis 2023
                 </div>
                 <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
                   Former la génération data
@@ -177,7 +183,7 @@ const About = () => {
                       <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" className="border-background/20 text-background hover:bg-background/10">
+                  <Button asChild variant="outline" className="border-background/20 text-accent hover:bg-background/10">
                     <Link to="/contact">Nous contacter</Link>
                   </Button>
                 </div>
@@ -254,7 +260,7 @@ const About = () => {
                   Notre parcours
                 </div>
                 <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground">
-                  Une startup née du terrain
+                  Une structure née du terrain
                 </h2>
               </div>
 
@@ -389,13 +395,7 @@ const About = () => {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               {partners.map((p) => (
-                  <div
-                      key={p.name}
-                      className="flex flex-col items-center gap-1 px-6 py-4 rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors"
-                  >
-                    <div className="font-heading font-bold text-foreground">{p.name}</div>
-                    <div className="text-xs text-muted-foreground">{p.sector}</div>
-                  </div>
+                  <PartnerCard key={p.name} partner={p} />
               ))}
             </div>
           </div>
@@ -417,7 +417,7 @@ const About = () => {
                       Prêt à transformer votre carrière ?
                     </h2>
                     <p className="text-background/60 leading-relaxed">
-                      Rejoignez les 150+ alumni qui ont déjà fait le saut. La prochaine promotion commence bientôt.
+                      Rejoignez les 30+ alumni qui ont déjà fait le saut. La prochaine promotion commence bientôt.
                     </p>
                   </div>
                   <div className="flex flex-col gap-3">
@@ -427,14 +427,14 @@ const About = () => {
                         <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Link>
                     </Button>
-                    <Button asChild size="lg" variant="outline" className="border-background/20 text-background hover:bg-background/10">
+                    <Button asChild size="lg" variant="outline" className="border-background/20 text-accent hover:bg-background/10">
                       <Link to="/orientation">
                         <Zap className="h-4 w-4 mr-2 text-accent" />
                         Quiz d'orientation (2 min)
                       </Link>
                     </Button>
                     <a
-                        href="https://wa.me/221770000000"
+                        href={COMPANY.whatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 py-3 rounded-xl border border-background/15 text-background/60 hover:text-background hover:bg-background/8 text-sm font-medium transition-colors"
@@ -492,6 +492,64 @@ function TeamCard({ member, delay }: { member: typeof team[0]; delay: number }) 
             {tag}
           </span>
           ))}
+        </div>
+      </div>
+  );
+}
+
+// Génère une couleur de fond cohérente à partir du nom
+function getInitialsBg(name) {
+  const colors = [
+    "bg-blue-100 text-blue-700",
+    "bg-emerald-100 text-emerald-700",
+    "bg-violet-100 text-violet-700",
+    "bg-amber-100 text-amber-700",
+    "bg-rose-100 text-rose-700",
+    "bg-cyan-100 text-cyan-700",
+  ];
+  const index = name.charCodeAt(0) % colors.length;
+  return colors[index];
+}
+
+function getInitials(name) {
+  return name
+      .split(" ")
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+}
+
+function  PartnerCard({ partner }) {
+  const [imgError, setImgError] = useState(false);
+  const showLogo = partner.logo && !imgError;
+
+  return (
+      <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200 min-w-[140px]">
+        {/* Zone logo / initiales */}
+        <div className="w-12 h-12 flex items-center justify-center rounded-xl overflow-hidden">
+          {showLogo ? (
+              <img
+                  src={partner.logo}
+                  alt={`Logo ${partner.name}`}
+                  className="w-full h-full object-contain"
+                  onError={() => setImgError(true)}
+              />
+          ) : (
+              <div
+                  className={`w-full h-full flex items-center justify-center rounded-xl text-sm font-bold ${getInitialsBg(partner.name)}`}
+              >
+                {getInitials(partner.name)}
+              </div>
+          )}
+        </div>
+
+        {/* Nom + secteur */}
+        <div className="font-heading font-bold text-foreground text-sm text-center leading-tight">
+          {partner.name}
+        </div>
+        <div className="text-xs text-muted-foreground text-center">
+          {partner.sector}
         </div>
       </div>
   );
