@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     container_name: model-tech-demo-frontend
     environment:
-      VITE_API_BASE_URL: http://192.168.181.6:8081/api
+      VITE_API_BASE_URL: http://api.model-technologie.com/api
     networks:
       - dokploy-network
     restart: unless-stopped
