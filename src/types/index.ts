@@ -11,7 +11,7 @@
 // Enums & Types communs
 // ============================================================
 
-export type RegistrationStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+export type RegistrationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
 
 export type ContactMessageStatus = 'unread' | 'read' | 'replied' | 'archived';
 

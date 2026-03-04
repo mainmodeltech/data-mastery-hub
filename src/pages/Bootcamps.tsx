@@ -1,17 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { bootcampService } from "@/services/bootcampService";
+import { registrationService } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  BarChart3, Database, Clock, Users, Target, CheckCircle,
+  BarChart3, Database, Clock, Users, CheckCircle,
   ArrowRight, Star, Calendar, Award, Layers, Code2,
-  TrendingUp, Briefcase, ChevronDown, ChevronUp, MessageCircle,
-  Sparkles, MapPin, Shield, Download, X, Loader2,
+  TrendingUp, ChevronDown, ChevronUp, MessageCircle
+  , MapPin, Shield, X, Loader2,
   BookOpen, Zap, Trophy, GraduationCap, AlertCircle,
 } from "lucide-react";
 import type { Bootcamp, BootcampSession } from "@/types/bootcamp.type";
@@ -268,24 +269,17 @@ function RegistrationModal({
     setSubmitting(true);
 
     try {
-      // Appel à ton API de registrations (à adapter selon l'endpoint disponible)
-      const response = await fetch("/api/v1/registrations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bootcampId: bootcamp.id,
-          sessionId: session?.id ?? null,
-          firstName: form.firstName.trim(),
-          lastName: form.lastName.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim() || null,
-          company: form.company.trim() || null,
-          position: form.position.trim() || null,
-          message: form.message.trim() || null,
-        }),
+      await registrationService.create({
+        bootcampId: bootcamp.id,
+        bootcampTitle: bootcamp.title,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || null,
+        company: form.company.trim() || null,
+        position: form.position.trim() || null,
+        message: form.message.trim() || null,
       });
-
-      if (!response.ok) throw new Error();
       setSubmitted(true);
     } catch {
       toast({ title: "Erreur", description: "Veuillez réessayer.", variant: "destructive" });
