@@ -382,38 +382,38 @@ export function Header() {
                   )}
 
                   {/* Services B2B */}
-                  <button
-                      onClick={() => setMobileExpanded(mobileExpanded === "services" ? null : "services")}
-                      className="flex items-center justify-between w-full px-3 py-3 rounded-xl hover:bg-secondary/50 text-left font-medium text-foreground/80"
-                  >
-                <span className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  Services B2B
-                </span>
-                    <ChevronDown className={cn("h-4 w-4 transition-transform", mobileExpanded === "services" ? "rotate-180" : "")} />
-                  </button>
-                  {mobileExpanded === "services" && (
-                      <div className="ml-4 flex flex-col gap-1 mb-2">
-                        {servicesMenu.map((item) => {
-                          const Icon = item.icon;
-                          return (
-                              <button
-                                  key={item.title}
-                                  onClick={() => handleMobileServiceClick(item)}
-                                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-secondary/40 border border-border text-left w-full"
-                              >
-                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", item.iconBg)}>
-                                  <Icon className={cn("h-4 w-4", item.iconColor)} />
-                                </div>
-                                <div>
-                                  <div className="text-sm font-medium text-foreground">{item.title}</div>
-                                  <div className="text-xs text-muted-foreground">{item.desc}</div>
-                                </div>
-                              </button>
-                          );
-                        })}
-                      </div>
-                  )}
+                {/*  <button*/}
+                {/*      onClick={() => setMobileExpanded(mobileExpanded === "services" ? null : "services")}*/}
+                {/*      className="flex items-center justify-between w-full px-3 py-3 rounded-xl hover:bg-secondary/50 text-left font-medium text-foreground/80"*/}
+                {/*  >*/}
+                {/*<span className="flex items-center gap-2">*/}
+                {/*  <Building2 className="h-4 w-4 text-primary" />*/}
+                {/*  Services B2B*/}
+                {/*</span>*/}
+                {/*    <ChevronDown className={cn("h-4 w-4 transition-transform", mobileExpanded === "services" ? "rotate-180" : "")} />*/}
+                {/*  </button>*/}
+                {/*  {mobileExpanded === "services" && (*/}
+                {/*      <div className="ml-4 flex flex-col gap-1 mb-2">*/}
+                {/*        {servicesMenu.map((item) => {*/}
+                {/*          const Icon = item.icon;*/}
+                {/*          return (*/}
+                {/*              <button*/}
+                {/*                  key={item.title}*/}
+                {/*                  onClick={() => handleMobileServiceClick(item)}*/}
+                {/*                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-secondary/40 border border-border text-left w-full"*/}
+                {/*              >*/}
+                {/*                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", item.iconBg)}>*/}
+                {/*                  <Icon className={cn("h-4 w-4", item.iconColor)} />*/}
+                {/*                </div>*/}
+                {/*                <div>*/}
+                {/*                  <div className="text-sm font-medium text-foreground">{item.title}</div>*/}
+                {/*                  <div className="text-xs text-muted-foreground">{item.desc}</div>*/}
+                {/*                </div>*/}
+                {/*              </button>*/}
+                {/*          );*/}
+                {/*        })}*/}
+                {/*      </div>*/}
+                {/*  )}*/}
 
                   {/* Flat links */}
                   {[
