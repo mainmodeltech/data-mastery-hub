@@ -12,49 +12,11 @@ import {
   Briefcase, Wrench, Quote, Trophy, Clock, Play, Pause
 } from "lucide-react";
 import {COMPANY} from "@/config/constants.ts";
+import {AlumniPerson, Project, ProjectMember, ProjectScreenshot} from "@/types/alumni.ts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ProjectMember = {
-  id: string;
-  alumni: {
-    id: string;
-    name: string;
-    current_title: string | null;
-    current_position: string | null;
-    linkedin_url: string | null;
-    photo_url: string | null;
-  };
-};
 
-type ProjectScreenshot = {
-  id: string;
-  photo_url: string;
-  caption: string | null;
-};
-
-type Project = {
-  id: string;
-  title: string;
-  description: string | null;
-  tools_technologies: string[] | null;
-  access_link: string | null;
-  cover_image_url: string | null;
-  cohort: string | null;
-  year: number | null;
-  members: ProjectMember[];
-  screenshots: ProjectScreenshot[];
-};
-
-type AlumniPerson = {
-  id: string;
-  name: string;
-  current_title: string | null;
-  current_position: string | null;
-  linkedin_url: string | null;
-  photo_url: string | null;
-  cohort: string | null;
-};
 
 // ─── Static fallback data ────────────────────────────────────────────────────
 
@@ -128,7 +90,7 @@ const staticTestimonials = [
 ];
 
 const staticAlumni: AlumniPerson[] = [
-  { id: "a1", name: "Fatou Ndiaye", current_title: "Analyste BI", current_position: "Sonatel", linkedin_url: "#", photo_url: null, cohort: "Promo Mars 2024" },
+  { id: "a1", name: "Cedric Zagba", current_title: "Analyste BI", current_position: "Sonatel", linkedin_url: "#", photo_url: null, cohort: "Promo Mars 2024" },
   { id: "a2", name: "Moussa Sow", current_title: "Data Analyst", current_position: "Wave Mobile Money", linkedin_url: "#", photo_url: null, cohort: "Promo Jan 2024" },
   { id: "a3", name: "Aïssatou Fall", current_title: "Contrôleur de Gestion", current_position: "Baobab Groupe", linkedin_url: "#", photo_url: null, cohort: "Promo Nov 2023" },
   { id: "a4", name: "Ibrahima Diallo", current_title: "SQL Developer", current_position: "BICIS", linkedin_url: "#", photo_url: null, cohort: "Promo Sept 2023" },

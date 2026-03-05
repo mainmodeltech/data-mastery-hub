@@ -255,13 +255,48 @@ function RegistrationModal({
   const isAccent = staticData.colorKey === "accent";
 
   const [form, setForm] = useState({
-    firstName: "", lastName: "", email: "", phone: "", company: "", position: "", message: "",
+    firstName: "", lastName: "", email: "", phone: "", company: "", position: "", message: "", promoCode: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [promoValid, setPromoValid] = useState<{ discountPercent: number } | null>(null);
+  const [promoChecking, setPromoChecking] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  // Validation du code promo en temps reel (debounce)
+  const promoTimeoutRef = useState<ReturnType<typeof setTimeout> | null>(null);
+  const handlePromoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setForm((prev) => ({ ...prev, promoCode: value }));
+    setPromoValid(null);
+
+    if (promoTimeoutRef[0]) clearTimeout(promoTimeoutRef[0]);
+
+    if (value.trim().length >= 3) {
+      setPromoChecking(true);
+      promoTimeoutRef[0] = setTimeout(async () => {
+        try {
+          const res = await fetch(
+              `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api/v1"}/promo-codes/validate?code=${encodeURIComponent(value.trim())}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setPromoValid({ discountPercent: data.discountPercent });
+          } else {
+            setPromoValid(null);
+          }
+        } catch {
+          setPromoValid(null);
+        } finally {
+          setPromoChecking(false);
+        }
+      }, 500);
+    } else {
+      setPromoChecking(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,6 +307,10 @@ function RegistrationModal({
       await registrationService.create({
         bootcampId: bootcamp.id,
         bootcampTitle: bootcamp.title,
+        sessionId: session?.id ?? null,
+        sessionName: session?.sessionName ?? null,
+        promoCodeUsed: form.promoCode.trim() || null,
+        discountPercent: promoValid?.discountPercent ?? null,
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
@@ -386,6 +425,37 @@ function RegistrationModal({
                           />
                         </div>
                     ))}
+                    {/* Code promo / parrainage */}
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Code parrainage / promo (optionnel)</label>
+                      <div className="relative">
+                        <input
+                            name="promoCode"
+                            value={form.promoCode}
+                            onChange={handlePromoChange}
+                            placeholder="Ex: AMADOU10"
+                            className={cn(
+                                "w-full px-3 py-2.5 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all uppercase",
+                                promoValid ? "border-green-500 focus:border-green-500" : "border-border focus:border-primary"
+                            )}
+                        />
+                        {promoChecking && (
+                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                        {promoValid && !promoChecking && (
+                            <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        )}
+                      </div>
+                      {promoValid && (
+                          <p className="text-xs text-green-600 font-semibold mt-1">
+                            ✓ Code valide — Réduction de {promoValid.discountPercent}% applicable
+                          </p>
+                      )}
+                      {form.promoCode.trim().length >= 3 && !promoValid && !promoChecking && (
+                          <p className="text-xs text-muted-foreground mt-1">Code non reconnu</p>
+                      )}
+                    </div>
+
                     <div>
                       <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Message ou question</label>
                       <textarea

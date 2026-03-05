@@ -38,11 +38,15 @@ export interface Bootcamp {
   updatedAt: string;
 }
 
-/** Inscription d'un visiteur a un bootcamp */
+/** Inscription d'un visiteur a une session de bootcamp */
 export interface Registration {
   id: string;
   bootcampId: string | null;
   bootcampTitle: string | null;
+  sessionId: string | null;
+  sessionName: string | null;
+  promoCodeUsed: string | null;
+  discountPercent: number | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -208,7 +212,20 @@ export interface GalleryPhoto {
 // DTOs pour creation/modification (envoi vers l'API)
 // ============================================================
 
-export type CreateRegistrationDTO = Omit<Registration, 'id' | 'status' | 'createdAt' | 'updatedAt'>;
+export interface CreateRegistrationDTO {
+  bootcampId: string | null;
+  bootcampTitle: string | null;
+  sessionId: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  position: string | null;
+  message: string | null;
+  /** Code promo saisi par le visiteur (le backend valide et applique) */
+  promoCode: string | null;
+}
 
 export type CreateContactMessageDTO = Omit<ContactMessage, 'id' | 'status' | 'notes' | 'createdAt' | 'updatedAt'>;
 
