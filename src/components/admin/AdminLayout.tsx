@@ -28,13 +28,13 @@ const navItems = [
   { href: "/admin/inscriptions", label: "Inscriptions", icon: ClipboardList },
   { href: "/admin/masterclass", label: "Masterclass", icon: ClipboardList },
   { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag },
-  { href: "/admin/services", label: "Services", icon: Briefcase },
-  { href: "/admin/references", label: "Références", icon: Star },
-  { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare },
-  { href: "/admin/alumni", label: "Alumni", icon: GraduationCap },
-  { href: "/admin/projets", label: "Projets", icon: Users },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare },
-  { href: "/admin/galerie", label: "Galerie", icon: Image },
+  { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare },
+  // { href: "/admin/services", label: "Services", icon: Briefcase },
+  // { href: "/admin/references", label: "Références", icon: Star },
+  // { href: "/admin/alumni", label: "Alumni", icon: GraduationCap },
+  // { href: "/admin/projets", label: "Projets", icon: Users },
+  // { href: "/admin/galerie", label: "Galerie", icon: Image },
 ];
 
 interface AdminLayoutProps {

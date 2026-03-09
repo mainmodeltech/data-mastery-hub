@@ -15,6 +15,8 @@ import ProtectedRoute from '@/components/admin/ProtectedRoute';
 import AdminPromoCodes from "@/pages/admin/AdminPromoCodes.tsx";
 import MasterclassPage from "@/pages/MasterclassPage";
 import AdminMasterclass from "@/pages/admin/AdminMasterclassPage.tsx";
+import AdminForgotPassword from "@/pages/admin/AdminForgotPassword.tsx";
+import AdminResetPassword from "@/pages/admin/AdminResetPassword.tsx";
 
 // ============================================================
 // Lazy loading des pages
@@ -99,9 +101,12 @@ const App = () => (
                   <Route path="/alumni" element={<Alumni />} />
                   <Route path="/orientation" element={<Orientation />} />
                   <Route path="/contact" element={<Contact />} />
+                  <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
 
                   {/* ── Backoffice admin ─────────────────────────── */}
-                  <Route path="/admin/login" element={<AdminLogin />} />
+                  <Route path="/admin/login"          element={<AdminLogin />} />
+                  <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+                  <Route path="/admin/reset-password"  element={<AdminResetPassword />} />
 
                   <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
 
@@ -112,7 +117,7 @@ const App = () => (
 
                   {/* Sessions bootcamp */}
                   <Route path="/admin/bootcamp-sessions" element={<ProtectedRoute><AdminAllSessions /></ProtectedRoute>} />
-                  <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
+
 
 
 
@@ -122,11 +127,12 @@ const App = () => (
                   <Route path="/admin/services" element={<ProtectedRoute><AdminServices /></ProtectedRoute>} />
                   <Route path="/admin/references" element={<ProtectedRoute><AdminReferences /></ProtectedRoute>} />
                   <Route path="/admin/temoignages" element={<ProtectedRoute><AdminTemoignages /></ProtectedRoute>} />
-                  <Route path="/admin/masterclass" element={<AdminMasterclassPage />} />
+                  <Route path="/admin/masterclass" element={<ProtectedRoute><AdminMasterclassPage /></ProtectedRoute>} />
                   <Route path="/admin/alumni" element={<ProtectedRoute><AdminAlumni /></ProtectedRoute>} />
                   <Route path="/admin/projets" element={<ProtectedRoute><AdminProjects /></ProtectedRoute>} />
                   <Route path="/admin/messages" element={<ProtectedRoute><AdminMessages /></ProtectedRoute>} />
                   <Route path="/admin/galerie" element={<ProtectedRoute><AdminGalerie /></ProtectedRoute>} />
+
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>

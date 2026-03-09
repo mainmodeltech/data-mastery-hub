@@ -22,7 +22,7 @@ const sessions = [
         placesLeft: 15,
         urgency: false,
         price: "150 000 FCFA",
-        href: "/bootcamps/powerbi",
+        href: "/bootcamps",
     },
     {
         bootcamp: "Bootcamp Data Analyst SQL & Python",
@@ -41,7 +41,7 @@ const sessions = [
         placesLeft: 15,
         urgency: true,
         price: "100 000 FCFA",
-        href: "/bootcamps/data-analyst",
+        href: "/bootcamps/",
     },
 ];
 
@@ -85,7 +85,7 @@ export function SessionsSection() {
                         </p>
                     </div>
                     <Button asChild variant="outline" size="lg" className="group flex-shrink-0">
-                        <a href="https://wa.me/221770000000" target="_blank" rel="noopener noreferrer">
+                        <a href={COMPANY.whatsappUrl} target="_blank" rel="noopener noreferrer">
                             <MessageCircle className="h-4 w-4 mr-2 text-green-500" />
                             Nous contacter sur WhatsApp
                         </a>
