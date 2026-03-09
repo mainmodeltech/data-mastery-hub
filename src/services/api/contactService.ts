@@ -1,5 +1,6 @@
 /**
  * Service API pour les Messages de contact.
+ * Compatible avec ApiResponse<T> du backend Spring Boot.
  */
 
 import { httpClient } from '@/services/httpClient';
@@ -7,32 +8,62 @@ import type {
   ContactMessage,
   ContactMessageStatus,
   CreateContactMessageDTO,
-  PaginatedResponse,
+  ApiResponse, ContactMessagesPage
 } from '@/types';
 
-const BASE_PATH = '/contact-messages';
+const BASE_PATH  = '/contact-messages';
 const ADMIN_PATH = '/admin/contact-messages';
 
+// ─── Service ──────────────────────────────────────────────────────────────────
+
 export const contactService = {
-  /** Envoyer un message de contact (public - pas besoin d'auth) */
-  send: (data: CreateContactMessageDTO) =>
-    httpClient.post<ContactMessage>(BASE_PATH, data, { skipAuth: true }),
+  /** Envoyer un message de contact (public — pas d'auth) */
+  send: async (data: CreateContactMessageDTO): Promise<ContactMessage> => {
+    const res = await httpClient.post<ApiResponse<ContactMessage>>(
+        BASE_PATH,
+        data,
+        { skipAuth: true },
+    );
+    return res.data;
+  },
 
-  /** Recuperer tous les messages (admin) */
-  getAll: (page?: number, size?: number, status?: ContactMessageStatus) =>
-    httpClient.get<PaginatedResponse<ContactMessage>>(ADMIN_PATH, {
-      params: { page, size, status },
-    }),
+  /**
+   * Récupérer tous les messages (admin) — réponse paginée.
+   * Retourne { items, pagination } pour que le hook soit simple à consommer.
+   */
+  getAll: async (page = 0, size = 50): Promise<ContactMessagesPage> => {
+    const res = await httpClient.get<ApiResponse<ContactMessage[]>>(ADMIN_PATH, {
+      params: { page, size },
+    });
+    return {
+      items: res.data ?? [],
+      pagination: res.pagination ?? {
+        page,
+        size,
+        totalElements: res.data?.length ?? 0,
+        totalPages: 1,
+      },
+    };
+  },
 
-  /** Recuperer un message par ID (admin) */
-  getById: (id: string) =>
-    httpClient.get<ContactMessage>(`${ADMIN_PATH}/${id}`),
+  /** Récupérer un message par ID */
+  getById: async (id: string): Promise<ContactMessage> => {
+    const res = await httpClient.get<ApiResponse<ContactMessage>>(`${ADMIN_PATH}/${id}`);
+    return res.data;
+  },
 
-  /** Mettre a jour le statut d'un message (admin) */
-  updateStatus: (id: string, status: ContactMessageStatus, notes?: string) =>
-    httpClient.patch<ContactMessage>(`${ADMIN_PATH}/${id}/status`, { status, notes }),
+  /** Changer le statut d'un message */
+  updateStatus: async (id: string, status: ContactMessageStatus): Promise<ContactMessage> => {
+    const res = await httpClient.put<ApiResponse<ContactMessage>>(
+        `${ADMIN_PATH}/${id}/status`,
+        null,
+        { params: { status } },
+    );
+    return res.data;
+  },
 
-  /** Supprimer un message (admin) */
-  delete: (id: string) =>
-    httpClient.delete<void>(`${ADMIN_PATH}/${id}`),
+  /** Supprimer un message (soft-delete) */
+  delete: async (id: string): Promise<void> => {
+    await httpClient.delete(`${ADMIN_PATH}/${id}`);
+  },
 };

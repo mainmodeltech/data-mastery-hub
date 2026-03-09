@@ -12,6 +12,9 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QUERY_CONFIG } from '@/config/constants';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
+import AdminPromoCodes from "@/pages/admin/AdminPromoCodes.tsx";
+import MasterclassPage from "@/pages/MasterclassPage";
+import AdminMasterclass from "@/pages/admin/AdminMasterclassPage.tsx";
 
 // ============================================================
 // Lazy loading des pages
@@ -37,10 +40,12 @@ const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminReferences = lazy(() => import('./pages/admin/AdminReferences'));
 const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
+const AdminMasterclassPage = lazy(() => import('./pages/admin/AdminMasterclassPage.tsx'));
 const AdminAlumni = lazy(() => import('./pages/admin/AdminAlumni'));
 const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
 const AdminGalerie = lazy(() => import('./pages/admin/AdminGalerie'));
 const AdminProjects = lazy(() => import('./pages/admin/AdminProjects'));
+
 
 // ============================================================
 // Configuration React Query
@@ -107,12 +112,17 @@ const App = () => (
 
                   {/* Sessions bootcamp */}
                   <Route path="/admin/bootcamp-sessions" element={<ProtectedRoute><AdminAllSessions /></ProtectedRoute>} />
+                  <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
+
+
 
                   {/* Autres sections */}
                   <Route path="/admin/inscriptions" element={<ProtectedRoute><AdminInscriptions /></ProtectedRoute>} />
+                  <Route path="/admin/promo-codes" element={<ProtectedRoute><AdminPromoCodes /></ProtectedRoute>} />
                   <Route path="/admin/services" element={<ProtectedRoute><AdminServices /></ProtectedRoute>} />
                   <Route path="/admin/references" element={<ProtectedRoute><AdminReferences /></ProtectedRoute>} />
                   <Route path="/admin/temoignages" element={<ProtectedRoute><AdminTemoignages /></ProtectedRoute>} />
+                  <Route path="/admin/masterclass" element={<AdminMasterclassPage />} />
                   <Route path="/admin/alumni" element={<ProtectedRoute><AdminAlumni /></ProtectedRoute>} />
                   <Route path="/admin/projets" element={<ProtectedRoute><AdminProjects /></ProtectedRoute>} />
                   <Route path="/admin/messages" element={<ProtectedRoute><AdminMessages /></ProtectedRoute>} />

@@ -1,41 +1,48 @@
-/**
- * Service API pour les Temoignages.
- */
+// src/services/testimonialService.ts
 
 import { httpClient } from '@/services/httpClient';
-import type {
-  Testimonial,
-  CreateTestimonialDTO,
-  UpdateTestimonialDTO,
-  PaginatedResponse,
-} from '@/types';
+import type { Testimonial, TestimonialRequest } from '@/types/testimonial.types';
 
-const BASE_PATH = '/testimonials';
+const ADMIN_PATH  = '/admin/testimonials';
+const PUBLIC_PATH = '/testimonials';
+
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
 
 export const testimonialService = {
-  /** Recuperer les temoignages publies (site public) */
-  getPublished: () =>
-    httpClient.get<Testimonial[]>(`${BASE_PATH}/published`),
+  /** Témoignages publiés — endpoint public, pas d'auth */
+  getPublished: async (): Promise<Testimonial[]> => {
+    const res = await httpClient.get<ApiResponse<Testimonial[]>>(
+        `${PUBLIC_PATH}/published`,
+        { skipAuth: true } as never,
+    );
+    return res.data ?? [];
+  },
 
-  /** Recuperer tous les temoignages (admin) */
-  getAll: (page?: number, size?: number) =>
-    httpClient.get<PaginatedResponse<Testimonial>>(BASE_PATH, {
-      params: { page, size },
-    }),
+  getAll: async (): Promise<Testimonial[]> => {
+    const res = await httpClient.get<ApiResponse<Testimonial[]>>(ADMIN_PATH);
+    return res.data ?? [];
+  },
 
-  /** Recuperer un temoignage par ID */
-  getById: (id: string) =>
-    httpClient.get<Testimonial>(`${BASE_PATH}/${id}`),
+  create: async (payload: TestimonialRequest): Promise<Testimonial> => {
+    const res = await httpClient.post<ApiResponse<Testimonial>>(ADMIN_PATH, payload);
+    return res.data;
+  },
 
-  /** Creer un temoignage (admin) */
-  create: (data: CreateTestimonialDTO) =>
-    httpClient.post<Testimonial>(BASE_PATH, data),
+  update: async (id: string, payload: TestimonialRequest): Promise<Testimonial> => {
+    const res = await httpClient.put<ApiResponse<Testimonial>>(`${ADMIN_PATH}/${id}`, payload);
+    return res.data;
+  },
 
-  /** Mettre a jour un temoignage (admin) */
-  update: (id: string, data: UpdateTestimonialDTO) =>
-    httpClient.put<Testimonial>(`${BASE_PATH}/${id}`, data),
+  delete: async (id: string): Promise<void> => {
+    await httpClient.delete(`${ADMIN_PATH}/${id}`);
+  },
 
-  /** Supprimer un temoignage (admin) */
-  delete: (id: string) =>
-    httpClient.delete<void>(`${BASE_PATH}/${id}`),
+  togglePublished: async (id: string): Promise<Testimonial> => {
+    const res = await httpClient.patch<ApiResponse<Testimonial>>(`${ADMIN_PATH}/${id}/toggle-published`);
+    return res.data;
+  },
 };
