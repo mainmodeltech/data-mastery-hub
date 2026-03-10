@@ -263,7 +263,7 @@ const results: Record<string, Result> = {
         ctaLabel: "Demander un devis",
         ctaHref: "/contact",
         secondaryLabel: "Voir nos services B2B",
-        secondaryHref: "/services",
+        secondaryHref: "/contact",
         testimonial: {
             name: "Directeur RH",
             role: "Institution Financière · Dakar",

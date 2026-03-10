@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import logoHorizontal from "@/assets/logo-black-horizontal.png";
 import logoMark from "@/assets/logo-black.png";
+import martinPhoto from "@/assets/martin-chokki.jpeg"; // ← placer le fichier dans src/assets/
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -42,8 +43,8 @@ import { httpClient } from "@/services/httpClient";
 
 // ─── Config masterclass ────────────────────────────────────────────────────────
 
-const MASTERCLASS_ID = "power-bi-dashboard-2026-03-20";
-const EVENT_DATE     = new Date("2026-03-20T18:00:00+00:00");
+const MASTERCLASS_ID = "power-bi-dashboard-2026-03-24";
+const EVENT_DATE     = new Date("2026-03-24T18:00:00+00:00"); // Mardi 24 mars
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -133,22 +134,24 @@ const PROGRAMME = [
 
 // ─── Formateurs ───────────────────────────────────────────────────────────────
 
-const SPEAKERS = [
-    {
-        name: "Cédric",
-        role: "Spécialiste Power BI",
-        bio: "Formateur Power BI avec plus de 3 ans d'expérience en entreprise. A formé des équipes dans la banque et les télécoms.",
-        initials: "CE",
-        gradient: "linear-gradient(135deg, #fbbf24, #f59e0b)",
-    },
-    {
-        name: "Lionnel",
-        role: "Fondateur — Model Technologie",
-        bio: "Data analyst et entrepreneur. A accompagné plus de 200 apprenants vers des postes en data analyse en Afrique de l'Ouest.",
-        initials: "LI",
-        gradient: "linear-gradient(135deg, #0ea5e9, #6366f1)",
-    },
-];
+interface Speaker {
+    name:     string;
+    role:     string;
+    bio:      string;
+    photo?:   string;
+    initials: string;
+    gradient: string;
+}
+
+// ─── Formateur ────────────────────────────────────────────────────────────────
+
+const SPEAKER = {
+    name:     "Martin Komla CHOKKI",
+    role:     "Data Strategist | Expert Power BI & IA Agent",
+    bio:      "Spécialiste de la data et de l'automatisation, Martin accompagne les organisations du secteur bancaire dans la transformation de leurs données en outils de pilotage stratégique. Il conçoit des dashboards dynamiques et des solutions d'IA qui permettent aux décideurs d'agir avec précision, en temps réel.",
+    photo:    martinPhoto,
+    tags:     ["Power BI", "IA Agent", "Secteur bancaire", "Data Strategy", "Automatisation"],
+};
 
 // ─── Formulaire ───────────────────────────────────────────────────────────────
 
@@ -164,8 +167,6 @@ function RegistrationForm() {
             try {
                 return await masterclassService.register({ ...form, masterclassId: MASTERCLASS_ID });
             } catch (err: any) {
-                // On réattache le status pour que onError puisse le lire même si
-                // l'intercepteur httpClient a transformé l'erreur
                 const status: number     = err?.response?.status ?? err?.status;
                 const message: string    = err?.response?.data?.message ?? err?.message ?? "";
                 const enriched           = new Error(message) as any;
@@ -219,7 +220,7 @@ function RegistrationForm() {
                     <span className="text-amber-400 font-semibold">{form.email}</span>.
                 </p>
                 <p className="text-slate-400 text-sm">
-                    Rendez-vous le <strong className="text-white">vendredi 20 mars à 18h</strong> !
+                    Rendez-vous le <strong className="text-white">mardi 24 mars à 18h</strong> !
                 </p>
             </div>
         );
@@ -322,11 +323,11 @@ function RegistrationForm() {
                         <SelectValue placeholder="Sélectionner votre profil" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-700">
-                        <SelectItem value="Étudiant(e)"    className="text-slate-200 focus:bg-amber-400/10">Étudiant(e)</SelectItem>
-                        <SelectItem value="Professionnel"  className="text-slate-200 focus:bg-amber-400/10">Professionnel(le)</SelectItem>
-                        <SelectItem value="Entrepreneur"   className="text-slate-200 focus:bg-amber-400/10">Entrepreneur(se)</SelectItem>
+                        <SelectItem value="Étudiant(e)"     className="text-slate-200 focus:bg-amber-400/10">Étudiant(e)</SelectItem>
+                        <SelectItem value="Professionnel"   className="text-slate-200 focus:bg-amber-400/10">Professionnel(le)</SelectItem>
+                        <SelectItem value="Entrepreneur"    className="text-slate-200 focus:bg-amber-400/10">Entrepreneur(se)</SelectItem>
                         <SelectItem value="En reconversion" className="text-slate-200 focus:bg-amber-400/10">En reconversion</SelectItem>
-                        <SelectItem value="Autre"          className="text-slate-200 focus:bg-amber-400/10">Autre</SelectItem>
+                        <SelectItem value="Autre"           className="text-slate-200 focus:bg-amber-400/10">Autre</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -377,10 +378,11 @@ export default function MasterclassPage() {
             <nav className="border-b border-white/5 bg-[#0d0f1a]/80 backdrop-blur-sm sticky top-0 z-50">
                 <div className="container mx-auto px-4 lg:px-8 h-14 flex items-center justify-between">
                     <Link to="/">
+                        {/* Logo blanc sur fond sombre — on retire brightness-0 qui rendait le logo invisible */}
                         <img
                             src={logoHorizontal}
                             alt="Model Technologie"
-                            className="h-7 w-auto brightness-0 invert"
+                            className="h-7 w-auto invert"
                         />
                     </Link>
                     <a
@@ -398,7 +400,6 @@ export default function MasterclassPage() {
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-amber-400/5 rounded-full blur-[120px]" />
                     <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
-                    {/* Grille */}
                     <div
                         className="absolute inset-0 opacity-[0.03]"
                         style={{
@@ -443,7 +444,7 @@ export default function MasterclassPage() {
                                 {/* Infos événement */}
                                 <div className="flex flex-wrap gap-4 mb-10">
                                     {[
-                                        { icon: Calendar, text: "Vendredi 20 mars 2026" },
+                                        { icon: Calendar, text: "Mardi 24 mars 2026" },
                                         { icon: Clock,    text: "18h00 – 20h00 (GMT+0)" },
                                         { icon: Video,    text: "En ligne · Google Meet" },
                                         { icon: Users,    text: "Session live interactive" },
@@ -497,7 +498,7 @@ export default function MasterclassPage() {
                                         <img
                                             src={logoMark}
                                             alt="Model Technologie"
-                                            className="h-10 w-auto mx-auto mb-3 brightness-0 invert opacity-80"
+                                            className="h-10 w-auto mx-auto mb-3 invert opacity-80"
                                         />
                                         <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1 mb-3">
                                             <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
@@ -563,15 +564,12 @@ export default function MasterclassPage() {
                             <h2 className="text-3xl md:text-4xl font-black mb-3">
                                 Programme de la <span className="text-amber-400">session</span>
                             </h2>
-                            <p className="text-slate-400">Vendredi 20 mars 2026 · 18h00 – 20h00</p>
+                            <p className="text-slate-400">Mardi 24 mars 2026 · 18h00 – 20h00</p>
                         </div>
 
                         <div className="space-y-0">
                             {PROGRAMME.map((item, i) => (
-                                <div
-                                    key={i}
-                                    className="flex gap-5 group"
-                                >
+                                <div key={i} className="flex gap-5 group">
                                     {/* Timeline */}
                                     <div className="flex flex-col items-center">
                                         <div className="w-9 h-9 rounded-full bg-amber-400/10 border border-amber-400/30 flex items-center justify-center flex-shrink-0 mt-4 group-hover:bg-amber-400/20 transition-colors">
@@ -599,39 +597,93 @@ export default function MasterclassPage() {
             </section>
 
             {/* ── FORMATEURS ────────────────────────────────────────────────────── */}
-            <section className="py-20 border-t border-white/5">
-                <div className="container mx-auto px-4 lg:px-8">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl font-black mb-3">
-                                Vos <span className="text-amber-400">formateurs</span>
-                            </h2>
-                            <p className="text-slate-400">Des praticiens, pas des théoriciens.</p>
+            <section className="py-24 border-t border-white/5 relative overflow-hidden">
+                {/* Halo décoratif derrière la photo */}
+                <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-amber-400/4 rounded-full blur-[140px] pointer-events-none"/>
+
+                <div className="container mx-auto px-4 lg:px-8 relative z-10">
+                    <div className="max-w-5xl mx-auto">
+
+                        {/* Label section */}
+                        <div className="flex items-center gap-3 mb-12">
+                            <div className="h-px flex-1 bg-white/8"/>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">
+                                Votre formateur
+                            </span>
+                            <div className="h-px flex-1 bg-white/8"/>
                         </div>
 
-                        <div className="grid sm:grid-cols-2 gap-6">
-                            {SPEAKERS.map(s => (
-                                <div
-                                    key={s.name}
-                                    className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 flex gap-4"
-                                >
+                        {/* Layout editorial : photo à gauche, contenu à droite */}
+                        <div className="grid lg:grid-cols-[320px_1fr] gap-12 lg:gap-16 items-center">
+
+                            {/* Photo avec effets */}
+                            <div className="flex justify-center lg:justify-start">
+                                <div className="relative">
+                                    {/* Cadre décoratif décalé */}
                                     <div
-                                        className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 text-white font-black text-lg"
-                                        style={{ background: s.gradient }}
-                                    >
-                                        {s.initials}
+                                        className="absolute -inset-3 rounded-3xl border border-amber-400/15 -rotate-2"/>
+                                    <div className="absolute -inset-3 rounded-3xl border border-white/5 rotate-1"/>
+
+                                    {/* Photo */}
+                                    <div className="relative w-64 h-72 lg:w-72 lg:h-80 rounded-2xl overflow-hidden">
+                                        <img
+                                            src={SPEAKER.photo}
+                                            alt={SPEAKER.name}
+                                            className="w-full h-full object-cover object-top"
+                                        />
+                                        {/* Dégradé bas */}
+                                        <div
+                                            className="absolute inset-0 bg-gradient-to-t from-[#0d0f1a]/60 via-transparent to-transparent"/>
                                     </div>
-                                    <div>
-                                        <p className="font-black text-lg">{s.name}</p>
-                                        <p className="text-amber-400 text-xs font-semibold mb-2">{s.role}</p>
-                                        <p className="text-slate-400 text-sm leading-relaxed">{s.bio}</p>
+
+                                    {/* Badge flottant */}
+                                    <div
+                                        className="absolute -bottom-4 -right-4 bg-amber-400 text-slate-900 rounded-xl px-3 py-2 shadow-[0_8px_32px_rgba(251,191,36,0.4)]">
+                                        <p className="text-xs font-black uppercase tracking-wide leading-none">Expert</p>
+                                        <p className="text-xs font-black uppercase tracking-wide leading-none">Power
+                                            BI</p>
                                     </div>
                                 </div>
-                            ))}
+                            </div>
+
+                            {/* Contenu */}
+                            <div>
+                                {/* Nom */}
+                                <h2 className="text-4xl lg:text-5xl font-black tracking-tight leading-[1.05] mb-2">
+                                    {SPEAKER.name}
+                                </h2>
+
+                                {/* Titre avec ligne dorée */}
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-8 h-[2px] bg-amber-400 rounded-full"/>
+                                    <p className="text-amber-400 font-semibold text-sm tracking-wide">
+                                        {SPEAKER.role}
+                                    </p>
+                                </div>
+
+                                {/* Bio */}
+                                <p className="text-slate-300 text-lg leading-relaxed mb-8">
+                                    {SPEAKER.bio}
+                                </p>
+
+                                {/* Tags expertise */}
+                                <div className="flex flex-wrap gap-2">
+                                    {SPEAKER.tags.map(tag => (
+                                        <span
+                                            key={tag}
+                                            className="text-xs font-semibold text-slate-300 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 hover:border-amber-400/30 hover:text-amber-400 transition-colors"
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
+
 
             {/* ── CTA FINAL ─────────────────────────────────────────────────────── */}
             <section className="py-20 border-t border-white/5 bg-gradient-to-b from-transparent to-amber-400/5">
@@ -639,7 +691,7 @@ export default function MasterclassPage() {
                     <div className="max-w-2xl mx-auto">
                         <div className="inline-flex items-center gap-1.5 mb-4">
                             {[...Array(5)].map((_, i) => (
-                                <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                                <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400"/>
                             ))}
                         </div>
                         <h2 className="text-3xl md:text-4xl font-black mb-4">
@@ -648,18 +700,18 @@ export default function MasterclassPage() {
                         </h2>
                         <p className="text-slate-400 text-lg mb-8">
                             Rejoignez des dizaines de professionnels et étudiants qui transforment
-                            leurs données en insights. C'est gratuit, en direct, le 20 mars.
+                            leurs données en insights. C'est gratuit, en direct, le 24 mars.
                         </p>
                         <a
                             href="#"
                             onClick={e => {
                                 e.preventDefault();
-                                window.scrollTo({ top: 0, behavior: "smooth" });
+                                window.scrollTo({top: 0, behavior: "smooth"});
                             }}
                             className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-base px-8 py-4 rounded-xl transition-all duration-200 hover:shadow-[0_0_32px_rgba(251,191,36,0.35)]"
                         >
                             Je m'inscris gratuitement
-                            <ArrowRight className="h-5 w-5" />
+                            <ArrowRight className="h-5 w-5"/>
                         </a>
                         <p className="text-slate-500 text-sm mt-4">
                             Aucune carte de crédit requise · Lien Meet envoyé par email
@@ -670,17 +722,19 @@ export default function MasterclassPage() {
 
             {/* ── FOOTER MINIMAL ────────────────────────────────────────────────── */}
             <footer className="border-t border-white/5 py-8">
-                <div className="container mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div
+                    className="container mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <Link to="/" className="flex items-center gap-3 group">
                         <img
                             src={logoHorizontal}
                             alt="Model Technologie"
-                            className="h-6 w-auto brightness-0 invert opacity-50 group-hover:opacity-80 transition-opacity"
+                            className="h-6 w-auto invert opacity-50 group-hover:opacity-80 transition-opacity"
                         />
                     </Link>
                     <p className="text-xs text-slate-600">© 2026 Model Technologie · Dakar, Sénégal</p>
-                    <Link to="/" className="text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1">
-                        Retour au site <ChevronRight className="h-3.5 w-3.5" />
+                    <Link to="/"
+                          className="text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1">
+                        Retour au site <ChevronRight className="h-3.5 w-3.5"/>
                     </Link>
                 </div>
             </footer>
