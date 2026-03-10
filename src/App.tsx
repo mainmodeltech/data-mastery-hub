@@ -14,7 +14,6 @@ import { QUERY_CONFIG } from '@/config/constants';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
 import AdminPromoCodes from "@/pages/admin/AdminPromoCodes.tsx";
 import MasterclassPage from "@/pages/MasterclassPage";
-import AdminMasterclass from "@/pages/admin/AdminMasterclassPage.tsx";
 import AdminForgotPassword from "@/pages/admin/AdminForgotPassword.tsx";
 import AdminResetPassword from "@/pages/admin/AdminResetPassword.tsx";
 
@@ -23,13 +22,12 @@ import AdminResetPassword from "@/pages/admin/AdminResetPassword.tsx";
 // ============================================================
 
 // Pages publiques
-const Index = lazy(() => import('./pages/Index'));
-const About = lazy(() => import('./pages/About'));
-// const Services = lazy(() => import('./pages/Services'));
-const Bootcamps = lazy(() => import('./pages/Bootcamps'));
-const Alumni = lazy(() => import('./pages/Alumni'));
-const Orientation = lazy(() => import('./pages/Orientation'));
-const Contact = lazy(() => import('./pages/Contact'));
+// const Index = lazy(() => import('./pages/Index'));
+// const About = lazy(() => import('./pages/About'));
+// const Bootcamps = lazy(() => import('./pages/Bootcamps'));
+// const Alumni = lazy(() => import('./pages/Alumni'));
+// const Orientation = lazy(() => import('./pages/Orientation'));
+// const Contact = lazy(() => import('./pages/Contact'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Pages admin
@@ -94,13 +92,13 @@ const App = () => (
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   {/* ── Site public ─────────────────────────────── */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/a-propos" element={<About />} />
-                  {/*<Route path="/services" element={<Services />} />*/}
-                  <Route path="/bootcamps" element={<Bootcamps />} />
-                  <Route path="/alumni" element={<Alumni />} />
-                  <Route path="/orientation" element={<Orientation />} />
-                  <Route path="/contact" element={<Contact />} />
+                  {/*<Route path="/" element={<Index />} />*/}
+                  {/*<Route path="/a-propos" element={<About />} />*/}
+                  {/*/!*<Route path="/services" element={<Services />} />*!/*/}
+                  {/*<Route path="/bootcamps" element={<Bootcamps />} />*/}
+                  {/*<Route path="/alumni" element={<Alumni />} />*/}
+                  {/*<Route path="/orientation" element={<Orientation />} />*/}
+                  {/*<Route path="/contact" element={<Contact />} />*/}
                   <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
 
                   {/* ── Backoffice admin ─────────────────────────── */}

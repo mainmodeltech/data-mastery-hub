@@ -377,7 +377,7 @@ export default function MasterclassPage() {
             {/* ── NAVBAR ───────────────────────────────────────────────────────── */}
             <nav className="border-b border-white/5 bg-[#0d0f1a]/80 backdrop-blur-sm sticky top-0 z-50">
                 <div className="container mx-auto px-4 lg:px-8 h-14 flex items-center justify-between">
-                    <Link to="#">
+                    <Link to="/">
                         {/* Logo blanc sur fond sombre — on retire brightness-0 qui rendait le logo invisible */}
                         <img
                             src={logoHorizontal}
@@ -724,7 +724,7 @@ export default function MasterclassPage() {
             <footer className="border-t border-white/5 py-8">
                 <div
                     className="container mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <Link to="#" className="flex items-center gap-3 group">
+                    <Link to="/" className="flex items-center gap-3 group">
                         <img
                             src={logoHorizontal}
                             alt="Model Technologie"
@@ -732,7 +732,7 @@ export default function MasterclassPage() {
                         />
                     </Link>
                     <p className="text-xs text-slate-600">© 2026 Model Technologie · Dakar, Sénégal</p>
-                    <Link to="#"
+                    <Link to="/"
                           className="text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1">
                         Retour au site <ChevronRight className="h-3.5 w-3.5"/>
                     </Link>
