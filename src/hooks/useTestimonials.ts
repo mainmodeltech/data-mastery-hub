@@ -1,71 +1,98 @@
-/**
- * Hooks React Query pour les Temoignages.
- */
+// src/hooks/useTestimonials.ts
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { testimonialService } from '@/services/api';
-import type { CreateTestimonialDTO, UpdateTestimonialDTO } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { testimonialService } from '@/services/api/testimonialService';
+import type { TestimonialRequest } from '@/types/testimonial.types';
 import { QUERY_CONFIG } from '@/config/constants';
 
+// ─── Query keys ───────────────────────────────────────────────────────────────
+
 export const TESTIMONIAL_KEYS = {
-  all: ['testimonials'] as const,
-  published: ['testimonials', 'published'] as const,
-  detail: (id: string) => ['testimonials', id] as const,
+  all:       ['testimonials', 'admin'] as const,
+  lists:     () => [...TESTIMONIAL_KEYS.all, 'list'] as const,
+  published: ['testimonials', 'public', 'published'] as const,
 };
 
-/** Hook pour recuperer les temoignages publies (site public) */
+// ─── Hooks ────────────────────────────────────────────────────────────────────
+
+/** Témoignages publiés — utilisé sur la landing page et la page Alumni (public) */
 export function usePublishedTestimonials() {
   return useQuery({
     queryKey: TESTIMONIAL_KEYS.published,
-    queryFn: () => testimonialService.getPublished(),
+    queryFn:  testimonialService.getPublished,
     staleTime: QUERY_CONFIG.staleTime,
-    gcTime: QUERY_CONFIG.gcTime,
   });
 }
 
-/** Hook pour recuperer tous les temoignages (admin) */
-export function useAllTestimonials(page?: number, size?: number) {
+/** Liste de tous les témoignages (admin) */
+export function useAdminTestimonials() {
   return useQuery({
-    queryKey: [...TESTIMONIAL_KEYS.all, { page, size }],
-    queryFn: () => testimonialService.getAll(page, size),
+    queryKey: TESTIMONIAL_KEYS.lists(),
+    queryFn:  testimonialService.getAll,
     staleTime: QUERY_CONFIG.staleTime,
   });
 }
 
-/** Hook pour creer un temoignage */
+/** Créer un témoignage */
 export function useCreateTestimonial() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: (data: CreateTestimonialDTO) => testimonialService.create(data),
+    mutationFn: (payload: TestimonialRequest) => testimonialService.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TESTIMONIAL_KEYS.all });
+      toast({ title: 'Témoignage créé avec succès' });
     },
+    onError: () => toast({ title: 'Erreur lors de la création', variant: 'destructive' }),
   });
 }
 
-/** Hook pour mettre a jour un temoignage */
+/** Mettre à jour un témoignage */
 export function useUpdateTestimonial() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateTestimonialDTO }) =>
-      testimonialService.update(id, data),
-    onSuccess: (_, { id }) => {
+    mutationFn: ({ id, payload }: { id: string; payload: TestimonialRequest }) =>
+        testimonialService.update(id, payload),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TESTIMONIAL_KEYS.all });
-      queryClient.invalidateQueries({ queryKey: TESTIMONIAL_KEYS.detail(id) });
+      toast({ title: 'Témoignage mis à jour' });
     },
+    onError: () => toast({ title: 'Erreur lors de la mise à jour', variant: 'destructive' }),
   });
 }
 
-/** Hook pour supprimer un temoignage */
+/** Supprimer un témoignage (soft-delete) */
 export function useDeleteTestimonial() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation({
     mutationFn: (id: string) => testimonialService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TESTIMONIAL_KEYS.all });
+      toast({ title: 'Témoignage supprimé' });
     },
+    onError: () => toast({ title: 'Erreur lors de la suppression', variant: 'destructive' }),
+  });
+}
+
+/** Basculer la visibilité d'un témoignage */
+export function useToggleTestimonialPublished() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (id: string) => testimonialService.togglePublished(id),
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: TESTIMONIAL_KEYS.all });
+      toast({
+        title: updated.published ? 'Témoignage publié' : 'Témoignage masqué',
+      });
+    },
+    onError: () => toast({ title: 'Erreur', variant: 'destructive' }),
   });
 }

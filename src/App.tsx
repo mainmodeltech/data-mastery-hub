@@ -12,19 +12,22 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QUERY_CONFIG } from '@/config/constants';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
+import AdminPromoCodes from "@/pages/admin/AdminPromoCodes.tsx";
+import MasterclassPage from "@/pages/MasterclassPage";
+import AdminForgotPassword from "@/pages/admin/AdminForgotPassword.tsx";
+import AdminResetPassword from "@/pages/admin/AdminResetPassword.tsx";
 
 // ============================================================
 // Lazy loading des pages
 // ============================================================
 
 // Pages publiques
-const Index = lazy(() => import('./pages/Index'));
-const About = lazy(() => import('./pages/About'));
-// const Services = lazy(() => import('./pages/Services'));
-const Bootcamps = lazy(() => import('./pages/Bootcamps'));
-const Alumni = lazy(() => import('./pages/Alumni'));
-const Orientation = lazy(() => import('./pages/Orientation'));
-const Contact = lazy(() => import('./pages/Contact'));
+// const Index = lazy(() => import('./pages/Index'));
+// const About = lazy(() => import('./pages/About'));
+// const Bootcamps = lazy(() => import('./pages/Bootcamps'));
+// const Alumni = lazy(() => import('./pages/Alumni'));
+// const Orientation = lazy(() => import('./pages/Orientation'));
+// const Contact = lazy(() => import('./pages/Contact'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Pages admin
@@ -37,10 +40,12 @@ const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminReferences = lazy(() => import('./pages/admin/AdminReferences'));
 const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
+const AdminMasterclassPage = lazy(() => import('./pages/admin/AdminMasterclassPage.tsx'));
 const AdminAlumni = lazy(() => import('./pages/admin/AdminAlumni'));
 const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
 const AdminGalerie = lazy(() => import('./pages/admin/AdminGalerie'));
 const AdminProjects = lazy(() => import('./pages/admin/AdminProjects'));
+
 
 // ============================================================
 // Configuration React Query
@@ -87,16 +92,19 @@ const App = () => (
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   {/* ── Site public ─────────────────────────────── */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/a-propos" element={<About />} />
-                  {/*<Route path="/services" element={<Services />} />*/}
-                  <Route path="/bootcamps" element={<Bootcamps />} />
-                  <Route path="/alumni" element={<Alumni />} />
-                  <Route path="/orientation" element={<Orientation />} />
-                  <Route path="/contact" element={<Contact />} />
+                  {/*<Route path="/" element={<Index />} />*/}
+                  {/*<Route path="/a-propos" element={<About />} />*/}
+                  {/*/!*<Route path="/services" element={<Services />} />*!/*/}
+                  {/*<Route path="/bootcamps" element={<Bootcamps />} />*/}
+                  {/*<Route path="/alumni" element={<Alumni />} />*/}
+                  {/*<Route path="/orientation" element={<Orientation />} />*/}
+                  {/*<Route path="/contact" element={<Contact />} />*/}
+                  <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
 
                   {/* ── Backoffice admin ─────────────────────────── */}
-                  <Route path="/admin/login" element={<AdminLogin />} />
+                  <Route path="/admin/login"          element={<AdminLogin />} />
+                  <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+                  <Route path="/admin/reset-password"  element={<AdminResetPassword />} />
 
                   <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
 
@@ -108,15 +116,21 @@ const App = () => (
                   {/* Sessions bootcamp */}
                   <Route path="/admin/bootcamp-sessions" element={<ProtectedRoute><AdminAllSessions /></ProtectedRoute>} />
 
+
+
+
                   {/* Autres sections */}
                   <Route path="/admin/inscriptions" element={<ProtectedRoute><AdminInscriptions /></ProtectedRoute>} />
+                  <Route path="/admin/promo-codes" element={<ProtectedRoute><AdminPromoCodes /></ProtectedRoute>} />
                   <Route path="/admin/services" element={<ProtectedRoute><AdminServices /></ProtectedRoute>} />
                   <Route path="/admin/references" element={<ProtectedRoute><AdminReferences /></ProtectedRoute>} />
                   <Route path="/admin/temoignages" element={<ProtectedRoute><AdminTemoignages /></ProtectedRoute>} />
+                  <Route path="/admin/masterclass" element={<ProtectedRoute><AdminMasterclassPage /></ProtectedRoute>} />
                   <Route path="/admin/alumni" element={<ProtectedRoute><AdminAlumni /></ProtectedRoute>} />
                   <Route path="/admin/projets" element={<ProtectedRoute><AdminProjects /></ProtectedRoute>} />
                   <Route path="/admin/messages" element={<ProtectedRoute><AdminMessages /></ProtectedRoute>} />
                   <Route path="/admin/galerie" element={<ProtectedRoute><AdminGalerie /></ProtectedRoute>} />
+
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>

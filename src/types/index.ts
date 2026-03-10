@@ -38,11 +38,15 @@ export interface Bootcamp {
   updatedAt: string;
 }
 
-/** Inscription d'un visiteur a un bootcamp */
+/** Inscription d'un visiteur a une session de bootcamp */
 export interface Registration {
   id: string;
   bootcampId: string | null;
   bootcampTitle: string | null;
+  sessionId: string | null;
+  sessionName: string | null;
+  promoCodeUsed: string | null;
+  discountPercent: number | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -147,20 +151,6 @@ export interface Reference {
   updatedAt: string;
 }
 
-/** Temoignage */
-export interface Testimonial {
-  id: string;
-  name: string;
-  content: string;
-  company: string | null;
-  role: string | null;
-  rating: number | null;
-  published: boolean;
-  displayOrder: number | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 /** Message de contact */
 export interface ContactMessage {
   id: string;
@@ -204,11 +194,73 @@ export interface GalleryPhoto {
   createdAt: string;
 }
 
+
+export interface MasterclassRegistration {
+  id: string;
+  masterclassId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  profile: string | null;
+  company: string | null;
+  emailSent: boolean;
+  createdAt: string;
+}
+
+export interface MasterclassRegistrationsPage {
+  items: MasterclassRegistration[];
+  pagination: {
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+
+// ─── Types internes ───────────────────────────────────────────────────────────
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  pagination?: {
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
+export interface ContactMessagesPage {
+  items: ContactMessage[];
+  pagination: {
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
 // ============================================================
 // DTOs pour creation/modification (envoi vers l'API)
 // ============================================================
 
-export type CreateRegistrationDTO = Omit<Registration, 'id' | 'status' | 'createdAt' | 'updatedAt'>;
+export interface CreateRegistrationDTO {
+  bootcampId: string | null;
+  bootcampTitle: string | null;
+  sessionId: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  position: string | null;
+  message: string | null;
+  /** Code promo saisi par le visiteur (le backend valide et applique) */
+  promoCode: string | null;
+}
 
 export type CreateContactMessageDTO = Omit<ContactMessage, 'id' | 'status' | 'notes' | 'createdAt' | 'updatedAt'>;
 
@@ -227,20 +279,12 @@ export type UpdateProjectDTO = Partial<CreateProjectDTO>;
 export type CreateReferenceDTO = Omit<Reference, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateReferenceDTO = Partial<CreateReferenceDTO>;
 
-export type CreateTestimonialDTO = Omit<Testimonial, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateTestimonialDTO = Partial<CreateTestimonialDTO>;
-
 export type CreateGalleryPhotoDTO = Omit<GalleryPhoto, 'id' | 'createdAt'>;
 export type UpdateGalleryPhotoDTO = Partial<CreateGalleryPhotoDTO>;
 
 // ============================================================
 // Types de reponse API
 // ============================================================
-
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-}
 
 /** Format Spring Data Page<T> */
 export interface PaginatedResponse<T> {

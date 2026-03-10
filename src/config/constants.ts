@@ -72,7 +72,7 @@ export const FOOTER_SERVICES = [
 // ============================================================
 
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1',
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'https://api.model-technologie.com/api/v1',
   timeout: 15000,
   retryCount: 3,
   retryDelay: 1000,

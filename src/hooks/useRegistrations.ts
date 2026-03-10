@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { registrationService } from '@/services/api';
 import type { CreateRegistrationDTO, RegistrationStatus } from '@/types';
 import { QUERY_CONFIG } from '@/config/constants';
+import {httpClient} from "@/services/httpClient.ts";
 
 export const REGISTRATION_KEYS = {
   all: ['registrations'] as const,
@@ -50,5 +51,15 @@ export function useDeleteRegistration() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: REGISTRATION_KEYS.all });
     },
+  });
+}
+
+export function useSessionAvailability(sessionId: string) {
+  return useQuery({
+    queryKey: ['session', sessionId, 'availability'],
+    queryFn: () => httpClient.get(`/sessions/${sessionId}/availability`),
+    enabled: !!sessionId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 60 * 1000, // Rafraîchir toutes les minutes
   });
 }

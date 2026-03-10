@@ -1,17 +1,12 @@
 /**
- * Service API pour l'Authentification.
- * Gere le login, logout et refresh token via JWT (Spring Boot Security).
- */
-
-/**
- * Service d'authentification — branché sur Spring Boot JWT.
+ * Service d'authentification — Spring Boot JWT.
  *
- * Endpoints consommés :
- *   POST /api/v1/auth/login   → AuthResponse (accessToken + user)
- *   GET  /api/v1/auth/me      → AuthUser
- *
- * Note : pas de refreshToken côté backend pour l'instant.
- * Le token expire après expiresIn ms — on déconnecte l'utilisateur à ce moment.
+ * Endpoints :
+ *   POST /api/v1/auth/login            → AuthResponse
+ *   POST /api/v1/auth/logout           → révocation token
+ *   GET  /api/v1/auth/me               → AuthUser
+ *   POST /api/v1/auth/forgot-password  → déclenche l'email
+ *   POST /api/v1/auth/reset-password   → réinitialise le mot de passe
  */
 
 import { httpClient, tokenStorage } from '@/services/httpClient';
@@ -22,8 +17,7 @@ const BASE_PATH = '/auth';
 export const authService = {
 
   /**
-   * Connexion avec email + mot de passe.
-   * Stocke le token JWT dans localStorage.
+   * Connexion — stocke le JWT en localStorage.
    */
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const response = await httpClient.post<AuthResponse>(
@@ -31,25 +25,46 @@ export const authService = {
         credentials,
         { skipAuth: true },
     );
-
-    // Stocker uniquement l'accessToken (pas de refreshToken côté backend)
     tokenStorage.setAccessToken(response.accessToken);
-
     return response;
   },
 
   /**
-   * Déconnexion — nettoyage local uniquement.
-   * Le backend Spring Boot est stateless (JWT), pas d'endpoint logout nécessaire.
+   * Déconnexion — révoque le token côté backend (blacklist JWT).
+   * Le nettoyage du localStorage est fait dans useAuth.signOut().
    */
-  logout: (): void => {
+  logout: async (): Promise<void> => {
+    await httpClient.post<void>(`${BASE_PATH}/logout`, {});
     tokenStorage.clearTokens();
   },
 
   /**
-   * Récupérer le profil de l'utilisateur connecté.
-   * Utilisé au démarrage pour vérifier que le token stocké est toujours valide.
+   * Profil de l'utilisateur connecté.
+   * Utilisé au démarrage pour valider le token stocké.
    */
   getCurrentUser: (): Promise<AuthUser> =>
       httpClient.get<AuthUser>(`${BASE_PATH}/me`),
+
+  /**
+   * Demande de réinitialisation du mot de passe.
+   * Le backend envoie un email avec un lien contenant un token.
+   */
+  forgotPassword: async (email: string): Promise<void> => {
+    await httpClient.post<void>(
+        `${BASE_PATH}/forgot-password`,
+        { email },
+        { skipAuth: true },
+    );
+  },
+
+  /**
+   * Réinitialisation du mot de passe avec le token reçu par email.
+   */
+  resetPassword: async (token: string, newPassword: string): Promise<void> => {
+    await httpClient.post<void>(
+        `${BASE_PATH}/reset-password`,
+        { token, newPassword },
+        { skipAuth: true },
+    );
+  },
 };

@@ -16,4 +16,4 @@ services:
 networks:
   dokploy-network:
     name: dokploy-network
-    external: false
+    external: true
