@@ -124,12 +124,12 @@ function CountdownBlock({ value, label }: { value: number; label: string }) {
 
 const PROGRAMME = [
     { time: "18h00", title: "Accueil & présentation", desc: "Tour de table, objectifs de la session" },
-    { time: "18h10", title: "Interface Power BI Desktop", desc: "Découverte de l'environnement de travail" },
+    { time: "18h15", title: "Interface Power BI Desktop", desc: "Découverte de l'environnement de travail" },
     { time: "18h30", title: "Importer et préparer vos données", desc: "Connexion à Excel, nettoyage avec Power Query" },
-    { time: "18h55", title: "Créer vos premières visualisations", desc: "Graphiques, cartes, indicateurs KPI" },
-    { time: "19h20", title: "Construire le dashboard complet", desc: "Mise en page, filtres, interactivité" },
-    { time: "19h45", title: "Publier et partager", desc: "Power BI Service, liens de partage" },
-    { time: "19h55", title: "Q&A et ressources", desc: "Questions libres, ressources pour continuer" },
+    { time: "19h00", title: "Créer vos premières visualisations", desc: "Graphiques, cartes, indicateurs KPI" },
+    { time: "19h30", title: "Construire le dashboard complet", desc: "Mise en page, filtres, interactivité" },
+    { time: "19h45", title: "Q&A et ressources", desc: "Questions libres, ressources pour continuer" },
+    { time: "19h55", title: "Next Steps", desc: "Annonces au sujets de Model technologie et ses bootcamps" },
 ];
 
 // ─── Formateurs ───────────────────────────────────────────────────────────────
@@ -377,7 +377,7 @@ export default function MasterclassPage() {
             {/* ── NAVBAR ───────────────────────────────────────────────────────── */}
             <nav className="border-b border-white/5 bg-[#0d0f1a]/80 backdrop-blur-sm sticky top-0 z-50">
                 <div className="container mx-auto px-4 lg:px-8 h-14 flex items-center justify-between">
-                    <Link to="/">
+                    <Link to="#">
                         {/* Logo blanc sur fond sombre — on retire brightness-0 qui rendait le logo invisible */}
                         <img
                             src={logoHorizontal}
@@ -477,9 +477,9 @@ export default function MasterclassPage() {
                                     {[
                                         "100% gratuit, aucune carte requise",
                                         "Session live avec Q&A en direct",
-                                        "Exercice pratique inclus",
+                                        "Approche par la pratique",
                                         "Replay disponible pour les inscrits",
-                                        "Certificat de participation",
+                                        "surprise pour les participants",
                                         "Ouvert à tous les niveaux",
                                     ].map(point => (
                                         <div key={point} className="flex items-center gap-2 text-sm text-slate-300">
@@ -724,7 +724,7 @@ export default function MasterclassPage() {
             <footer className="border-t border-white/5 py-8">
                 <div
                     className="container mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <Link to="/" className="flex items-center gap-3 group">
+                    <Link to="#" className="flex items-center gap-3 group">
                         <img
                             src={logoHorizontal}
                             alt="Model Technologie"
@@ -732,7 +732,7 @@ export default function MasterclassPage() {
                         />
                     </Link>
                     <p className="text-xs text-slate-600">© 2026 Model Technologie · Dakar, Sénégal</p>
-                    <Link to="/"
+                    <Link to="#"
                           className="text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1">
                         Retour au site <ChevronRight className="h-3.5 w-3.5"/>
                     </Link>
