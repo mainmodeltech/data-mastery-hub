@@ -198,7 +198,7 @@ function RegistrationForm() {
     });
 
     const handleSubmit = () => {
-        if (!form.firstName || !form.lastName || !form.email || !form.profile) {
+        if (!form.firstName || !form.lastName  || !form.phone || !form.email || !form.profile) {
             toast({ title: "Merci de remplir les champs obligatoires.", variant: "destructive" });
             return;
         }
@@ -303,7 +303,7 @@ function RegistrationForm() {
             {/* Téléphone */}
             <div className="space-y-1.5">
                 <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">
-                    Téléphone
+                    Téléphone *
                 </Label>
                 <Input
                     value={form.phone}
