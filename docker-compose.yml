@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: model-tech-demo-frontend
+    container_name: model-tech-prod-frontend
     environment:
       VITE_API_BASE_URL: http://api.model-technologie.com/api
     networks:
