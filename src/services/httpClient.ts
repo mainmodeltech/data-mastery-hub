@@ -101,4 +101,17 @@ export const httpClient = {
 
   delete: <T>(path: string, options?: RequestOptions) =>
       request<T>('DELETE', path, undefined, options),
+
+  // Utilitaire à ajouter dans httpClient.ts
+  buildUrl: (path: string, params?: Record<string, unknown>): string => {
+    if (!params) return path;
+    const qs = new URLSearchParams(
+        Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+    ).toString();
+    return qs ? `${path}?${qs}` : path;
+  },
 };
+
+

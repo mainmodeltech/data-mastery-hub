@@ -51,7 +51,7 @@ import {MasterclassRegistration} from "@/types";
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const MASTERCLASS_ID = "power-bi-dashboard-2026-03-24";
-const PAGE_SIZE      = 20;
+const PAGE_SIZE      = 10;
 
 // ─── Profil config ────────────────────────────────────────────────────────────
 

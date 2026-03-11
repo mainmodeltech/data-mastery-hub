@@ -1,23 +1,19 @@
-// src/services/masterclassAdminService.ts
+// src/services/api/masterclassAdminService.ts
 
 import { httpClient } from "@/services/httpClient";
-import {ApiResponse, MasterclassRegistration, MasterclassRegistrationsPage} from "@/types";
+import { ApiResponse, MasterclassRegistration, MasterclassRegistrationsPage } from "@/types";
 
 const ADMIN_PATH = "/admin/masterclass";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-// ─── Service ──────────────────────────────────────────────────────────────────
 
 export const masterclassAdminService = {
     getRegistrations: async (
         masterclassId: string,
         page = 0,
-        size = 20,
+        size = 10,
     ): Promise<MasterclassRegistrationsPage> => {
+        // ✅ Paramètres injectés directement dans l'URL — fetch natif ne supporte pas "params"
         const res = await httpClient.get<ApiResponse<MasterclassRegistration[]>>(
-            `${ADMIN_PATH}/${masterclassId}/registrations`,
-            { params: { page, size } },
+            `${ADMIN_PATH}/${masterclassId}/registrations?page=${page}&size=${size}`,
         );
         return {
             items: res.data ?? [],
