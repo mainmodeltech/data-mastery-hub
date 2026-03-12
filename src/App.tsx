@@ -1,68 +1,145 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import ProtectedRoute from "@/components/admin/ProtectedRoute";
-import Index from "./pages/Index";
-import About from "./pages/About";
-import Services from "./pages/Services";
-import Bootcamps from "./pages/Bootcamps";
-import Alumni from "./pages/Alumni";
-import References from "./pages/References";
-import Contact from "./pages/Contact";
-import NotFound from "./pages/NotFound";
-import AdminLogin from "./pages/admin/AdminLogin";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminBootcamps from "./pages/admin/AdminBootcamps";
-import AdminInscriptions from "./pages/admin/AdminInscriptions";
-import AdminServices from "./pages/admin/AdminServices";
-import AdminReferences from "./pages/admin/AdminReferences";
-import AdminTemoignages from "./pages/admin/AdminTemoignages";
-import AdminAlumni from "./pages/admin/AdminAlumni";
-import AdminMessages from "./pages/admin/AdminMessages";
-import AdminGalerie from "./pages/admin/AdminGalerie";
-import AdminProjects from "./pages/admin/AdminProjects";
+/**
+ * Point d'entree de l'application React.
+ */
 
-const queryClient = new QueryClient();
+import { Suspense, lazy } from 'react';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '@/hooks/useAuth';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { QUERY_CONFIG } from '@/config/constants';
+import ProtectedRoute from '@/components/admin/ProtectedRoute';
+import AdminPromoCodes from "@/pages/admin/AdminPromoCodes.tsx";
+import MasterclassPage from "@/pages/MasterclassPage";
+import AdminForgotPassword from "@/pages/admin/AdminForgotPassword.tsx";
+import AdminResetPassword from "@/pages/admin/AdminResetPassword.tsx";
+
+// ============================================================
+// Lazy loading des pages
+// ============================================================
+
+// Pages publiques
+// const Index = lazy(() => import('./pages/Index'));
+// const About = lazy(() => import('./pages/About'));
+// const Bootcamps = lazy(() => import('./pages/Bootcamps'));
+// const Alumni = lazy(() => import('./pages/Alumni'));
+// const Orientation = lazy(() => import('./pages/Orientation'));
+// const Contact = lazy(() => import('./pages/Contact'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+// Pages admin
+const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminBootcamps = lazy(() => import('./pages/admin/AdminBootcamps'));
+const AdminBootcampForm = lazy(() => import('./pages/admin/BootcampForm'));
+const AdminAllSessions = lazy(() => import('./pages/admin/AdminAllSessions'));
+const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
+const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
+const AdminReferences = lazy(() => import('./pages/admin/AdminReferences'));
+const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
+const AdminMasterclassPage = lazy(() => import('./pages/admin/AdminMasterclassPage.tsx'));
+const AdminAlumni = lazy(() => import('./pages/admin/AdminAlumni'));
+const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
+const AdminGalerie = lazy(() => import('./pages/admin/AdminGalerie'));
+const AdminProjects = lazy(() => import('./pages/admin/AdminProjects'));
+
+
+// ============================================================
+// Configuration React Query
+// ============================================================
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: QUERY_CONFIG.staleTime,
+      gcTime: QUERY_CONFIG.gcTime,
+      retry: QUERY_CONFIG.retryCount,
+      refetchOnWindowFocus: QUERY_CONFIG.refetchOnWindowFocus,
+    },
+  },
+});
+
+// ============================================================
+// Composant de chargement
+// ============================================================
+
+function PageLoader() {
+  return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+  );
+}
+
+// ============================================================
+// App
+// ============================================================
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            {/* Site public */}
-            <Route path="/" element={<Index />} />
-            <Route path="/a-propos" element={<About />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/bootcamps" element={<Bootcamps />} />
-            <Route path="/alumni" element={<Alumni />} />
-            <Route path="/references" element={<References />} />
-            <Route path="/contact" element={<Contact />} />
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* ── Site public ─────────────────────────────── */}
+                  {/*<Route path="/" element={<Index />} />*/}
+                  {/*<Route path="/a-propos" element={<About />} />*/}
+                  {/*/!*<Route path="/services" element={<Services />} />*!/*/}
+                  {/*<Route path="/bootcamps" element={<Bootcamps />} />*/}
+                  {/*<Route path="/alumni" element={<Alumni />} />*/}
+                  {/*<Route path="/orientation" element={<Orientation />} />*/}
+                  {/*<Route path="/contact" element={<Contact />} />*/}
+                  <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
 
-            {/* Backoffice admin */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/bootcamps" element={<ProtectedRoute><AdminBootcamps /></ProtectedRoute>} />
-            <Route path="/admin/inscriptions" element={<ProtectedRoute><AdminInscriptions /></ProtectedRoute>} />
-            <Route path="/admin/services" element={<ProtectedRoute><AdminServices /></ProtectedRoute>} />
-            <Route path="/admin/references" element={<ProtectedRoute><AdminReferences /></ProtectedRoute>} />
-            <Route path="/admin/temoignages" element={<ProtectedRoute><AdminTemoignages /></ProtectedRoute>} />
-            <Route path="/admin/alumni" element={<ProtectedRoute><AdminAlumni /></ProtectedRoute>} />
-            <Route path="/admin/projets" element={<ProtectedRoute><AdminProjects /></ProtectedRoute>} />
-            <Route path="/admin/messages" element={<ProtectedRoute><AdminMessages /></ProtectedRoute>} />
-            <Route path="/admin/galerie" element={<ProtectedRoute><AdminGalerie /></ProtectedRoute>} />
+                  {/* ── Backoffice admin ─────────────────────────── */}
+                  <Route path="/admin/login"          element={<AdminLogin />} />
+                  <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+                  <Route path="/admin/reset-password"  element={<AdminResetPassword />} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+                  <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+
+                  {/* Bootcamps */}
+                  <Route path="/admin/bootcamps" element={<ProtectedRoute><AdminBootcamps /></ProtectedRoute>} />
+                  <Route path="/admin/bootcamps/new" element={<ProtectedRoute><AdminBootcampForm /></ProtectedRoute>} />
+                  <Route path="/admin/bootcamps/:id/edit" element={<ProtectedRoute><AdminBootcampForm /></ProtectedRoute>} />
+
+                  {/* Sessions bootcamp */}
+                  <Route path="/admin/bootcamp-sessions" element={<ProtectedRoute><AdminAllSessions /></ProtectedRoute>} />
+
+
+
+
+                  {/* Autres sections */}
+                  <Route path="/admin/inscriptions" element={<ProtectedRoute><AdminInscriptions /></ProtectedRoute>} />
+                  <Route path="/admin/promo-codes" element={<ProtectedRoute><AdminPromoCodes /></ProtectedRoute>} />
+                  <Route path="/admin/services" element={<ProtectedRoute><AdminServices /></ProtectedRoute>} />
+                  <Route path="/admin/references" element={<ProtectedRoute><AdminReferences /></ProtectedRoute>} />
+                  <Route path="/admin/temoignages" element={<ProtectedRoute><AdminTemoignages /></ProtectedRoute>} />
+                  <Route path="/admin/masterclass" element={<ProtectedRoute><AdminMasterclassPage /></ProtectedRoute>} />
+                  <Route path="/admin/alumni" element={<ProtectedRoute><AdminAlumni /></ProtectedRoute>} />
+                  <Route path="/admin/projets" element={<ProtectedRoute><AdminProjects /></ProtectedRoute>} />
+                  <Route path="/admin/messages" element={<ProtectedRoute><AdminMessages /></ProtectedRoute>} />
+                  <Route path="/admin/galerie" element={<ProtectedRoute><AdminGalerie /></ProtectedRoute>} />
+
+
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
 );
 
 export default App;

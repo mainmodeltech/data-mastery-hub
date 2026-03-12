@@ -1,32 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+/**
+ * Section References de la page d'accueil.
+ * Utilise le hook usePublishedReferences.
+ */
 
-const staticReferences = [
-  { name: "SGBS", sector: "Banque" },
-  { name: "BOA", sector: "Banque" },
-  { name: "CBAO", sector: "Banque" },
-  { name: "AXA", sector: "Assurance" },
-  { name: "ESMT", sector: "École" },
-  { name: "CESAG", sector: "École" },
-  { name: "ISM", sector: "École" },
-  { name: "Microsoft", sector: "Partenaire" },
-];
+import { usePublishedReferences } from '@/hooks/useReferences';
+import { FALLBACK_REFERENCES } from '@/config/constants';
 
 export function ReferencesSection() {
-  const { data } = useQuery({
-    queryKey: ["references-home"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("references")
-        .select("name, sector, logo_text, logo_url")
-        .eq("published", true)
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: references } = usePublishedReferences();
 
-  const references = data && data.length > 0 ? data : staticReferences;
+  const displayReferences = references && references.length > 0
+    ? references
+    : FALLBACK_REFERENCES;
 
   return (
     <section className="py-16 bg-secondary border-y border-border">
@@ -38,16 +23,18 @@ export function ReferencesSection() {
         </div>
 
         <div className="flex flex-wrap justify-center items-center gap-8 lg:gap-16">
-          {references.map((ref: any) => (
+          {displayReferences.map((ref) => (
             <div
               key={ref.name}
               className="flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity duration-300"
             >
-              {ref.logo_url ? (
-                <img src={ref.logo_url} alt={ref.name} className="h-12 w-auto object-contain" />
+              {'logoUrl' in ref && ref.logoUrl ? (
+                <img src={ref.logoUrl} alt={ref.name} className="h-12 w-auto object-contain" />
               ) : (
                 <div className="h-12 w-24 bg-muted rounded-lg flex items-center justify-center">
-                  <span className="font-heading font-bold text-foreground text-sm">{ref.logo_text || ref.name}</span>
+                  <span className="font-heading font-bold text-foreground text-sm">
+                    {'logoText' in ref ? ref.logoText || ref.name : ref.name}
+                  </span>
                 </div>
               )}
               <span className="text-xs text-muted-foreground">{ref.sector}</span>

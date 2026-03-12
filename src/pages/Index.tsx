@@ -1,24 +1,24 @@
 import { Layout } from "@/components/layout/Layout";
 import { HeroSection } from "@/components/home/HeroSection";
-import { ValueProposition } from "@/components/home/ValueProposition";
-import { ServicesSection } from "@/components/home/ServicesSection";
-import { GallerySection } from "@/components/home/GallerySection";
-import { ReferencesSection } from "@/components/home/ReferencesSection";
+import { StatsSection } from "@/components/home/StatsSection";
+import { BootcampsSection } from "@/components/home/BootcampsSection";
+import { OrientationTeaser } from "@/components/home/OrientationTeaser";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
-import { CTASection } from "@/components/home/CTASection";
+import { B2BSection } from "@/components/home/B2BSection";
+import { SessionsSection } from "@/components/home/SessionsSection";
 
 const Index = () => {
-  return (
-    <Layout>
-      <HeroSection />
-      <ValueProposition />
-      <ServicesSection />
-      <GallerySection />
-      <ReferencesSection />
-      <TestimonialsSection />
-      <CTASection />
-    </Layout>
-  );
+    return (
+        <Layout>
+            <HeroSection />
+            <StatsSection />
+            <BootcampsSection />
+            <OrientationTeaser />
+            <TestimonialsSection />
+            {/*<B2BSection />*/}
+            <SessionsSection />
+        </Layout>
+    );
 };
 
 export default Index;
