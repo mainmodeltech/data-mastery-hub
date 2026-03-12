@@ -7,7 +7,7 @@
 import {authEvents} from "@/services/api/authEvents.ts";
 
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '  https://api.model-technologie.com/api/v1';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://api-staging.model-technologie.com/api';
 
 // ─── Token Storage ────────────────────────────────────────────────────────────
 
