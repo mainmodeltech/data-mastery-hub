@@ -124,13 +124,13 @@ function CountdownBlock({ value, label }: { value: number; label: string }) {
 // ─── Programme ────────────────────────────────────────────────────────────────
 
 const PROGRAMME = [
-    { time: "18h00", title: "Accueil & présentation",          desc: "Tour de table, objectifs de la session" },
-    { time: "18h10", title: "Interface Power BI Desktop",      desc: "Découverte de l'environnement de travail" },
-    { time: "18h30", title: "Importer et préparer vos données",desc: "Connexion à Excel, nettoyage avec Power Query" },
-    { time: "18h55", title: "Créer vos premières visualisations", desc: "Graphiques, cartes, indicateurs KPI" },
-    { time: "19h20", title: "Construire le dashboard complet", desc: "Mise en page, filtres, interactivité" },
-    { time: "19h45", title: "Publier et partager",             desc: "Power BI Service, liens de partage" },
-    { time: "19h55", title: "Q&A et ressources",               desc: "Questions libres, ressources pour continuer" },
+    { time: "18h00", title: "Accueil & présentation", desc: "Tour de table, objectifs de la session" },
+    { time: "18h15", title: "Interface Power BI Desktop", desc: "Découverte de l'environnement de travail" },
+    { time: "18h30", title: "Importer et préparer vos données", desc: "Connexion à Excel, nettoyage avec Power Query" },
+    { time: "19h00", title: "Créer vos premières visualisations", desc: "Graphiques, cartes, indicateurs KPI" },
+    { time: "19h30", title: "Construire le dashboard complet", desc: "Mise en page, filtres, interactivité" },
+    { time: "19h45", title: "Q&A et ressources", desc: "Questions libres, ressources pour continuer" },
+    { time: "19h55", title: "Next Steps", desc: "Annonces au sujets de Model technologie et ses bootcamps" },
 ];
 
 // ─── Formateur ────────────────────────────────────────────────────────────────
