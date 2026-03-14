@@ -300,7 +300,7 @@ const AdminInscriptions = () => {
 
   const statusParam =
       filterStatus === "all" ? undefined : (filterStatus as RegistrationStatus);
-  const { data, isLoading } = useRegistrations(page, 200, statusParam);
+  const { data, isLoading } = useRegistrations(page, 10, statusParam);
   const updateStatusMutation = useUpdateRegistrationStatus();
 
   const registrations: Registration[] = data?.content ?? [];

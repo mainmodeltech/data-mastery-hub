@@ -1,56 +1,29 @@
 /**
- * Route protégée — redirige vers /admin/login si non authentifié.
+ * ProtectedRoute.tsx
  *
- * Protections :
- * 1. Vérifie user + loading (comportement existant)
- * 2. Vérifie la présence du token à chaque rendu (suppression localStorage)
- * 3. Vérifie la validité côté backend au focus de la fenêtre (reprise d'onglet)
+ * Guard de route admin — vérifie que l'utilisateur est authentifié
+ * via le JWT Spring Boot (nouveau useAuth).
  */
 
-import { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { tokenStorage } from '@/services/httpClient';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2 } from "lucide-react";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, signOut } = useAuth();
-  const location = useLocation();
+  const { user, loading } = useAuth();
+  const location          = useLocation();
 
-  // ── Vérification au focus : si l'onglet reprend le focus et que le token
-  //    a été supprimé entre temps (autre onglet, DevTools), déconnecter. ──
-  useEffect(() => {
-    const handleFocus = () => {
-      const token = tokenStorage.getAccessToken();
-      if (!token && user) {
-        signOut();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [user, signOut]);
-
-  // ── Chargement initial ─────────────────────────────────────────────────
   if (loading) {
     return (
         <div className="min-h-screen flex items-center justify-center bg-secondary">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="text-sm text-muted-foreground">Vérification de la session…</p>
-          </div>
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
     );
   }
 
-  // ── Token absent (supprimé en DevTools avant que storage event soit émis) ─
-  const token = tokenStorage.getAccessToken();
-  if (!user || !token) {
+  if (!user) {
     return (
-        <Navigate
-            to="/admin/login"
-            state={{ from: location }}
-            replace
-        />
+        <Navigate to="/admin/login" state={{ from: location }} replace />
     );
   }
 

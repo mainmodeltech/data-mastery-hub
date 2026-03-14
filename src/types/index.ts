@@ -255,11 +255,15 @@ export interface CreateRegistrationDTO {
   lastName: string;
   email: string;
   phone: string | null;
+  profile: string | null;
   company: string | null;
+  country: string | null;
+  school: string | null;
   position: string | null;
   message: string | null;
   /** Code promo saisi par le visiteur (le backend valide et applique) */
   promoCode: string | null;
+  recaptchaToken: string | null;
 }
 
 export type CreateContactMessageDTO = Omit<ContactMessage, 'id' | 'status' | 'notes' | 'createdAt' | 'updatedAt'>;

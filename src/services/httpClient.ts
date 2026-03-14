@@ -1,17 +1,22 @@
 /**
- * Client HTTP — fetch natif avec gestion JWT.
+ * httpClient.ts
  *
- * Sur 401 ou 403 : émet un événement global `unauthorized`
- * que AuthProvider écoute pour déclencher la déconnexion automatique.
+ * Client HTTP centralisé pour les appels vers le backend Spring Boot.
+ *
+ * Fonctionnalités :
+ *   - Base URL configurée via VITE_API_URL (build-time)
+ *   - Injection automatique du header Authorization: Bearer <token>
+ *   - skipAuth: true pour les routes publiques (inscription, login, reCAPTCHA…)
+ *   - Support des query params via l'option { params }
+ *   - Erreurs enrichies avec le status HTTP
  */
-import {authEvents} from "@/services/api/authEvents.ts";
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+const API_PREFIX = "/api/v1";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://api-staging.model-technologie.com/api';
-
-// ─── Token Storage ────────────────────────────────────────────────────────────
-
-const TOKEN_KEY = 'access_token';
+// ─── Clé de stockage ──────────────────────────────────────────────────────────
+// Doit correspondre à JWT_STORAGE_KEY dans useAuth.tsx
+export const TOKEN_KEY = "access_token";
 
 export const tokenStorage = {
   getAccessToken: (): string | null => localStorage.getItem(TOKEN_KEY),
@@ -19,99 +24,114 @@ export const tokenStorage = {
   clearTokens: (): void => localStorage.removeItem(TOKEN_KEY),
 };
 
-// ─── Options de requête ───────────────────────────────────────────────────────
-
-interface RequestOptions extends RequestInit {
+interface RequestOptions {
+  /** Si true, n'envoie PAS le header Authorization (routes publiques) */
   skipAuth?: boolean;
+  /** Query params ajoutés à l'URL */
+  params?: Record<string, string | number | boolean | undefined | null>;
+  headers?: Record<string, string>;
 }
 
-// ─── Client HTTP ──────────────────────────────────────────────────────────────
+class ApiError extends Error {
+  constructor(
+      public readonly status: number,
+      message: string,
+      public readonly body?: unknown
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function buildUrl(path: string, params?: RequestOptions["params"]): string {
+  const url = `${BASE_URL}${API_PREFIX}${path}`;
+  if (!params) return url;
+
+  const qs = Object.entries(params)
+      .filter(([, v]) => v !== undefined && v !== null)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+      .join("&");
+
+  return qs ? `${url}?${qs}` : url;
+}
+
+function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
 
 async function request<T>(
     method: string,
     path: string,
     body?: unknown,
-    options: RequestOptions = {},
+    options: RequestOptions = {}
 ): Promise<T> {
-  const { skipAuth = false, ...fetchOptions } = options;
+  const { skipAuth = false, params, headers: extraHeaders = {} } = options;
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(fetchOptions.headers as Record<string, string>),
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...extraHeaders,
   };
 
-  // Injecter le JWT si présent et non ignoré
   if (!skipAuth) {
-    const token = tokenStorage.getAccessToken();
+    const token = getToken();
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
+    // Si pas de token et skipAuth=false → la requête partira sans header,
+    // le backend répondra 401/403 et le composant gèrera l'erreur.
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+  const url = buildUrl(path, params);
+
+  const response = await fetch(url, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    ...fetchOptions,
   });
 
-  // ── Gestion des erreurs d'authentification ────────────────────────────────
-  if (response.status === 401 || response.status === 403) {
-    // Nettoyer le token invalide
-    tokenStorage.clearTokens();
-    // Notifier AuthProvider → déconnexion + redirect login
-    authEvents.emit('unauthorized');
-    throw new Error(`HTTP ${response.status}`);
+  // Pas de contenu (ex: DELETE 204)
+  if (response.status === 204) {
+    return undefined as unknown as T;
+  }
+
+  // Toujours parser le JSON pour récupérer le message d'erreur éventuel
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
   }
 
   if (!response.ok) {
-    // Essayer de parser le message d'erreur du backend
-    let message = `HTTP ${response.status}`;
-    try {
-      const errorData = await response.json();
-      message = errorData.message ?? errorData.error ?? message;
-    } catch {
-      // pas de JSON dans la réponse d'erreur
-    }
-    throw new Error(message);
+    const message =
+        (data as { message?: string })?.message ??
+        `Erreur ${response.status}`;
+    throw new ApiError(response.status, message, data);
   }
 
-  // 204 No Content → pas de corps JSON
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
+  return data as T;
 }
 
 // ─── Interface publique ───────────────────────────────────────────────────────
 
 export const httpClient = {
   get: <T>(path: string, options?: RequestOptions) =>
-      request<T>('GET', path, undefined, options),
+      request<T>("GET", path, undefined, options),
 
   post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-      request<T>('POST', path, body, options),
+      request<T>("POST", path, body, options),
 
   put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-      request<T>('PUT', path, body, options),
+      request<T>("PUT", path, body, options),
 
   patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-      request<T>('PATCH', path, body, options),
+      request<T>("PATCH", path, body, options),
 
   delete: <T>(path: string, options?: RequestOptions) =>
-      request<T>('DELETE', path, undefined, options),
-
-  // Utilitaire à ajouter dans httpClient.ts
-  buildUrl: (path: string, params?: Record<string, unknown>): string => {
-    if (!params) return path;
-    const qs = new URLSearchParams(
-        Object.entries(params)
-            .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)])
-    ).toString();
-    return qs ? `${path}?${qs}` : path;
-  },
+      request<T>("DELETE", path, undefined, options),
 };
 
-
+export { ApiError };
