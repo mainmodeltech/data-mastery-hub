@@ -51,6 +51,9 @@ export interface Registration {
   lastName: string;
   email: string;
   phone: string | null;
+  country: string | null;
+  profile: string | null;
+  school: string | null;
   company: string | null;
   position: string | null;
   message: string | null;

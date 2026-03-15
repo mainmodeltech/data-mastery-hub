@@ -6,7 +6,6 @@ import {
 } from "@/hooks/useRegistrations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -52,12 +51,21 @@ import {
   CalendarCheck,
   Ban,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Registration, RegistrationStatus } from "@/types";
 
-// ─── Config statuts ────────────────────────────────────────────────────────────
+// ─── Constantes ───────────────────────────────────────────────────────────────
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50, 100] as const;
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
+
+// ─── Config statuts ───────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<
     RegistrationStatus,
@@ -105,7 +113,7 @@ const ALL_STATUSES: RegistrationStatus[] = [
   "COMPLETED",
 ];
 
-// ─── KPI Card ──────────────────────────────────────────────────────────────────
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
 
 interface KpiCardProps {
   label: string;
@@ -131,7 +139,7 @@ function KpiCard({ label, value, icon, colorClass, bgClass }: KpiCardProps) {
   );
 }
 
-// ─── Status Badge ──────────────────────────────────────────────────────────────
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: RegistrationStatus }) {
   const cfg = STATUS_CONFIG[status];
@@ -145,7 +153,155 @@ function StatusBadge({ status }: { status: RegistrationStatus }) {
   );
 }
 
-// ─── Modale détail ─────────────────────────────────────────────────────────────
+// ─── Pagination bar ───────────────────────────────────────────────────────────
+
+interface PaginationBarProps {
+  page: number;           // 0-indexed (Spring)
+  totalPages: number;
+  totalElements: number;
+  pageSize: PageSize;
+  onPageChange: (p: number) => void;
+  onPageSizeChange: (s: PageSize) => void;
+  isLoading: boolean;
+}
+
+function PaginationBar({
+                         page,
+                         totalPages,
+                         totalElements,
+                         pageSize,
+                         onPageChange,
+                         onPageSizeChange,
+                         isLoading,
+                       }: PaginationBarProps) {
+  const from = totalElements === 0 ? 0 : page * pageSize + 1;
+  const to   = Math.min((page + 1) * pageSize, totalElements);
+
+  // Pages à afficher : max 5 numéros autour de la page courante
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i);
+    const delta = 2;
+    const left  = Math.max(0, page - delta);
+    const right = Math.min(totalPages - 1, page + delta);
+    const pages: (number | "ellipsis")[] = [];
+
+    if (left > 0) { pages.push(0); if (left > 1) pages.push("ellipsis"); }
+    for (let i = left; i <= right; i++) pages.push(i);
+    if (right < totalPages - 1) {
+      if (right < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages - 1);
+    }
+    return pages;
+  }, [page, totalPages]);
+
+  return (
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-3">
+        {/* Résumé + sélecteur taille */}
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-muted-foreground whitespace-nowrap">
+            {totalElements === 0
+                ? "Aucun résultat"
+                : `${from}–${to} sur ${totalElements}`}
+          </p>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Lignes :</span>
+            <Select
+                value={String(pageSize)}
+                onValueChange={(v) => onPageSizeChange(Number(v) as PageSize)}
+                disabled={isLoading}
+            >
+              <SelectTrigger className="h-7 w-16 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={String(s)} className="text-xs">
+                      {s}
+                    </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Boutons de navigation */}
+        <div className="flex items-center gap-1">
+          {/* Première page */}
+          <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onPageChange(0)}
+              disabled={page === 0 || isLoading}
+              title="Première page"
+          >
+            <ChevronsLeft className="h-3.5 w-3.5" />
+          </Button>
+
+          {/* Page précédente */}
+          <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onPageChange(page - 1)}
+              disabled={page === 0 || isLoading}
+              title="Page précédente"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+
+          {/* Numéros de page */}
+          {pageNumbers.map((p, idx) =>
+              p === "ellipsis" ? (
+                  <span
+                      key={`ellipsis-${idx}`}
+                      className="h-7 w-7 flex items-center justify-center text-xs text-muted-foreground"
+                  >
+              …
+            </span>
+              ) : (
+                  <Button
+                      key={p}
+                      variant={p === page ? "default" : "ghost"}
+                      size="icon"
+                      className="h-7 w-7 text-xs"
+                      onClick={() => onPageChange(p)}
+                      disabled={isLoading}
+                  >
+                    {p + 1}
+                  </Button>
+              )
+          )}
+
+          {/* Page suivante */}
+          <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages - 1 || isLoading}
+              title="Page suivante"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+
+          {/* Dernière page */}
+          <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onPageChange(totalPages - 1)}
+              disabled={page >= totalPages - 1 || isLoading}
+              title="Dernière page"
+          >
+            <ChevronsRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+  );
+}
+
+// ─── Modale détail ────────────────────────────────────────────────────────────
 
 interface DetailModalProps {
   registration: Registration | null;
@@ -160,12 +316,9 @@ function DetailModal({
                        onUpdateStatus,
                        isUpdating,
                      }: DetailModalProps) {
-  const [localStatus, setLocalStatus] = useState<RegistrationStatus | null>(
-      null
-  );
+  const [localStatus, setLocalStatus] = useState<RegistrationStatus | null>(null);
 
-  const currentStatus =
-      localStatus ?? (registration?.status as RegistrationStatus);
+  const currentStatus = localStatus ?? (registration?.status as RegistrationStatus);
 
   const handleStatusChange = async (val: string) => {
     if (!registration) return;
@@ -181,9 +334,7 @@ function DetailModal({
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-            <span>
-              {registration.firstName} {registration.lastName}
-            </span>
+              <span>{registration.firstName} {registration.lastName}</span>
               <StatusBadge status={currentStatus} />
             </DialogTitle>
           </DialogHeader>
@@ -195,10 +346,15 @@ function DetailModal({
                 Informations personnelles
               </p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                <Field label="Email" value={registration.email} />
-                <Field label="Téléphone" value={registration.phone} />
+                <Field label="Email"      value={registration.email} />
+                <Field label="Téléphone"  value={registration.phone} />
+                <Field label="Pays"       value={registration.country} />
+                <Field label="Profil"     value={registration.profile} />
                 <Field label="Entreprise" value={registration.company} />
-                <Field label="Poste" value={registration.position} />
+                <Field label="Poste"      value={registration.position} />
+                {registration.school && (
+                    <Field label="École / Institution" value={registration.school} />
+                )}
               </div>
             </div>
 
@@ -211,21 +367,18 @@ function DetailModal({
               </p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <Field label="Bootcamp" value={registration.bootcampTitle} />
-                <Field label="Session" value={registration.sessionName} />
+                <Field label="Session"  value={registration.sessionName} />
                 {registration.promoCodeUsed && (
                     <div className="col-span-2">
                       <p className="text-muted-foreground mb-0.5">Code promo</p>
                       <p className="font-medium text-emerald-600">
-                        {registration.promoCodeUsed} (−{registration.discountPercent}
-                        %)
+                        {registration.promoCodeUsed} (−{registration.discountPercent}%)
                       </p>
                     </div>
                 )}
                 <Field
                     label="Inscrit le"
-                    value={format(new Date(registration.createdAt), "d MMMM yyyy", {
-                      locale: fr,
-                    })}
+                    value={format(new Date(registration.createdAt), "d MMMM yyyy", { locale: fr })}
                 />
               </div>
             </div>
@@ -249,7 +402,11 @@ function DetailModal({
             {/* Changer statut */}
             <div className="flex items-center gap-3">
               <Label className="shrink-0 text-sm">Statut</Label>
-              <Select value={currentStatus} onValueChange={handleStatusChange} disabled={isUpdating}>
+              <Select
+                  value={currentStatus}
+                  onValueChange={handleStatusChange}
+                  disabled={isUpdating}
+              >
                 <SelectTrigger className="flex-1">
                   <SelectValue />
                 </SelectTrigger>
@@ -264,7 +421,9 @@ function DetailModal({
                   ))}
                 </SelectContent>
               </Select>
-              {isUpdating && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              {isUpdating && (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
             </div>
           </div>
         </DialogContent>
@@ -272,13 +431,7 @@ function DetailModal({
   );
 }
 
-function Field({
-                 label,
-                 value,
-               }: {
-  label: string;
-  value: string | null | undefined;
-}) {
+function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
       <div>
         <p className="text-muted-foreground mb-0.5">{label}</p>
@@ -287,25 +440,42 @@ function Field({
   );
 }
 
-// ─── Page principale ───────────────────────────────────────────────────────────
+// ─── Page principale ──────────────────────────────────────────────────────────
 
 const AdminInscriptions = () => {
   const { toast } = useToast();
-  const [selected, setSelected] = useState<Registration | null>(null);
-  const [filterStatus, setFilterStatus] = useState<RegistrationStatus | "all">(
-      "all"
-  );
-  const [search, setSearch] = useState("");
-  const [page] = useState(0);
+
+  // ── État pagination ────────────────────────────────────────────────────────
+  const [page, setPage]           = useState(0);
+  const [pageSize, setPageSize]   = useState<PageSize>(10);
+
+  // ── Filtres ────────────────────────────────────────────────────────────────
+  const [selected, setSelected]         = useState<Registration | null>(null);
+  const [filterStatus, setFilterStatus] = useState<RegistrationStatus | "all">("all");
+  const [search, setSearch]             = useState("");
 
   const statusParam =
       filterStatus === "all" ? undefined : (filterStatus as RegistrationStatus);
-  const { data, isLoading } = useRegistrations(page, 10, statusParam);
-  const updateStatusMutation = useUpdateRegistrationStatus();
+
+  // Réinitialiser à la page 0 quand on change le filtre ou la taille
+  const handleFilterStatus = (s: RegistrationStatus | "all") => {
+    setFilterStatus(s);
+    setPage(0);
+  };
+  const handlePageSize = (s: PageSize) => {
+    setPageSize(s);
+    setPage(0);
+  };
+
+  // ── Data ───────────────────────────────────────────────────────────────────
+  const { data, isLoading }   = useRegistrations(page, pageSize, statusParam);
+  const updateStatusMutation  = useUpdateRegistrationStatus();
 
   const registrations: Registration[] = data?.content ?? [];
+  const totalPages    = data?.totalPages   ?? 0;
+  const totalElements = data?.totalElements ?? 0;
 
-  // Filtrage local par recherche
+  // ── Filtrage local par recherche (sur la page courante uniquement) ─────────
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     if (!q) return registrations;
@@ -319,15 +489,17 @@ const AdminInscriptions = () => {
     );
   }, [registrations, search]);
 
-  // KPIs calculés sur toutes les inscriptions (sans filtre de recherche)
-  const kpis = useMemo(() => {
-    const total = registrations.length;
-    const confirmed = registrations.filter((r) => r.status === "CONFIRMED").length;
-    const pending = registrations.filter((r) => r.status === "PENDING").length;
-    const cancelled = registrations.filter((r) => r.status === "CANCELLED").length;
-    return { total, confirmed, pending, cancelled };
-  }, [registrations]);
+  // ── KPIs sur la page courante ─────────────────────────────────────────────
+  // Note : pour des KPIs globaux il faudrait un endpoint dédié.
+  // Ici on affiche les données réelles de la page chargée.
+  const kpis = useMemo(() => ({
+    total:     totalElements,
+    confirmed: registrations.filter((r) => r.status === "CONFIRMED").length,
+    pending:   registrations.filter((r) => r.status === "PENDING").length,
+    cancelled: registrations.filter((r) => r.status === "CANCELLED").length,
+  }), [registrations, totalElements]);
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleUpdateStatus = async (id: string, status: RegistrationStatus) => {
     try {
       await updateStatusMutation.mutateAsync({ id, status });
@@ -344,8 +516,10 @@ const AdminInscriptions = () => {
     }
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
       <AdminLayout title="Inscriptions">
+
         {/* ── KPIs ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <KpiCard
@@ -393,7 +567,7 @@ const AdminInscriptions = () => {
           {/* Filtre statut */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
-                onClick={() => setFilterStatus("all")}
+                onClick={() => handleFilterStatus("all")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                     filterStatus === "all"
                         ? "bg-primary text-primary-foreground border-primary"
@@ -405,7 +579,7 @@ const AdminInscriptions = () => {
             {ALL_STATUSES.map((s) => (
                 <button
                     key={s}
-                    onClick={() => setFilterStatus(s)}
+                    onClick={() => handleFilterStatus(s)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                         filterStatus === s
                             ? "bg-primary text-primary-foreground border-primary"
@@ -418,7 +592,9 @@ const AdminInscriptions = () => {
           </div>
 
           <span className="text-xs text-muted-foreground ml-auto">
-          {filtered.length} résultat{filtered.length !== 1 ? "s" : ""}
+          {search
+              ? `${filtered.length} résultat${filtered.length !== 1 ? "s" : ""} sur la page`
+              : `${totalElements} inscription${totalElements !== 1 ? "s" : ""} au total`}
         </span>
         </div>
 
@@ -430,154 +606,163 @@ const AdminInscriptions = () => {
                 <span className="text-sm">Chargement…</span>
               </div>
           ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/40 hover:bg-muted/40">
-                    <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
-                      Participant
-                    </TableHead>
-                    <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
-                      Formation
-                    </TableHead>
-                    <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground hidden md:table-cell">
-                      Session
-                    </TableHead>
-                    <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground hidden lg:table-cell">
-                      Date
-                    </TableHead>
-                    <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
-                      Statut
-                    </TableHead>
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                            colSpan={6}
-                            className="text-center py-16 text-muted-foreground text-sm"
-                        >
-                          Aucune inscription trouvée.
-                        </TableCell>
-                      </TableRow>
-                  ) : (
-                      filtered.map((item) => (
-                          <TableRow
-                              key={item.id}
-                              className="hover:bg-muted/30 cursor-pointer group"
-                              onClick={() => setSelected(item)}
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
+                        Participant
+                      </TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
+                        Formation
+                      </TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground hidden md:table-cell">
+                        Session
+                      </TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground hidden lg:table-cell">
+                        Date
+                      </TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
+                        Statut
+                      </TableHead>
+                      <TableHead className="w-10" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                              colSpan={6}
+                              className="text-center py-16 text-muted-foreground text-sm"
                           >
-                            {/* Participant */}
-                            <TableCell>
-                              <div>
-                                <p className="font-medium text-sm text-foreground">
-                                  {item.firstName} {item.lastName}
+                            Aucune inscription trouvée.
+                          </TableCell>
+                        </TableRow>
+                    ) : (
+                        filtered.map((item) => (
+                            <TableRow
+                                key={item.id}
+                                className="hover:bg-muted/30 cursor-pointer group"
+                                onClick={() => setSelected(item)}
+                            >
+                              {/* Participant */}
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium text-sm text-foreground">
+                                    {item.firstName} {item.lastName}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">{item.email}</p>
+                                  {item.company && (
+                                      <p className="text-xs text-muted-foreground">
+                                        {item.company}
+                                        {item.position && ` · ${item.position}`}
+                                      </p>
+                                  )}
+                                </div>
+                              </TableCell>
+
+                              {/* Formation */}
+                              <TableCell>
+                                <p className="text-sm font-medium text-foreground">
+                                  {item.bootcampTitle || "—"}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {item.email}
-                                </p>
-                                {item.company && (
-                                    <p className="text-xs text-muted-foreground">
-                                      {item.company}
-                                      {item.position && ` · ${item.position}`}
-                                    </p>
+                                {item.promoCodeUsed && (
+                                    <span className="text-xs text-emerald-600 font-medium">
+                            {item.promoCodeUsed} (−{item.discountPercent}%)
+                          </span>
                                 )}
-                              </div>
-                            </TableCell>
+                              </TableCell>
 
-                            {/* Formation */}
-                            <TableCell>
-                              <p className="text-sm font-medium text-foreground">
-                                {item.bootcampTitle || "—"}
-                              </p>
-                              {item.promoCodeUsed && (
-                                  <span className="text-xs text-emerald-600 font-medium">
-                          {item.promoCodeUsed} (−{item.discountPercent}%)
-                        </span>
-                              )}
-                            </TableCell>
+                              {/* Session */}
+                              <TableCell className="hidden md:table-cell">
+                                <p className="text-sm text-muted-foreground">
+                                  {item.sessionName || "—"}
+                                </p>
+                              </TableCell>
 
-                            {/* Session */}
-                            <TableCell className="hidden md:table-cell">
-                              <p className="text-sm text-muted-foreground">
-                                {item.sessionName || "—"}
-                              </p>
-                            </TableCell>
+                              {/* Date */}
+                              <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                                {format(new Date(item.createdAt), "d MMM yyyy", { locale: fr })}
+                              </TableCell>
 
-                            {/* Date */}
-                            <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                              {format(new Date(item.createdAt), "d MMM yyyy", {
-                                locale: fr,
-                              })}
-                            </TableCell>
+                              {/* Statut */}
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Select
+                                    value={item.status}
+                                    onValueChange={(v) =>
+                                        handleUpdateStatus(item.id, v as RegistrationStatus)
+                                    }
+                                >
+                                  <SelectTrigger className="h-7 w-36 text-xs border-0 shadow-none p-0 gap-1 bg-transparent focus:ring-0">
+                                    <StatusBadge status={item.status as RegistrationStatus} />
+                                    <ChevronDown className="h-3 w-3 text-muted-foreground ml-1 shrink-0" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {ALL_STATUSES.map((s) => (
+                                        <SelectItem key={s} value={s}>
+                                <span className="flex items-center gap-2 text-xs">
+                                  {STATUS_CONFIG[s].icon}
+                                  {STATUS_CONFIG[s].label}
+                                </span>
+                                        </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
 
-                            {/* Statut */}
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <Select
-                                  value={item.status}
-                                  onValueChange={(v) =>
-                                      handleUpdateStatus(item.id, v as RegistrationStatus)
-                                  }
-                              >
-                                <SelectTrigger className="h-7 w-36 text-xs border-0 shadow-none p-0 gap-1 bg-transparent focus:ring-0">
-                                  <StatusBadge status={item.status as RegistrationStatus} />
-                                  <ChevronDown className="h-3 w-3 text-muted-foreground ml-1 shrink-0" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {ALL_STATUSES.map((s) => (
-                                      <SelectItem key={s} value={s}>
-                              <span className="flex items-center gap-2 text-xs">
-                                {STATUS_CONFIG[s].icon}
-                                {STATUS_CONFIG[s].label}
-                              </span>
-                                      </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-
-                            {/* Actions */}
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => setSelected(item)}>
-                                    <Eye className="h-3.5 w-3.5 mr-2" />
-                                    Voir le détail
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  {ALL_STATUSES.filter((s) => s !== item.status).map(
-                                      (s) => (
-                                          <DropdownMenuItem
-                                              key={s}
-                                              onClick={() =>
-                                                  handleUpdateStatus(item.id, s)
-                                              }
-                                          >
+                              {/* Actions */}
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setSelected(item)}>
+                                      <Eye className="h-3.5 w-3.5 mr-2" />
+                                      Voir le détail
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    {ALL_STATUSES.filter((s) => s !== item.status).map((s) => (
+                                        <DropdownMenuItem
+                                            key={s}
+                                            onClick={() => handleUpdateStatus(item.id, s)}
+                                        >
                                 <span className="flex items-center gap-2">
                                   {STATUS_CONFIG[s].icon}
                                   Marquer «{STATUS_CONFIG[s].label}»
                                 </span>
-                                          </DropdownMenuItem>
-                                      )
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                      ))
-                  )}
-                </TableBody>
-              </Table>
+                                        </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
+
+                {/* ── Barre de pagination ── */}
+                {totalPages > 0 && (
+                    <div className="border-t border-border px-4">
+                      <PaginationBar
+                          page={page}
+                          totalPages={totalPages}
+                          totalElements={totalElements}
+                          pageSize={pageSize}
+                          onPageChange={setPage}
+                          onPageSizeChange={handlePageSize}
+                          isLoading={isLoading}
+                      />
+                    </div>
+                )}
+              </>
           )}
         </div>
 
