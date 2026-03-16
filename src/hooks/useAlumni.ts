@@ -1,71 +1,45 @@
+// ── Ajouts à faire dans useNetworking.ts ──────────────────────────────────────
+// Ces hooks publics (skipAuth) remplacent les appels Supabase dans AlumniPage
+
+import { useQuery } from "@tanstack/react-query";
+import { alumniService, projectService } from "@/services/api/networkingService";
+import type { AlumniSummary, ProjectSummary } from "@/services/api/networkingService";
+
 /**
- * Hooks React Query pour les Alumni.
+ * Hook public — liste tous les alumni publiés triés par display_order.
+ * Remplace l'appel Supabase alumni dans AlumniPage.
+ * Cache : 10 minutes (données peu volatiles).
  */
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { alumniService } from '@/services/api';
-import type { CreateAlumniDTO, UpdateAlumniDTO } from '@/types';
-import { QUERY_CONFIG } from '@/config/constants';
-
-export const ALUMNI_KEYS = {
-  all: ['alumni'] as const,
-  published: ['alumni', 'published'] as const,
-  detail: (id: string) => ['alumni', id] as const,
-};
-
-/** Hook pour recuperer les alumni publies (site public) */
 export function usePublishedAlumni() {
+  return useQuery<AlumniSummary[]>({
+    queryKey:  ["alumni-published"],
+    queryFn:   () => alumniService.getAllPublished(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook public — liste tous les projets publiés (avec membres et screenshots).
+ * Remplace les 3 appels Supabase imbriqués dans AlumniPage.
+ * Cache : 10 minutes.
+ */
+export function usePublishedProjects() {
+  return useQuery<ProjectSummary[]>({
+    queryKey:  ["projects-published"],
+    queryFn:   () => projectService.getAllPublished(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook public — détail d'un projet publié par ID.
+ * Utilisé pour la modale de détail (screenshots inclus).
+ */
+export function usePublishedProjectDetail(id: string | null) {
   return useQuery({
-    queryKey: ALUMNI_KEYS.published,
-    queryFn: () => alumniService.getPublished(),
-    staleTime: QUERY_CONFIG.staleTime,
-    gcTime: QUERY_CONFIG.gcTime,
-  });
-}
-
-/** Hook pour recuperer tous les alumni (admin) */
-export function useAllAlumni(page?: number, size?: number) {
-  return useQuery({
-    queryKey: [...ALUMNI_KEYS.all, { page, size }],
-    queryFn: () => alumniService.getAll(page, size),
-    staleTime: QUERY_CONFIG.staleTime,
-  });
-}
-
-/** Hook pour creer un alumni */
-export function useCreateAlumni() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: CreateAlumniDTO) => alumniService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ALUMNI_KEYS.all });
-    },
-  });
-}
-
-/** Hook pour mettre a jour un alumni */
-export function useUpdateAlumni() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateAlumniDTO }) =>
-      alumniService.update(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ALUMNI_KEYS.all });
-      queryClient.invalidateQueries({ queryKey: ALUMNI_KEYS.detail(id) });
-    },
-  });
-}
-
-/** Hook pour supprimer un alumni */
-export function useDeleteAlumni() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => alumniService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ALUMNI_KEYS.all });
-    },
+    queryKey:  ["projects-published", id],
+    queryFn:   () => projectService.getPublishedById(id!),
+    enabled:   !!id,
+    staleTime: 10 * 60 * 1000,
   });
 }

@@ -32,8 +32,8 @@ const navItems = [
   { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare },
   // { href: "/admin/services", label: "Services", icon: Briefcase },
   // { href: "/admin/references", label: "Références", icon: Star },
-  // { href: "/admin/alumni", label: "Alumni", icon: GraduationCap },
-  // { href: "/admin/projets", label: "Projets", icon: Users },
+  { href: "/admin/alumni", label: "Alumni", icon: GraduationCap },
+  { href: "/admin/projets", label: "Projets", icon: Users },
   // { href: "/admin/galerie", label: "Galerie", icon: Image },
 ];
 

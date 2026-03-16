@@ -1,3 +1,5 @@
+
+
 /**
  * httpClient.ts
  *
@@ -8,21 +10,24 @@
  *   - Injection automatique du header Authorization: Bearer <token>
  *   - skipAuth: true pour les routes publiques (inscription, login, reCAPTCHA…)
  *   - Support des query params via l'option { params }
+ *   - Support natif FormData : Content-Type NON forcé (boundary généré par le browser)
  *   - Erreurs enrichies avec le status HTTP
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+const BASE_URL   = import.meta.env.VITE_API_BASE_URL ?? "";
 const API_PREFIX = "/api/v1";
 
 // ─── Clé de stockage ──────────────────────────────────────────────────────────
-// Doit correspondre à JWT_STORAGE_KEY dans useAuth.tsx
 export const TOKEN_KEY = "access_token";
+
 
 export const tokenStorage = {
   getAccessToken: (): string | null => localStorage.getItem(TOKEN_KEY),
   setAccessToken: (token: string): void => localStorage.setItem(TOKEN_KEY, token),
   clearTokens: (): void => localStorage.removeItem(TOKEN_KEY),
 };
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface RequestOptions {
   /** Si true, n'envoie PAS le header Authorization (routes publiques) */
@@ -69,9 +74,14 @@ async function request<T>(
 ): Promise<T> {
   const { skipAuth = false, params, headers: extraHeaders = {} } = options;
 
+  const isFormData = body instanceof FormData;
+
+  // Pour FormData, on NE SET PAS Content-Type manuellement.
+  // Le browser génère automatiquement "multipart/form-data; boundary=xxxx".
+  // Forcer ce header supprime le boundary → Spring Boot "Failed to parse multipart".
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     Accept: "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...extraHeaders,
   };
 
@@ -80,8 +90,6 @@ async function request<T>(
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
-    // Si pas de token et skipAuth=false → la requête partira sans header,
-    // le backend répondra 401/403 et le composant gèrera l'erreur.
   }
 
   const url = buildUrl(path, params);
@@ -89,7 +97,11 @@ async function request<T>(
   const response = await fetch(url, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: isFormData
+        ? body                              // FormData passé tel quel
+        : body !== undefined
+            ? JSON.stringify(body)          // JSON sérialisé
+            : undefined,
   });
 
   // Pas de contenu (ex: DELETE 204)
@@ -97,7 +109,6 @@ async function request<T>(
     return undefined as unknown as T;
   }
 
-  // Toujours parser le JSON pour récupérer le message d'erreur éventuel
   let data: unknown;
   try {
     data = await response.json();
