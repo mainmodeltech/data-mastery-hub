@@ -1,202 +1,147 @@
 /**
- * Hook d'authentification JWT — Spring Boot backend.
+ * useAuth.tsx
  *
- * Cycle de vie :
- * 1. Au mount   : si token en localStorage → GET /auth/me pour valider
- * 2. signIn     : POST /auth/login → stocke token + user en state
- * 3. signOut    : POST /auth/logout (révocation backend) + nettoyage local
+ * Contexte d'authentification branché sur le backend Spring Boot JWT.
+ * Remplace l'ancien useAuth basé sur Supabase.
  *
- * Déconnexion automatique :
- * - Sur 401/403 : httpClient émet authEvents('unauthorized') → signOut()
- * - Sur suppression manuelle du token dans DevTools : storage event → signOut()
- *
- * FIX : on ne redirige vers /admin/login QUE si l'utilisateur était connecté.
- * Un visiteur anonyme sur le site public ne doit jamais être redirigé.
+ * Contrat :
+ *   - signIn()  → POST /api/v1/auth/login, stocke le JWT dans localStorage
+ *   - signOut() → supprime le JWT du localStorage
+ *   - user      → payload décodé du JWT (email, roles, etc.)
+ *   - token     → le JWT brut (utilisé par httpClient)
  */
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
-  useCallback,
-  useRef,
-  type ReactNode,
-} from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authService } from '@/services/api';
-import { tokenStorage } from '@/services/httpClient';
-import { authEvents } from '@/services/api/authEvents';
-import type { AuthUser } from '@/types';
+} from "react";
+import { httpClient } from "@/services/httpClient";
 
-// ============================================================
-// Types
-// ============================================================
+// ─── Clé de stockage ──────────────────────────────────────────────────────────
+// Doit correspondre à TOKEN_KEY dans httpClient.ts
+export const JWT_STORAGE_KEY = "access_token";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface JwtPayload {
+  sub: string;        // email de l'utilisateur
+  roles?: string[];
+  exp?: number;       // timestamp d'expiration (secondes)
+  iat?: number;
+}
+
+interface AuthUser {
+  email: string;
+  roles: string[];
+}
 
 interface AuthContextType {
   user: AuthUser | null;
-  isAuthenticated: boolean;
+  token: string | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<{ error: Error | null }>;
-  resetPassword: (token: string, newPassword: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signOut: () => void;
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Décode la partie payload d'un JWT (sans vérification de signature côté client) */
+function decodeJwt(token: string): JwtPayload | null {
+  try {
+    const base64 = token.split(".")[1];
+    const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json) as JwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+/** Vérifie si un JWT est encore valide (non expiré) */
+function isTokenValid(token: string): boolean {
+  const payload = decodeJwt(token);
+  if (!payload?.exp) return false;
+  return payload.exp * 1000 > Date.now();
+}
+
+function payloadToUser(payload: JwtPayload): AuthUser {
+  return {
+    email: payload.sub,
+    roles: payload.roles ?? [],
+  };
+}
+
+// ─── Contexte ─────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// ============================================================
-// Provider
-// ============================================================
-
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [token, setToken]   = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
-  const signingOut = useRef(false);
-  // Ref pour lire la valeur fraîche de user dans les callbacks (évite stale closure)
-  const userRef = useRef<AuthUser | null>(null);
-  userRef.current = user;
-
-  // ── Déconnexion interne ─────────────────────────────────────────────────
-  const performSignOut = useCallback(async (skipBackend = false) => {
-    if (signingOut.current) return;
-    signingOut.current = true;
-
-    // Capturer AVANT de vider le state
-    const wasLoggedIn = userRef.current !== null;
-
-    try {
-      if (!skipBackend) {
-        await authService.logout();
-      }
-    } catch {
-      // backend injoignable ou token déjà expiré — on nettoie quand même
-    } finally {
-      tokenStorage.clearTokens();
-      setUser(null);
-      signingOut.current = false;
-
-      // ✅ Rediriger UNIQUEMENT si l'utilisateur était connecté.
-      // Les visiteurs anonymes du site public ne doivent jamais être
-      // redirigés vers /admin/login suite à un 401 d'une API publique.
-      if (wasLoggedIn) {
-        navigate('/admin/login', { replace: true });
-      }
-    }
-  }, [navigate]);
-
-  // ── Initialisation ──────────────────────────────────────────────────────
+  // Initialisation : lit le token du localStorage au montage
   useEffect(() => {
-    const initAuth = async () => {
-      const token = tokenStorage.getAccessToken();
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const currentUser = await authService.getCurrentUser();
-        setUser(currentUser);
-      } catch {
-        // Token invalide / expiré — nettoyage silencieux (pas de redirect ici,
-        // ProtectedRoute s'en chargera)
-        tokenStorage.clearTokens();
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-  }, []);
-
-  // ── Écoute des 401/403 émis par httpClient ──────────────────────────────
-  useEffect(() => {
-    const unsubscribe = authEvents.on('unauthorized', () => {
-      // N'agir que si connecté — pas pour les visiteurs anonymes
-      if (userRef.current !== null) {
-        performSignOut(true);
-      }
-    });
-    return unsubscribe;
-  }, [performSignOut]);
-
-  // ── Écoute de la suppression manuelle du token (DevTools, autre onglet) ─
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'access_token' && e.newValue === null && userRef.current !== null) {
-        // Token supprimé pendant une session active
-        performSignOut(true);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [user, performSignOut]);
-
-  // ── signIn ──────────────────────────────────────────────────────────────
-  const signIn = useCallback(async (email: string, password: string) => {
-    try {
-      const response = await authService.login({ email, password });
-      setUser(response.user);
-      return { error: null };
-    } catch (err) {
-      return { error: err instanceof Error ? err : new Error('Erreur de connexion') };
+    const stored = localStorage.getItem(JWT_STORAGE_KEY);
+    if (stored && isTokenValid(stored)) {
+      setToken(stored);
+    } else {
+      // Token absent ou expiré → nettoyer
+      localStorage.removeItem(JWT_STORAGE_KEY);
     }
+    setLoading(false);
   }, []);
 
-  // ── signOut (action utilisateur) ────────────────────────────────────────
-  const signOut = useCallback(async () => {
-    await performSignOut(false);
-  }, [performSignOut]);
+  // Dérive l'objet user depuis le token JWT
+  const user = useMemo<AuthUser | null>(() => {
+    if (!token) return null;
+    const payload = decodeJwt(token);
+    return payload ? payloadToUser(payload) : null;
+  }, [token]);
 
-  // ── forgotPassword ──────────────────────────────────────────────────────
-  const forgotPassword = useCallback(async (email: string) => {
-    try {
-      await authService.forgotPassword(email);
-      return { error: null };
-    } catch (err) {
-      return { error: err instanceof Error ? err : new Error('Erreur lors de la demande') };
-    }
-  }, []);
+  const signIn = useCallback(
+      async (email: string, password: string): Promise<{ error: string | null }> => {
+        try {
+          const response = await httpClient.post<{
+            accessToken: string;
+            tokenType: string;
+            expiresIn: number;
+          }>(
+              "/auth/login",
+              { email, password },
+              { skipAuth: true }
+          );
 
-  // ── resetPassword ───────────────────────────────────────────────────────
-  const resetPassword = useCallback(async (token: string, newPassword: string) => {
-    try {
-      await authService.resetPassword(token, newPassword);
-      return { error: null };
-    } catch (err) {
-      return { error: err instanceof Error ? err : new Error('Token invalide ou expiré') };
-    }
-  }, []);
-
-  return (
-      <AuthContext.Provider
-          value={{
-            user,
-            isAuthenticated: !!user,
-            loading,
-            signIn,
-            signOut,
-            forgotPassword,
-            resetPassword,
-          }}
-      >
-        {children}
-      </AuthContext.Provider>
+          const jwt = response.accessToken;
+          localStorage.setItem(JWT_STORAGE_KEY, jwt);
+          setToken(jwt);
+          return { error: null };
+        } catch (err: unknown) {
+          const message =
+              (err as { message?: string })?.message ?? "Identifiants incorrects.";
+          return { error: message };
+        }
+      },
+      []
   );
+
+  const signOut = useCallback(() => {
+    localStorage.removeItem(JWT_STORAGE_KEY);
+    setToken(null);
+  }, []);
+
+  const value = useMemo<AuthContextType>(
+      () => ({ user, token, loading, signIn, signOut }),
+      [user, token, loading, signIn, signOut]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// ============================================================
-// Hook
-// ============================================================
-
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth doit être utilisé dans un AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
+  return ctx;
 };
