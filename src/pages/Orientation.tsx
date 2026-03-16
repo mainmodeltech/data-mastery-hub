@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -642,6 +643,7 @@ const Orientation = () => {
 
     return (
         <Layout>
+            <SeoHead {...PAGE_SEO.bootcamps} />
             <div className="min-h-screen bg-background">
 
                 {/* ── INTRO ─────────────────────────────────────────────────── */}
@@ -826,6 +828,7 @@ const Orientation = () => {
                     </section>
                 )}
             </div>
+
         </Layout>
     );
 };

@@ -12,6 +12,7 @@ import {
   Sparkles, Calendar, Award, Briefcase, X, Loader2,
   Phone, Mail, FileText
 } from "lucide-react";
+import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
 
 // ─── Static data ─────────────────────────────────────────────────────────────
 
@@ -495,7 +496,7 @@ const Services = () => {
 
   return (
       <Layout>
-
+        <SeoHead {...PAGE_SEO.bootcamps} />
         {/* ── HERO ─────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-24 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
@@ -650,6 +651,7 @@ const Services = () => {
         {contactFor && (
             <ContactModal service={contactFor} onClose={() => setContactFor(null)} />
         )}
+
       </Layout>
   );
 };

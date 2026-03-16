@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import {COMPANY} from "@/config/constants.ts";
 import {useState} from "react";
+import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -144,7 +145,7 @@ const partners = [
 const About = () => {
   return (
       <Layout>
-
+        <SeoHead {...PAGE_SEO.bootcamps} />
         {/* ── HERO ─────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-24 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
