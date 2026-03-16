@@ -472,13 +472,13 @@ export function Header() {
               <Link to="/contact" className={navLinkClass("/contact")}>
                 Contact
               </Link>
-              <Link
-                  to="/masterclass/power-bi-dashboard"
-                  className="flex items-center gap-1.5 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 text-amber-500 dark:text-amber-400 text-sm font-bold px-3 py-1.5 rounded-full transition-colors"
-              >
-                <Zap className="h-3.5 w-3.5 animate-pulse" />
-                Masterclass gratuite
-              </Link>
+              {/*<Link*/}
+              {/*    to="/masterclass/power-bi-dashboard"*/}
+              {/*    className="flex items-center gap-1.5 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 text-amber-500 dark:text-amber-400 text-sm font-bold px-3 py-1.5 rounded-full transition-colors"*/}
+              {/*>*/}
+              {/*  <Zap className="h-3.5 w-3.5 animate-pulse" />*/}
+              {/*  Masterclass gratuite*/}
+              {/*</Link>*/}
             </div>
 
             {/* ── Desktop CTAs ── */}
