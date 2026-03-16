@@ -670,8 +670,8 @@ const AlumniPage = () => {
           <div className="container mx-auto px-4 lg:px-8">
             <div className="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto text-center">
               {[
-                { icon: Building2, label: "Ils recrutent nos alumni", companies: "BICIS · Wave · Sonatel · Baobab · Orange · Ecobank" },
-                { icon: Clock,     label: "Délai moyen pour trouver un poste", stat: "6 semaines", sub: "après la certification" },
+                { icon: Building2, label: "Ils recrutent nos alumni", companies: "SGSN · Wave · Sonatel · Baobab · CESAG · CETUD" },
+                { icon: Clock,     label: "Délai moyen pour trouver un poste", stat: "3 mois", sub: "après la certification" },
                 { icon: TrendingUp, label: "Augmentation salariale moyenne", stat: "+35%", sub: "constatée sur les reconversions" },
               ].map((item, i) => (
                   <div key={i} className="p-5 rounded-2xl border border-border bg-card">
@@ -687,24 +687,7 @@ const AlumniPage = () => {
           </div>
         </section>
 
-        {/* ── TÉMOIGNAGES ──────────────────────────────────────────────────────── */}
-        <section className="py-20 lg:py-28 overflow-hidden">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
-                <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
-                Ce qu'ils en disent
-              </div>
-              <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-3">
-                Les mots de nos alumni
-              </h2>
-              <p className="text-muted-foreground">
-                Note moyenne <strong className="text-foreground">4.9/5</strong> sur {testimonials.length} avis vérifiés
-              </p>
-            </div>
-          </div>
-          <TestimonialSlider testimonials={testimonials} />
-        </section>
+
 
         {/* ── PROJETS → backend Spring Boot ────────────────────────────────────── */}
         {(loadingProjects || projects.length > 0) && (
@@ -797,6 +780,25 @@ const AlumniPage = () => {
                 </>
             )}
           </div>
+        </section>
+
+        {/* ── TÉMOIGNAGES ──────────────────────────────────────────────────────── */}
+        <section className="py-20 lg:py-28 overflow-hidden">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
+                <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+                Ce qu'ils en disent
+              </div>
+              <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-3">
+                Les mots de nos alumni
+              </h2>
+              <p className="text-muted-foreground">
+                Note moyenne <strong className="text-foreground">4.9/5</strong> sur {testimonials.length} avis vérifiés
+              </p>
+            </div>
+          </div>
+          <TestimonialSlider testimonials={testimonials} />
         </section>
 
         {/* ── CTAs ─────────────────────────────────────────────────────────────── */}

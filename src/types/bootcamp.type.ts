@@ -24,6 +24,7 @@ export interface BootcampSession {
     maxParticipants: number;
     currentParticipants: number;
     isFull: boolean;
+    schedule: string;
     status: SessionStatus;
     format: SessionFormat;
     location: string | null;

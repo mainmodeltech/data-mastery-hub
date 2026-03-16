@@ -795,7 +795,7 @@ export default function BootcampsPage() {
                   <Loader2 className="h-8 w-8 animate-spin text-accent" />
                 </div>
             ) : isError ? (
-                <div className="flex justify-center pb-16 text-background/60 text-sm">
+                <div className="flex justify-center pb-16 text-amber-500 text-sm">
                   <AlertCircle className="h-4 w-4 mr-2" />
                   Erreur de chargement. Veuillez rafraîchir la page.
                 </div>
@@ -823,7 +823,7 @@ export default function BootcampsPage() {
                                   "flex items-center gap-3 px-6 py-4 rounded-xl font-semibold text-sm transition-all duration-200",
                                   isActive
                                       ? "bg-background text-foreground shadow-sm"
-                                      : "text-background/60 hover:text-background/80 hover:bg-background/5"
+                                      : "text-amber-500/60 hover:text-amber-400/80 hover:bg-background/5"
                               )}
                           >
                             <TabIcon
