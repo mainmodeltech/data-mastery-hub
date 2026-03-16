@@ -6,9 +6,9 @@
  * Wrapper  : entourer <App /> de <GoogleReCaptchaProvider> dans main.tsx
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Button } from "@/components/ui/button";
 import logoHorizontal from "@/assets/logo-black-horizontal.png";
@@ -39,8 +39,16 @@ import {
     Loader2,
     Mail,
     ShieldCheck,
+    XCircle,
+    Bell,
+    Home,
 } from "lucide-react";
 import { httpClient } from "@/services/httpClient";
+
+// ─── 🔒 Interrupteur inscriptions ─────────────────────────────────────────────
+// Passer à false pour rouvrir les inscriptions
+const REGISTRATIONS_CLOSED = true;
+// ──────────────────────────────────────────────────────────────────────────────
 
 // ─── Config masterclass ────────────────────────────────────────────────────────
 
@@ -79,6 +87,122 @@ const masterclassService = {
         return res;
     },
 };
+
+// ─── Modal inscriptions closes ────────────────────────────────────────────────
+
+function ClosedModal() {
+    const navigate  = useNavigate();
+    const [visible, setVisible] = useState(false);
+
+    // Déclenche l'animation d'entrée après le montage
+    useEffect(() => {
+        const t = setTimeout(() => setVisible(true), 80);
+        return () => clearTimeout(t);
+    }, []);
+
+    return (
+        /* Backdrop */
+        <div
+            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-300 ${
+                visible ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ background: "rgba(8, 9, 20, 0.88)", backdropFilter: "blur(12px)" }}
+        >
+            {/* Panel */}
+            <div
+                className={`relative w-full max-w-md transition-all duration-500 ${
+                    visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+                }`}
+            >
+                {/* Halo décoratif */}
+                <div className="absolute -inset-px rounded-3xl bg-gradient-to-br from-amber-400/20 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-400/8 rounded-full blur-[80px] pointer-events-none" />
+
+                <div className="relative bg-[#0d0f1a] border border-white/10 rounded-3xl p-8 text-center overflow-hidden">
+
+                    {/* Texture grille en fond */}
+                    <div
+                        className="absolute inset-0 opacity-[0.025] pointer-events-none"
+                        style={{
+                            backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+                            backgroundSize: "32px 32px",
+                        }}
+                    />
+
+                    {/* Icône */}
+                    <div className="relative mx-auto mb-5 w-20 h-20 flex items-center justify-center">
+                        <div className="absolute inset-0 rounded-full bg-amber-400/10 border border-amber-400/20 animate-ping opacity-30" />
+                        <div className="relative w-20 h-20 rounded-full bg-amber-400/10 border border-amber-400/25 flex items-center justify-center">
+                            <XCircle className="h-9 w-9 text-amber-400" />
+                        </div>
+                    </div>
+
+                    {/* Titre */}
+                    <div className="relative">
+                        <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-full px-3 py-1 mb-4">
+                            <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+                            <span className="text-red-400 text-xs font-bold uppercase tracking-widest">
+                                Inscriptions closes
+                            </span>
+                        </div>
+
+                        <h2 className="text-2xl font-black text-white leading-tight mb-3">
+                            Les inscriptions sont<br />
+                            <span className="text-amber-400">officiellement terminées</span>
+                        </h2>
+
+                        <p className="text-slate-400 text-sm leading-relaxed mb-2">
+                            Avec <strong className="text-white">150+ inscrits</strong>, nous avons atteint
+                            notre capacité maximale pour cette session du 24 mars.
+                        </p>
+
+                        <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                            La prochaine masterclass sera annoncée sur nos réseaux sociaux.
+                            Suivez-nous pour ne rien manquer !
+                        </p>
+
+                        {/* Séparateur décoratif */}
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="h-px flex-1 bg-white/8" />
+                            <Bell className="h-3.5 w-3.5 text-amber-400/60" />
+                            <div className="h-px flex-1 bg-white/8" />
+                        </div>
+
+                        {/* Réseaux sociaux */}
+                        <p className="text-slate-500 text-xs mb-5 uppercase tracking-widest font-semibold">
+                            Suivez-nous pour la prochaine date
+                        </p>
+                        <div className="flex items-center justify-center gap-3 mb-7">
+                            {[
+                                { label: "LinkedIn",  href: "https://linkedin.com/company/model-technologie" },
+                                { label: "WhatsApp",  href: "https://wa.me/221786310432" },
+                            ].map(({ label, href }) => (
+                                <a
+                                    key={label}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex-1 py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-sm font-semibold hover:bg-amber-400/10 hover:border-amber-400/30 hover:text-amber-400 transition-all duration-200"
+                                >
+                                    {label}
+                                </a>
+                            ))}
+                        </div>
+
+                        {/* CTA principal */}
+                        <Button
+                            onClick={() => navigate("/")}
+                            className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-sm rounded-xl transition-all duration-200 hover:shadow-[0_0_24px_rgba(251,191,36,0.35)]"
+                        >
+                            <Home className="h-4 w-4 mr-2" />
+                            Retour à l'accueil
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 // ─── Countdown ────────────────────────────────────────────────────────────────
 
@@ -147,7 +271,7 @@ const SPEAKER = {
 
 function RegistrationForm() {
     const { toast }             = useToast();
-    const { executeRecaptcha }  = useGoogleReCaptcha();      // ← hook reCAPTCHA v3
+    const { executeRecaptcha }  = useGoogleReCaptcha();
     const [form, setForm]       = useState<RegistrationForm>(EMPTY_FORM);
     const [status, setStatus]   = useState<"idle" | "success" | "duplicate">("idle");
 
@@ -155,13 +279,10 @@ function RegistrationForm() {
 
     const mutation = useMutation({
         mutationFn: async () => {
-            // 1. Obtenir le token reCAPTCHA (invisible pour l'utilisateur)
             if (!executeRecaptcha) {
                 throw new Error("reCAPTCHA non initialisé. Rechargez la page.");
             }
             const recaptchaToken = await executeRecaptcha("masterclass_register");
-
-            // 2. Envoyer avec le token
             try {
                 return await masterclassService.register({
                     ...form,
@@ -191,20 +312,11 @@ function RegistrationForm() {
             if (status === 409 || apiMessage.toLowerCase().includes("déjà inscrit")) {
                 setStatus("duplicate");
             } else if (status === 429) {
-                toast({
-                    title: "Trop de tentatives. Veuillez réessayer dans une heure.",
-                    variant: "destructive",
-                });
+                toast({ title: "Trop de tentatives. Veuillez réessayer dans une heure.", variant: "destructive" });
             } else if (status === 403) {
-                toast({
-                    title: "Vérification anti-bot échouée. Veuillez réessayer.",
-                    variant: "destructive",
-                });
+                toast({ title: "Vérification anti-bot échouée. Veuillez réessayer.", variant: "destructive" });
             } else {
-                toast({
-                    title: apiMessage || "Une erreur est survenue.",
-                    variant: "destructive",
-                });
+                toast({ title: apiMessage || "Une erreur est survenue.", variant: "destructive" });
             }
         },
     });
@@ -217,7 +329,6 @@ function RegistrationForm() {
         mutation.mutate();
     };
 
-    // ── État : inscription réussie ─────────────────────────────────────────
     if (status === "success") {
         return (
             <div className="text-center py-8 px-4">
@@ -236,7 +347,6 @@ function RegistrationForm() {
         );
     }
 
-    // ── État : email déjà inscrit ──────────────────────────────────────────
     if (status === "duplicate") {
         return (
             <div className="text-center py-8 px-4">
@@ -263,52 +373,24 @@ function RegistrationForm() {
 
     return (
         <div className="space-y-4">
-            {/* Prénom / Nom */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                     <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Prénom *</Label>
-                    <Input
-                        value={form.firstName}
-                        onChange={e => set({ firstName: e.target.value })}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20"
-                        placeholder="Amadou"
-                    />
+                    <Input value={form.firstName} onChange={e => set({ firstName: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="Amadou" />
                 </div>
                 <div className="space-y-1.5">
                     <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Nom *</Label>
-                    <Input
-                        value={form.lastName}
-                        onChange={e => set({ lastName: e.target.value })}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20"
-                        placeholder="Diallo"
-                    />
+                    <Input value={form.lastName} onChange={e => set({ lastName: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="Diallo" />
                 </div>
             </div>
-
-            {/* Email */}
             <div className="space-y-1.5">
                 <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Email *</Label>
-                <Input
-                    type="email"
-                    value={form.email}
-                    onChange={e => set({ email: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20"
-                    placeholder="amadou@exemple.com"
-                />
+                <Input type="email" value={form.email} onChange={e => set({ email: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="amadou@exemple.com" />
             </div>
-
-            {/* Téléphone */}
             <div className="space-y-1.5">
                 <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Téléphone *</Label>
-                <Input
-                    value={form.phone}
-                    onChange={e => set({ phone: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20"
-                    placeholder="+221 77 000 00 00"
-                />
+                <Input value={form.phone} onChange={e => set({ phone: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="+221 77 000 00 00" />
             </div>
-
-            {/* Profil */}
             <div className="space-y-1.5">
                 <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Vous êtes *</Label>
                 <Select value={form.profile} onValueChange={v => set({ profile: v })}>
@@ -324,32 +406,17 @@ function RegistrationForm() {
                     </SelectContent>
                 </Select>
             </div>
-
-            {/* Entreprise */}
             <div className="space-y-1.5">
                 <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Entreprise / École</Label>
-                <Input
-                    value={form.company}
-                    onChange={e => set({ company: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20"
-                    placeholder="Orange, UGB, UCAD…"
-                />
+                <Input value={form.company} onChange={e => set({ company: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="Orange, UGB, UCAD…" />
             </div>
-
-            {/* CTA */}
-            <Button
-                onClick={handleSubmit}
-                disabled={mutation.isPending}
-                className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-base mt-2 rounded-xl transition-all duration-200 hover:shadow-[0_0_24px_rgba(251,191,36,0.4)]"
-            >
+            <Button onClick={handleSubmit} disabled={mutation.isPending} className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-base mt-2 rounded-xl transition-all duration-200 hover:shadow-[0_0_24px_rgba(251,191,36,0.4)]">
                 {mutation.isPending ? (
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Vérification en cours…</>
                 ) : (
                     <>Je m'inscris gratuitement <ArrowRight className="h-4 w-4 ml-2" /></>
                 )}
             </Button>
-
-            {/* Mentions légales reCAPTCHA + sécurité */}
             <div className="space-y-1.5 pt-1">
                 <p className="text-center text-xs text-slate-500 flex items-center justify-center gap-1.5">
                     <Mail className="h-3 w-3" />
@@ -358,15 +425,9 @@ function RegistrationForm() {
                 <p className="text-center text-[10px] text-slate-600 flex items-center justify-center gap-1">
                     <ShieldCheck className="h-3 w-3 text-slate-700" />
                     Protégé par reCAPTCHA ·{" "}
-                    <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer"
-                       className="underline hover:text-slate-400 transition-colors">
-                        Confidentialité
-                    </a>
+                    <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline hover:text-slate-400 transition-colors">Confidentialité</a>
                     {" "}·{" "}
-                    <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer"
-                       className="underline hover:text-slate-400 transition-colors">
-                        CGU
-                    </a>
+                    <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline hover:text-slate-400 transition-colors">CGU</a>
                 </p>
             </div>
         </div>
@@ -380,6 +441,9 @@ export default function MasterclassPage() {
 
     return (
         <div className="min-h-screen bg-[#0d0f1a] text-white">
+
+            {/* 🔒 Modal inscriptions closes — monté en premier, z-[100] */}
+            {REGISTRATIONS_CLOSED && <ClosedModal />}
 
             {/* ── NAVBAR ───────────────────────────────────────────────────────── */}
             <nav className="border-b border-white/5 bg-[#0d0f1a]/80 backdrop-blur-sm sticky top-0 z-50">
@@ -402,14 +466,11 @@ export default function MasterclassPage() {
                 <div className="container mx-auto px-4 lg:px-8 pt-16 pb-12 relative z-10">
                     <div className="max-w-6xl mx-auto">
                         <div className="grid lg:grid-cols-[1fr_400px] gap-12 items-start">
-
-                            {/* Colonne gauche */}
                             <div>
                                 <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/30 rounded-full px-4 py-1.5 mb-6">
                                     <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
                                     <span className="text-amber-400 text-xs font-bold uppercase tracking-widest">Masterclass Gratuite · Places Limitées</span>
                                 </div>
-
                                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.05] mb-6 tracking-tight">
                                     Construire son premier{" "}
                                     <span className="relative inline-block">
@@ -419,11 +480,9 @@ export default function MasterclassPage() {
                                     <br />avec{" "}
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f2c811] to-amber-400">Microsoft Power BI</span>
                                 </h1>
-
                                 <p className="text-slate-300 text-lg leading-relaxed mb-8 max-w-xl">
                                     En 2 heures, apprenez à transformer vos données brutes en dashboards professionnels qui impressionnent. Une session 100% pratique, live et gratuite.
                                 </p>
-
                                 <div className="flex flex-wrap gap-4 mb-10">
                                     {[
                                         { icon: Calendar, text: "Mardi 24 mars 2026" },
@@ -437,7 +496,6 @@ export default function MasterclassPage() {
                                         </div>
                                     ))}
                                 </div>
-
                                 <div className="mb-10">
                                     <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-3">La session commence dans</p>
                                     <div className="flex items-center gap-3">
@@ -450,7 +508,6 @@ export default function MasterclassPage() {
                                         <CountdownBlock value={countdown.seconds} label="sec" />
                                     </div>
                                 </div>
-
                                 <div className="grid sm:grid-cols-2 gap-3">
                                     {[
                                         "100% gratuit, aucune carte requise",
@@ -468,7 +525,7 @@ export default function MasterclassPage() {
                                 </div>
                             </div>
 
-                            {/* Colonne droite — Formulaire */}
+                            {/* Formulaire */}
                             <div className="lg:sticky lg:top-20" id="inscription">
                                 <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
                                     <div className="text-center mb-6">
