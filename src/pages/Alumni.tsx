@@ -670,8 +670,8 @@ const AlumniPage = () => {
           <div className="container mx-auto px-4 lg:px-8">
             <div className="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto text-center">
               {[
-                { icon: Building2, label: "Ils recrutent nos alumni", companies: "BICIS · Wave · Sonatel · Baobab · Orange · Ecobank" },
-                { icon: Clock,     label: "Délai moyen pour trouver un poste", stat: "6 semaines", sub: "après la certification" },
+                { icon: Building2, label: "Ils recrutent nos alumni", companies: "SGSN · Wave · Sonatel · Baobab · CESAG · CETUD" },
+                { icon: Clock,     label: "Délai moyen pour trouver un poste", stat: "3 mois", sub: "après la certification" },
                 { icon: TrendingUp, label: "Augmentation salariale moyenne", stat: "+35%", sub: "constatée sur les reconversions" },
               ].map((item, i) => (
                   <div key={i} className="p-5 rounded-2xl border border-border bg-card">
