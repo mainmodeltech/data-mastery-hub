@@ -39,6 +39,7 @@ import type { Bootcamp, BootcampSession } from "@/types/bootcamp.type";
 import { COMPANY, QUERY_CONFIG } from "@/config/constants";
 import { RegistrationModal } from "./RegistrationModal";
 import {getBootcampStatic, StaticEnrichment} from "@/config/bootcamps.config.ts";
+import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -723,6 +724,7 @@ export default function BootcampsPage() {
 
   return (
       <Layout>
+        <SeoHead {...PAGE_SEO.bootcamps} />
         {/* ── Hero ──────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-0 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
@@ -944,6 +946,7 @@ export default function BootcampsPage() {
                 onClose={() => setRegisterFor(null)}
             />
         )}
+
       </Layout>
   );
 }
