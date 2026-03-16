@@ -196,7 +196,7 @@ export function HeroSection() {
                       <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-ping absolute" />
                       <div className="w-2.5 h-2.5 rounded-full bg-green-400 relative" />
                     </div>
-                    <span className="text-background text-sm font-medium">Session en cours · 24 apprenants</span>
+                    {/*<span className="text-background text-sm font-medium">Session en cours · 24 apprenants</span>*/}
                   </div>
                 </div>
               </div>
