@@ -339,7 +339,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user, signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   // ── Fetch bootcamps dynamique ──────────────────────────────────────────────
   // Même queryKey que BootcampsPage → résultat mis en cache, pas de double appel
@@ -482,43 +482,43 @@ export function Header() {
             </div>
 
             {/* ── Desktop CTAs ── */}
-            <div className="hidden lg:flex lg:items-center lg:gap-3 flex-shrink-0">
-              {isAuthenticated ? (
-                  <div className="flex items-center gap-2">
-                    <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="text-sm font-medium gap-1.5"
-                    >
-                      <Link to="/admin">
-                        <LayoutDashboard className="h-4 w-4" />
-                        {user?.email?.split("@")[0] ?? "Admin"}
-                      </Link>
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleSignOut}
-                        className="text-sm font-medium text-muted-foreground hover:text-destructive gap-1.5"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Déconnexion
-                    </Button>
-                  </div>
-              ) : (
-                  <Button
-                      asChild
-                      size="sm"
-                      className="font-bold bg-primary hover:bg-primary/90 text-white px-5"
-                  >
-                    <Link to="/admin/login">
-                      <LogIn className="h-4 w-4 mr-1.5" />
-                      Connexion
-                    </Link>
-                  </Button>
-              )}
-            </div>
+            {/*<div className="hidden lg:flex lg:items-center lg:gap-3 flex-shrink-0">*/}
+            {/*  {isAuthenticated ? (*/}
+            {/*      <div className="flex items-center gap-2">*/}
+            {/*        <Button*/}
+            {/*            asChild*/}
+            {/*            variant="outline"*/}
+            {/*            size="sm"*/}
+            {/*            className="text-sm font-medium gap-1.5"*/}
+            {/*        >*/}
+            {/*          <Link to="/admin">*/}
+            {/*            <LayoutDashboard className="h-4 w-4" />*/}
+            {/*            {user?.email?.split("@")[0] ?? "Admin"}*/}
+            {/*          </Link>*/}
+            {/*        </Button>*/}
+            {/*        <Button*/}
+            {/*            variant="ghost"*/}
+            {/*            size="sm"*/}
+            {/*            onClick={handleSignOut}*/}
+            {/*            className="text-sm font-medium text-muted-foreground hover:text-destructive gap-1.5"*/}
+            {/*        >*/}
+            {/*          <LogOut className="h-4 w-4" />*/}
+            {/*          Déconnexion*/}
+            {/*        </Button>*/}
+            {/*      </div>*/}
+            {/*  ) : (*/}
+            {/*      <Button*/}
+            {/*          asChild*/}
+            {/*          size="sm"*/}
+            {/*          className="font-bold bg-primary hover:bg-primary/90 text-white px-5"*/}
+            {/*      >*/}
+            {/*        <Link to="/admin/login">*/}
+            {/*          <LogIn className="h-4 w-4 mr-1.5" />*/}
+            {/*          Connexion*/}
+            {/*        </Link>*/}
+            {/*      </Button>*/}
+            {/*  )}*/}
+            {/*</div>*/}
 
             {/* ── Mobile burger ── */}
             <button
