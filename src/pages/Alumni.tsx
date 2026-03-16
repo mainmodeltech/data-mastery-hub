@@ -687,24 +687,7 @@ const AlumniPage = () => {
           </div>
         </section>
 
-        {/* ── TÉMOIGNAGES ──────────────────────────────────────────────────────── */}
-        <section className="py-20 lg:py-28 overflow-hidden">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
-                <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
-                Ce qu'ils en disent
-              </div>
-              <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-3">
-                Les mots de nos alumni
-              </h2>
-              <p className="text-muted-foreground">
-                Note moyenne <strong className="text-foreground">4.9/5</strong> sur {testimonials.length} avis vérifiés
-              </p>
-            </div>
-          </div>
-          <TestimonialSlider testimonials={testimonials} />
-        </section>
+
 
         {/* ── PROJETS → backend Spring Boot ────────────────────────────────────── */}
         {(loadingProjects || projects.length > 0) && (
@@ -797,6 +780,25 @@ const AlumniPage = () => {
                 </>
             )}
           </div>
+        </section>
+
+        {/* ── TÉMOIGNAGES ──────────────────────────────────────────────────────── */}
+        <section className="py-20 lg:py-28 overflow-hidden">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
+                <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+                Ce qu'ils en disent
+              </div>
+              <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-3">
+                Les mots de nos alumni
+              </h2>
+              <p className="text-muted-foreground">
+                Note moyenne <strong className="text-foreground">4.9/5</strong> sur {testimonials.length} avis vérifiés
+              </p>
+            </div>
+          </div>
+          <TestimonialSlider testimonials={testimonials} />
         </section>
 
         {/* ── CTAs ─────────────────────────────────────────────────────────────── */}

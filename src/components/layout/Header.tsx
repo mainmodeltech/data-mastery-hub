@@ -669,52 +669,52 @@ export function Header() {
                   ))}
 
                   {/* Auth mobile */}
-                  <div className="mt-3 pt-3 border-t border-border flex flex-col gap-2">
-                    {isAuthenticated ? (
-                        <>
-                          <Button
-                              asChild
-                              variant="outline"
-                              className="w-full justify-start gap-2"
-                          >
-                            <Link to="/admin">
-                              <LayoutDashboard className="h-4 w-4" />
-                              Tableau de bord admin
-                            </Link>
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
-                              onClick={handleSignOut}
-                          >
-                            <LogOut className="h-4 w-4" />
-                            Déconnexion
-                          </Button>
-                        </>
-                    ) : (
-                        <>
-                          <Button
-                              asChild
-                              variant="outline"
-                              className="w-full justify-start gap-2"
-                          >
-                            <Link to="/admin/login">
-                              <LogIn className="h-4 w-4" />
-                              Connexion admin
-                            </Link>
-                          </Button>
-                          <Button
-                              asChild
-                              className="w-full font-bold bg-primary text-white"
-                          >
-                            <Link to="/bootcamps">
-                              Voir les sessions · S'inscrire
-                              <ArrowRight className="h-4 w-4 ml-2" />
-                            </Link>
-                          </Button>
-                        </>
-                    )}
-                  </div>
+                  {/*<div className="mt-3 pt-3 border-t border-border flex flex-col gap-2">*/}
+                  {/*  {isAuthenticated ? (*/}
+                  {/*      <>*/}
+                  {/*        <Button*/}
+                  {/*            asChild*/}
+                  {/*            variant="outline"*/}
+                  {/*            className="w-full justify-start gap-2"*/}
+                  {/*        >*/}
+                  {/*          <Link to="/admin">*/}
+                  {/*            <LayoutDashboard className="h-4 w-4" />*/}
+                  {/*            Tableau de bord admin*/}
+                  {/*          </Link>*/}
+                  {/*        </Button>*/}
+                  {/*        <Button*/}
+                  {/*            variant="ghost"*/}
+                  {/*            className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"*/}
+                  {/*            onClick={handleSignOut}*/}
+                  {/*        >*/}
+                  {/*          <LogOut className="h-4 w-4" />*/}
+                  {/*          Déconnexion*/}
+                  {/*        </Button>*/}
+                  {/*      </>*/}
+                  {/*  ) : (*/}
+                  {/*      <>*/}
+                  {/*        <Button*/}
+                  {/*            asChild*/}
+                  {/*            variant="outline"*/}
+                  {/*            className="w-full justify-start gap-2"*/}
+                  {/*        >*/}
+                  {/*          <Link to="/admin/login">*/}
+                  {/*            <LogIn className="h-4 w-4" />*/}
+                  {/*            Connexion admin*/}
+                  {/*          </Link>*/}
+                  {/*        </Button>*/}
+                  {/*        <Button*/}
+                  {/*            asChild*/}
+                  {/*            className="w-full font-bold bg-primary text-white"*/}
+                  {/*        >*/}
+                  {/*          <Link to="/bootcamps">*/}
+                  {/*            Voir les sessions · S'inscrire*/}
+                  {/*            <ArrowRight className="h-4 w-4 ml-2" />*/}
+                  {/*          </Link>*/}
+                  {/*        </Button>*/}
+                  {/*      </>*/}
+                  {/*  )}*/}
+                  {/*</div>*/}
                 </div>
               </div>
           )}
