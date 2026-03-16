@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSendContactMessage } from '@/hooks/useContacts';
 import { COMPANY } from '@/config/constants';
 import type { CreateContactMessageDTO } from '@/types';
+import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -48,6 +49,7 @@ const Contact = () => {
 
   return (
     <Layout>
+      <SeoHead {...PAGE_SEO.bootcamps} />
       {/* Hero */}
       <section className="py-20 lg:py-28 bg-secondary">
         <div className="container mx-auto px-4 lg:px-8">
@@ -127,6 +129,7 @@ const Contact = () => {
           </div>
         </div>
       </section>
+
     </Layout>
   );
 };

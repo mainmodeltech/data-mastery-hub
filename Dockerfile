@@ -7,6 +7,8 @@ RUN npm install
 
 COPY . .
 RUN npm run build
+RUN npm install -D tsx
+RUN npm run build:seo
 
 # ---- Production stage ----
 FROM nginx:alpine

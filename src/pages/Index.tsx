@@ -6,10 +6,12 @@ import { OrientationTeaser } from "@/components/home/OrientationTeaser";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { B2BSection } from "@/components/home/B2BSection";
 import { SessionsSection } from "@/components/home/SessionsSection";
+import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 
 const Index = () => {
     return (
         <Layout>
+            <SeoHead {...PAGE_SEO.bootcamps} />
             <HeroSection />
             <StatsSection />
             <BootcampsSection />
@@ -17,8 +19,11 @@ const Index = () => {
             <TestimonialsSection />
             {/*<B2BSection />*/}
             <SessionsSection />
+
         </Layout>
     );
 };
+
+
 
 export default Index;

@@ -36,6 +36,7 @@ import {
   usePublishedProjectDetail,
 } from "@/hooks/useAlumni";
 import type { AlumniSummary, ProjectSummary, ProjectResponse } from "@/services/api/networkingService";
+import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
 
 // ─── Données statiques fallback ───────────────────────────────────────────────
 
@@ -614,7 +615,7 @@ const AlumniPage = () => {
 
   return (
       <Layout>
-
+        <SeoHead {...PAGE_SEO.bootcamps} />
         {/* ── HERO ─────────────────────────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-28 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
@@ -869,6 +870,7 @@ const AlumniPage = () => {
             projectId={selectedProjectId}
             onClose={() => setSelectedProjectId(null)}
         />
+
       </Layout>
   );
 };

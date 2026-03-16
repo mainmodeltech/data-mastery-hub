@@ -44,6 +44,7 @@ import {
     Home,
 } from "lucide-react";
 import { httpClient } from "@/services/httpClient";
+import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
 
 // ─── 🔒 Interrupteur inscriptions ─────────────────────────────────────────────
 // Passer à false pour rouvrir les inscriptions
@@ -683,6 +684,7 @@ export default function MasterclassPage() {
                     </Link>
                 </div>
             </footer>
+            <SeoHead {...PAGE_SEO.bootcamps} />
         </div>
     );
 }
