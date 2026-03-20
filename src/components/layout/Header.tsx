@@ -120,7 +120,7 @@ function buildBootcampMenuItems(bootcamps: Bootcamp[]): MenuItem[] {
           title: bc.title,
           // Utilise duration du backend si disponible, sinon fallback statique
           desc: bc.duration ?? style.fallbackDesc,
-          href: "/bootcamps",
+          href: bc.category == "bi" ? "/bootcamps?tab=bi" : "/bootcamps?tab=data",
           anchor: null,
           badge,
           badgeColor: badge ? style.badgeColor : "",

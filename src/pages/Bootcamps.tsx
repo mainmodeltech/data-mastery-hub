@@ -3,8 +3,8 @@
  *
  */
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import {useEffect, useState} from "react";
+import {Link, useSearchParams} from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { bootcampService } from "@/services/bootcampService";
@@ -705,26 +705,56 @@ function BootcampDetail({
   );
 }
 
-// ─── Page principale ──────────────────────────────────────────────────────────
+
 
 export default function BootcampsPage() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [registerFor, setRegisterFor] = useState<Bootcamp | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeIndex, setActiveIndex]   = useState(0);
+  const [registerFor, setRegisterFor]   = useState<Bootcamp | null>(null);
 
   const { data: bootcamps, isLoading, isError } = useQuery({
     queryKey: ["bootcamps", "public"],
-    queryFn: bootcampService.list,
+    queryFn:  bootcampService.list,
     staleTime: QUERY_CONFIG.staleTime,
   });
 
+  // ── Synchroniser l'index actif depuis ?tab= dans l'URL ──────────────────────
+  // Fonctionne au premier chargement ET quand l'URL change (ex: lien externe).
+  useEffect(() => {
+    if (!bootcamps || bootcamps.length === 0) return;
+
+    const tabParam = searchParams.get("tab"); // "bi" | "data" | null
+    if (!tabParam) {
+      // Pas de param → afficher le premier bootcamp (ordre du backend : featured first)
+      setActiveIndex(0);
+      return;
+    }
+
+    const idx = bootcamps.findIndex((b) => b.category === tabParam);
+    if (idx !== -1) {
+      setActiveIndex(idx);
+    }
+    // Si le param ne correspond à aucun bootcamp, on reste sur 0
+  }, [bootcamps, searchParams]);
+
+  // ── Changer d'onglet ET mettre à jour l'URL ─────────────────────────────────
+  const handleTabChange = (idx: number) => {
+    setActiveIndex(idx);
+    const category = bootcamps?.[idx]?.category;
+    if (category) {
+      setSearchParams({ tab: category }, { replace: true }); // replace: true → pas d'entrée dans l'historique
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  };
+
   const activeBootcamp = bootcamps?.[activeIndex];
-  const activeStatic = activeBootcamp
-      ? getBootcampStatic(activeBootcamp.category)
-      : null;
+  const activeStatic   = activeBootcamp ? getBootcampStatic(activeBootcamp.category) : null;
 
   return (
       <Layout>
         <SeoHead {...PAGE_SEO.bootcamps} />
+
         {/* ── Hero ──────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-0 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
@@ -753,9 +783,7 @@ export default function BootcampsPage() {
                   className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-6 leading-tight opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.2s" }}
               >
-                {bootcamps?.length === 1
-                    ? "1 bootcamp pour"
-                    : `${bootcamps?.length ?? 2} bootcamps pour`}{" "}
+                {bootcamps?.length === 1 ? "1 bootcamp pour" : `${bootcamps?.length ?? 2} bootcamps pour`}{" "}
                 <span className="text-accent">transformer</span>
                 <br />
                 votre carrière data
@@ -764,8 +792,8 @@ export default function BootcampsPage() {
                   className="text-lg text-background/65 mb-8 leading-relaxed opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.3s" }}
               >
-                Des programmes intensifs, conçus avec les entreprises qui recrutent
-                à Dakar. De la théorie à l'employabilité — en 8 ou 12 semaines.
+                Des programmes intensifs, conçus avec les entreprises qui recrutent à Dakar.
+                De la théorie à l'employabilité — en 8 ou 10 semaines.
               </p>
 
               {/* Trust strip */}
@@ -773,14 +801,12 @@ export default function BootcampsPage() {
                   className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-background/40 text-sm mb-10 opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.35s" }}
               >
-                {(
-                    [
-                      { icon: Users, text: "150+ alumni formés" },
-                      { icon: TrendingUp, text: "90% en poste en 3 mois" },
-                      { icon: MapPin, text: "Présentiel · Dakar" },
-                      { icon: Award, text: "Certification incluse" },
-                    ] as const
-                ).map((t, i) => (
+                {([
+                  { icon: Users,       text: "150+ alumni formés"        },
+                  { icon: TrendingUp,  text: "90% en poste en 3 mois"    },
+                  { icon: MapPin,      text: "Présentiel · Dakar"         },
+                  { icon: Award,       text: "Certification incluse"      },
+                ] as const).map((t, i) => (
                     <div key={i} className="flex items-center gap-1.5">
                       <t.icon className="h-3.5 w-3.5" />
                       {t.text}
@@ -789,7 +815,7 @@ export default function BootcampsPage() {
               </div>
             </div>
 
-            {/* Tab switcher */}
+            {/* ── Tab switcher ────────────────────────────── */}
             {isLoading ? (
                 <div className="flex justify-center pb-16">
                   <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -806,9 +832,9 @@ export default function BootcampsPage() {
                 >
                   <div className="inline-flex bg-background/8 border border-background/15 rounded-2xl p-1.5 gap-1.5">
                     {bootcamps.map((bc, idx) => {
-                      const s = getBootcampStatic(bc.category);
-                      const isActive = activeIndex === idx;
-                      const TabIcon = s.icon;
+                      const s          = getBootcampStatic(bc.category);
+                      const isActive   = activeIndex === idx;
+                      const TabIcon    = s.icon;
                       const tabSession = bc.nextSession;
                       const urgentSpots =
                           tabSession?.spotsRemaining !== null &&
@@ -818,32 +844,23 @@ export default function BootcampsPage() {
                       return (
                           <button
                               key={bc.id}
-                              onClick={() => setActiveIndex(idx)}
+                              onClick={() => handleTabChange(idx)}   // ← handleTabChange au lieu de setActiveIndex
                               className={cn(
                                   "flex items-center gap-3 px-6 py-4 rounded-xl font-semibold text-sm transition-all duration-200",
                                   isActive
                                       ? "bg-background text-foreground shadow-sm"
-                                      : "text-amber-500/60 hover:text-amber-400/80 hover:bg-background/5"
+                                      : "text-background/60 hover:text-background/80 hover:bg-background/5"
                               )}
                           >
-                            <TabIcon
-                                className={cn(
-                                    "h-4 w-4",
-                                    isActive
-                                        ? s.colorKey === "accent"
-                                            ? "text-accent"
-                                            : "text-primary"
-                                        : ""
-                                )}
-                            />
+                            <TabIcon className={cn("h-4 w-4", isActive ? (s.colorKey === "accent" ? "text-accent" : "text-primary") : "")} />
                             <span className="hidden sm:block">{bc.title}</span>
                             <span className="sm:hidden">
-                        {bc.category === "bi" ? "Power BI" : "Data & Python"}
-                      </span>
+                              {bc.category === "bi" ? "Power BI" : "Data & Python"}
+                            </span>
                             {urgentSpots && tabSession && (
                                 <span className="hidden sm:block text-xs bg-orange-500/15 text-orange-500 font-bold px-2 py-0.5 rounded-full">
-                          {tabSession.spotsRemaining} places
-                        </span>
+                                  {tabSession.spotsRemaining} places
+                                </span>
                             )}
                           </button>
                       );
@@ -855,21 +872,13 @@ export default function BootcampsPage() {
 
           {/* Wave */}
           <div className="relative z-10">
-            <svg
-                viewBox="0 0 1440 48"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-full"
-            >
-              <path
-                  d="M0 48 L0 24 Q360 0 720 24 Q1080 48 1440 24 L1440 48 Z"
-                  fill="hsl(var(--background))"
-              />
+            <svg viewBox="0 0 1440 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+              <path d="M0 48 L0 24 Q360 0 720 24 Q1080 48 1440 24 L1440 48 Z" fill="hsl(var(--background))" />
             </svg>
           </div>
         </section>
 
-        {/* ── Détail bootcamp ─────────────────────────────── */}
+        {/* ── Détail bootcamp ──────────────────────────────── */}
         {isLoading ? (
             <div className="flex justify-center py-32">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -878,23 +887,13 @@ export default function BootcampsPage() {
             <div className="text-center py-32 text-muted-foreground">
               <AlertCircle className="h-10 w-10 mx-auto mb-4" />
               <p>Impossible de charger les bootcamps.</p>
-              <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => window.location.reload()}
-              >
-                Réessayer
-              </Button>
+              <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>Réessayer</Button>
             </div>
         ) : activeBootcamp ? (
-            <BootcampDetail
-                key={activeBootcamp.id}
-                bootcamp={activeBootcamp}
-                onRegister={setRegisterFor}
-            />
+            <BootcampDetail key={activeBootcamp.id} bootcamp={activeBootcamp} onRegister={setRegisterFor} />
         ) : null}
 
-        {/* ── CTA mobile sticky ───────────────────────────── */}
+        {/* ── CTA mobile sticky ────────────────────────────── */}
         {activeBootcamp && (
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
               <Button
@@ -902,29 +901,22 @@ export default function BootcampsPage() {
                   disabled={!activeBootcamp.nextSession}
                   className={cn(
                       "w-full h-12 font-bold",
-                      activeStatic?.colorKey === "accent"
-                          ? "bg-accent hover:bg-accent/90 text-white"
-                          : "bg-primary hover:bg-primary/90 text-white"
+                      activeStatic?.colorKey === "accent" ? "bg-accent hover:bg-accent/90 text-white" : "bg-primary hover:bg-primary/90 text-white"
                   )}
               >
-                Réserver ma place
-                {activeBootcamp.price ? ` · ${activeBootcamp.price}` : ""}
+                Réserver ma place{activeBootcamp.price ? ` · ${activeBootcamp.price}` : ""}
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
         )}
 
-        {/* ── Compare strip ───────────────────────────────── */}
+        {/* ── Compare strip ─────────────────────────────────── */}
         <section className="py-12 bg-secondary/50 border-t border-border">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-3xl mx-auto">
               <div>
-                <p className="font-semibold text-foreground">
-                  Indécis entre les deux bootcamps ?
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Notre quiz d'orientation vous guide en 2 minutes.
-                </p>
+                <p className="font-semibold text-foreground">Indécis entre les deux bootcamps ?</p>
+                <p className="text-sm text-muted-foreground">Notre quiz d'orientation vous guide en 2 minutes.</p>
               </div>
               <Button asChild variant="outline" className="group flex-shrink-0">
                 <Link to="/orientation">
@@ -937,7 +929,7 @@ export default function BootcampsPage() {
           </div>
         </section>
 
-        {/* ── Modale d'inscription ────────────────────────── */}
+        {/* ── Modale d'inscription ──────────────────────────── */}
         {registerFor && (
             <RegistrationModal
                 bootcamp={registerFor}
@@ -946,7 +938,6 @@ export default function BootcampsPage() {
                 onClose={() => setRegisterFor(null)}
             />
         )}
-
       </Layout>
   );
 }
