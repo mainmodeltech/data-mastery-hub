@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { registrationService } from '@/services/api';
-import type { CreateRegistrationDTO, RegistrationStatus } from '@/types';
+import type { CreateRegistrationDTO, RegistrationStatus, PaymentStatus } from '@/types';
 import { QUERY_CONFIG } from '@/config/constants';
 import {httpClient} from "@/services/httpClient.ts";
 
@@ -21,10 +21,10 @@ export function useCreateRegistration() {
 }
 
 /** Hook pour recuperer toutes les inscriptions (admin) */
-export function useRegistrations(page?: number, size?: number, status?: RegistrationStatus) {
+export function useRegistrations(page?: number, size?: number, status?: RegistrationStatus, paymentStatus?: PaymentStatus) {
   return useQuery({
-    queryKey: [...REGISTRATION_KEYS.all, { page, size, status }],
-    queryFn: () => registrationService.getAll(page, size, status),
+    queryKey: [...REGISTRATION_KEYS.all, { page, size, status, paymentStatus }],
+    queryFn: () => registrationService.getAll(page, size, status, paymentStatus),
     staleTime: QUERY_CONFIG.staleTime,
   });
 }

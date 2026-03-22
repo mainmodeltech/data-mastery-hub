@@ -8,6 +8,7 @@ import type {
   Registration,
   CreateRegistrationDTO,
   RegistrationStatus,
+  PaymentStatus,
   PaginatedResponse,
 } from '@/types';
 
@@ -20,9 +21,9 @@ export const registrationService = {
     httpClient.post<Registration>(PUBLIC_PATH, data, { skipAuth: true }),
 
   /** Recuperer toutes les inscriptions (admin) */
-  getAll: (page?: number, size?: number, status?: RegistrationStatus) =>
+  getAll: (page?: number, size?: number, status?: RegistrationStatus, paymentStatus?: PaymentStatus) =>
     httpClient.get<PaginatedResponse<Registration>>(ADMIN_PATH, {
-      params: { page, size, status },
+      params: { page, size, status, paymentStatus },
     }),
 
   /** Recuperer une inscription par ID (admin) */

@@ -710,16 +710,25 @@ const AdminInscriptions = () => {
   const [pageSize, setPageSize]   = useState<PageSize>(10);
 
   // ── Filtres ────────────────────────────────────────────────────────────────
-  const [selected, setSelected]         = useState<Registration | null>(null);
-  const [filterStatus, setFilterStatus] = useState<RegistrationStatus | "all">("all");
-  const [search, setSearch]             = useState("");
+  const [selected, setSelected]                   = useState<Registration | null>(null);
+  const [filterStatus, setFilterStatus]           = useState<RegistrationStatus | "all">("all");
+  const [filterPayment, setFilterPayment]         = useState<PaymentStatus | "all">("all");
+  const [search, setSearch]                       = useState("");
 
   const statusParam =
       filterStatus === "all" ? undefined : (filterStatus as RegistrationStatus);
+  const paymentParam =
+      filterPayment === "all" ? undefined : (filterPayment as PaymentStatus);
 
   // Réinitialiser à la page 0 quand on change le filtre ou la taille
   const handleFilterStatus = (s: RegistrationStatus | "all") => {
     setFilterStatus(s);
+    setFilterPayment("all"); // un seul filtre server-side a la fois
+    setPage(0);
+  };
+  const handleFilterPayment = (s: PaymentStatus | "all") => {
+    setFilterPayment(s);
+    setFilterStatus("all"); // un seul filtre server-side a la fois
     setPage(0);
   };
   const handlePageSize = (s: PageSize) => {
@@ -728,7 +737,7 @@ const AdminInscriptions = () => {
   };
 
   // ── Data ───────────────────────────────────────────────────────────────────
-  const { data, isLoading }   = useRegistrations(page, pageSize, statusParam);
+  const { data, isLoading }   = useRegistrations(page, pageSize, statusParam, paymentParam);
   const updateStatusMutation  = useUpdateRegistrationStatus();
 
   const registrations: Registration[] = data?.content ?? [];
@@ -824,12 +833,12 @@ const AdminInscriptions = () => {
             />
           </div>
 
-          {/* Filtre statut */}
+          {/* Filtre statut inscription */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
                 onClick={() => handleFilterStatus("all")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-                    filterStatus === "all"
+                    filterStatus === "all" && filterPayment === "all"
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-card text-muted-foreground border-border hover:border-primary/50"
                 }`}
@@ -847,6 +856,25 @@ const AdminInscriptions = () => {
                     }`}
                 >
                   {STATUS_CONFIG[s].label}
+                </button>
+            ))}
+
+            {/* Separateur */}
+            <span className="text-muted-foreground/40 mx-1">|</span>
+
+            {/* Filtre paiement */}
+            {(["UNPAID", "PARTIAL", "PAID"] as PaymentStatus[]).map((s) => (
+                <button
+                    key={s}
+                    onClick={() => handleFilterPayment(s)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                        filterPayment === s
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground border-border hover:border-primary/50"
+                    }`}
+                >
+                  {PAYMENT_STATUS_CONFIG[s].icon}
+                  <span className="ml-1">{PAYMENT_STATUS_CONFIG[s].label}</span>
                 </button>
             ))}
           </div>

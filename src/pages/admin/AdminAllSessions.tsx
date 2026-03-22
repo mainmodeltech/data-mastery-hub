@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminBootcampService } from "@/services/Adminbootcampservice";
+import { useFinancialSummary } from "@/hooks/usePayments";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
     Pencil, Trash2, Star, StarOff, Loader2, Calendar, Users, BookOpen, Plus,
+    Wallet, TrendingUp, CircleDollarSign, Check, Clock, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type {
@@ -72,6 +74,122 @@ function sessionToForm(s: SessionWithBootcamp): SessionFormState {
     };
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatFcfa(amount: number | null | undefined): string {
+    if (amount == null) return "—";
+    return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
+}
+
+// ─── Modale resume financier ─────────────────────────────────────────────────
+
+function FinancialSummaryModal({ sessionId, sessionName, open, onClose }: {
+    sessionId: string; sessionName: string; open: boolean; onClose: () => void;
+}) {
+    const { data, isLoading } = useFinancialSummary(open ? sessionId : "");
+
+    // data is ApiResponse<SessionFinancialSummary>
+    const summary = data?.data;
+
+    return (
+        <Dialog open={open} onOpenChange={onClose}>
+            <DialogContent className="max-w-lg">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <CircleDollarSign className="h-5 w-5 text-primary" />
+                        Finances — {sessionName}
+                    </DialogTitle>
+                </DialogHeader>
+
+                {isLoading ? (
+                    <div className="flex justify-center py-12">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                ) : !summary ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">Aucune donnee disponible</p>
+                ) : (
+                    <div className="space-y-6 pt-2">
+                        {/* Barre de progression globale */}
+                        <div>
+                            <div className="flex items-center justify-between text-sm mb-2">
+                                <span className="font-medium text-foreground">Taux de recouvrement</span>
+                                <span className="font-bold text-lg text-foreground">{summary.collectionRate}%</span>
+                            </div>
+                            <div className="h-3 bg-muted rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-700 ${
+                                        summary.collectionRate >= 100 ? "bg-emerald-500" :
+                                        summary.collectionRate >= 50 ? "bg-amber-500" : "bg-red-500"
+                                    }`}
+                                    style={{ width: `${Math.min(100, summary.collectionRate)}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* KPIs financiers */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-muted/50 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                                    <span className="text-xs text-muted-foreground font-medium">Objectif</span>
+                                </div>
+                                <p className="text-lg font-bold text-foreground">{formatFcfa(summary.revenueTarget)}</p>
+                            </div>
+                            <div className="bg-muted/50 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Wallet className="h-4 w-4 text-emerald-600" />
+                                    <span className="text-xs text-muted-foreground font-medium">Encaisse</span>
+                                </div>
+                                <p className="text-lg font-bold text-emerald-600">{formatFcfa(summary.totalCollected)}</p>
+                            </div>
+                            <div className="bg-muted/50 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Clock className="h-4 w-4 text-amber-600" />
+                                    <span className="text-xs text-muted-foreground font-medium">Reste a recouvrer</span>
+                                </div>
+                                <p className="text-lg font-bold text-amber-600">{formatFcfa(summary.remainingToCollect)}</p>
+                            </div>
+                            <div className="bg-muted/50 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Users className="h-4 w-4 text-violet-600" />
+                                    <span className="text-xs text-muted-foreground font-medium">Inscriptions</span>
+                                </div>
+                                <p className="text-lg font-bold text-foreground">{summary.totalRegistrations}</p>
+                            </div>
+                        </div>
+
+                        {/* Repartition statuts paiement */}
+                        <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                                Repartition des paiements
+                            </p>
+                            <div className="flex gap-3">
+                                <div className="flex-1 text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
+                                    <Check className="h-4 w-4 text-emerald-600 mx-auto mb-1" />
+                                    <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{summary.paidCount}</p>
+                                    <p className="text-xs text-emerald-600 dark:text-emerald-400">Payes</p>
+                                </div>
+                                <div className="flex-1 text-center bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                                    <Clock className="h-4 w-4 text-amber-600 mx-auto mb-1" />
+                                    <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{summary.partialCount}</p>
+                                    <p className="text-xs text-amber-600 dark:text-amber-400">Partiels</p>
+                                </div>
+                                <div className="flex-1 text-center bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                                    <X className="h-4 w-4 text-red-600 mx-auto mb-1" />
+                                    <p className="text-2xl font-bold text-red-700 dark:text-red-400">{summary.unpaidCount}</p>
+                                    <p className="text-xs text-red-600 dark:text-red-400">Non payes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+// ─── Page principale ─────────────────────────────────────────────────────────
+
 export default function AdminAllSessions() {
     const queryClient = useQueryClient();
     const { toast } = useToast();
@@ -81,6 +199,8 @@ export default function AdminAllSessions() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingSession, setEditingSession] = useState<SessionWithBootcamp | null>(null);
     const [form, setForm] = useState<SessionFormState>(defaultForm());
+    const [financialSessionId, setFinancialSessionId] = useState<string | null>(null);
+    const [financialSessionName, setFinancialSessionName] = useState("");
 
     const { data: bootcamps, isLoading: loadingBootcamps } = useQuery({
         queryKey: ["admin", "bootcamps"],
@@ -280,6 +400,13 @@ export default function AdminAllSessions() {
                             </div>
 
                             <div className="flex items-center gap-1 flex-shrink-0">
+                                <Button
+                                    variant="ghost" size="icon" className="h-8 w-8"
+                                    onClick={() => { setFinancialSessionId(session.id); setFinancialSessionName(session.sessionName ?? `Cohorte ${session.cohortNumber ?? "?"}`); }}
+                                    title="Voir les finances"
+                                >
+                                    <CircleDollarSign className="h-4 w-4 text-emerald-600" />
+                                </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(session)}>
                                     <Pencil className="h-4 w-4 text-muted-foreground" />
                                 </Button>
@@ -412,6 +539,16 @@ export default function AdminAllSessions() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Modale resume financier */}
+            {financialSessionId && (
+                <FinancialSummaryModal
+                    sessionId={financialSessionId}
+                    sessionName={financialSessionName}
+                    open={!!financialSessionId}
+                    onClose={() => setFinancialSessionId(null)}
+                />
+            )}
         </AdminLayout>
     );
 }
