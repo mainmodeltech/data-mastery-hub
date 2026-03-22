@@ -13,6 +13,10 @@
 
 export type RegistrationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
 
+export type PaymentStatus = 'UNPAID' | 'PARTIAL' | 'PAID';
+
+export type PaymentMethod = 'WAVE' | 'ORANGE_MONEY' | 'VIREMENT' | 'CASH' | 'CARTE';
+
 export type ContactMessageStatus = 'unread' | 'read' | 'replied' | 'archived';
 
 export type ReferenceCategory = 'client' | 'school' | 'partner';
@@ -58,8 +62,49 @@ export interface Registration {
   position: string | null;
   message: string | null;
   status: RegistrationStatus;
+  // Paiement
+  paymentStatus: PaymentStatus;
+  amountDue: number | null;
+  amountPaid: number | null;
+  payments: Payment[];
   createdAt: string;
   updatedAt: string;
+}
+
+/** Paiement enregistre sur une inscription */
+export interface Payment {
+  id: string;
+  registrationId: string;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: PaymentMethod;
+  reference: string | null;
+  notes: string | null;
+  recordedBy: string | null;
+  createdAt: string;
+}
+
+/** Resume financier d'une session */
+export interface SessionFinancialSummary {
+  sessionId: string;
+  sessionName: string;
+  totalRegistrations: number;
+  revenueTarget: number;
+  totalCollected: number;
+  remainingToCollect: number;
+  collectionRate: number;
+  paidCount: number;
+  partialCount: number;
+  unpaidCount: number;
+}
+
+/** DTO pour creer un paiement */
+export interface CreatePaymentDTO {
+  amount: number;
+  paymentDate: string;
+  paymentMethod: PaymentMethod;
+  reference?: string;
+  notes?: string;
 }
 
 /** Alumni - Ancien apprenant ayant termine un bootcamp */

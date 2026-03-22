@@ -4,6 +4,7 @@ import {
   useRegistrations,
   useUpdateRegistrationStatus,
 } from "@/hooks/useRegistrations";
+import { useAddPayment, useDeletePayment } from "@/hooks/usePayments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -55,10 +56,15 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Plus,
+  Trash2,
+  Wallet,
+  CreditCard,
+  Banknote,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import type { Registration, RegistrationStatus } from "@/types";
+import type { Registration, RegistrationStatus, PaymentStatus, PaymentMethod, Payment, CreatePaymentDTO } from "@/types";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -112,6 +118,52 @@ const ALL_STATUSES: RegistrationStatus[] = [
   "CANCELLED",
   "COMPLETED",
 ];
+
+// ─── Config paiement ─────────────────────────────────────────────────────────
+
+const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; className: string; icon: React.ReactNode }> = {
+  UNPAID: {
+    label: "Non paye",
+    className: "border-red-300 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400",
+    icon: <X className="h-3 w-3" />,
+  },
+  PARTIAL: {
+    label: "Partiel",
+    className: "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
+    icon: <Clock className="h-3 w-3" />,
+  },
+  PAID: {
+    label: "Paye",
+    className: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400",
+    icon: <Check className="h-3 w-3" />,
+  },
+};
+
+const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  WAVE: "Wave",
+  ORANGE_MONEY: "Orange Money",
+  VIREMENT: "Virement",
+  CASH: "Especes",
+  CARTE: "Carte",
+};
+
+const ALL_PAYMENT_METHODS: PaymentMethod[] = ["WAVE", "ORANGE_MONEY", "VIREMENT", "CASH", "CARTE"];
+
+/** Formater un montant en FCFA */
+function formatFcfa(amount: number | null | undefined): string {
+  if (amount == null) return "—";
+  return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
+}
+
+function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
+  const cfg = PAYMENT_STATUS_CONFIG[status];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${cfg.className}`}>
+      {cfg.icon}
+      {cfg.label}
+    </span>
+  );
+}
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 
@@ -301,6 +353,209 @@ function PaginationBar({
   );
 }
 
+// ─── Section paiements dans la modale ─────────────────────────────────────────
+
+interface PaymentSectionProps {
+  registration: Registration;
+}
+
+function PaymentSection({ registration }: PaymentSectionProps) {
+  const { toast } = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("WAVE");
+  const [reference, setReference] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const addPayment = useAddPayment();
+  const deletePayment = useDeletePayment();
+
+  const payments = registration.payments ?? [];
+  const amountDue = registration.amountDue ?? 0;
+  const amountPaid = registration.amountPaid ?? 0;
+  const remaining = Math.max(0, amountDue - amountPaid);
+  const progressPct = amountDue > 0 ? Math.min(100, (amountPaid / amountDue) * 100) : 0;
+
+  const resetForm = () => {
+    setAmount("");
+    setPaymentDate(new Date().toISOString().split("T")[0]);
+    setPaymentMethod("WAVE");
+    setReference("");
+    setNotes("");
+    setShowForm(false);
+  };
+
+  const handleSubmit = async () => {
+    const numAmount = parseInt(amount.replace(/\s/g, ""), 10);
+    if (!numAmount || numAmount <= 0) {
+      toast({ title: "Montant invalide", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await addPayment.mutateAsync({
+        registrationId: registration.id,
+        data: {
+          amount: numAmount,
+          paymentDate,
+          paymentMethod,
+          reference: reference || undefined,
+          notes: notes || undefined,
+        },
+      });
+      toast({ title: "Paiement enregistre" });
+      resetForm();
+    } catch {
+      toast({ title: "Erreur", description: "Impossible d'enregistrer le paiement.", variant: "destructive" });
+    }
+  };
+
+  const handleDelete = async (paymentId: string) => {
+    try {
+      await deletePayment.mutateAsync(paymentId);
+      toast({ title: "Paiement supprime" });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de supprimer le paiement.", variant: "destructive" });
+    }
+  };
+
+  return (
+    <div>
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        Paiement
+      </p>
+
+      {/* Barre de progression */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between text-sm mb-1.5">
+          <div className="flex items-center gap-2">
+            <PaymentStatusBadge status={registration.paymentStatus ?? "UNPAID"} />
+          </div>
+          <span className="text-muted-foreground text-xs">
+            {formatFcfa(amountPaid)} / {formatFcfa(amountDue)}
+          </span>
+        </div>
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              progressPct >= 100 ? "bg-emerald-500" : progressPct > 0 ? "bg-amber-500" : "bg-muted"
+            }`}
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+        {remaining > 0 && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Reste a payer : {formatFcfa(remaining)}
+          </p>
+        )}
+      </div>
+
+      {/* Liste des paiements */}
+      {payments.length > 0 && (
+        <div className="space-y-2 mb-4">
+          {payments.map((p: Payment) => (
+            <div key={p.id} className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2 text-sm">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="font-medium">{formatFcfa(p.amount)}</span>
+                  <span className="text-xs text-muted-foreground">via {PAYMENT_METHOD_LABELS[p.paymentMethod]}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                  <span>{format(new Date(p.paymentDate), "d MMM yyyy", { locale: fr })}</span>
+                  {p.reference && <span>· Ref: {p.reference}</span>}
+                  {p.notes && <span>· {p.notes}</span>}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-red-600"
+                onClick={() => handleDelete(p.id)}
+                disabled={deletePayment.isPending}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Formulaire ajout */}
+      {showForm ? (
+        <div className="border border-border rounded-lg p-4 space-y-3">
+          <p className="text-sm font-medium mb-2">Nouveau paiement</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Montant (FCFA)</Label>
+              <Input
+                type="number"
+                placeholder="150000"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Date</Label>
+              <Input
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Mode</Label>
+              <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_PAYMENT_METHODS.map((m) => (
+                    <SelectItem key={m} value={m} className="text-sm">{PAYMENT_METHOD_LABELS[m]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Reference</Label>
+              <Input
+                placeholder="REF-12345"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Notes</Label>
+            <Input
+              placeholder="Notes libres..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <Button size="sm" onClick={handleSubmit} disabled={addPayment.isPending}>
+              {addPayment.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Check className="h-3.5 w-3.5 mr-1" />}
+              Enregistrer
+            </Button>
+            <Button size="sm" variant="ghost" onClick={resetForm}>Annuler</Button>
+          </div>
+        </div>
+      ) : (
+        <Button size="sm" variant="outline" onClick={() => setShowForm(true)} className="w-full">
+          <Plus className="h-3.5 w-3.5 mr-1" />
+          Ajouter un paiement
+        </Button>
+      )}
+    </div>
+  );
+}
+
 // ─── Modale détail ────────────────────────────────────────────────────────────
 
 interface DetailModalProps {
@@ -331,7 +586,7 @@ function DetailModal({
 
   return (
       <Dialog open={!!registration} onOpenChange={onClose}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <span>{registration.firstName} {registration.lastName}</span>
@@ -396,6 +651,11 @@ function DetailModal({
                   </div>
                 </>
             )}
+
+            <Separator />
+
+            {/* Section paiement */}
+            <PaymentSection registration={registration} />
 
             <Separator />
 
@@ -622,6 +882,9 @@ const AdminInscriptions = () => {
                       <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground hidden lg:table-cell">
                         Date
                       </TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground hidden lg:table-cell">
+                        Paiement
+                      </TableHead>
                       <TableHead className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
                         Statut
                       </TableHead>
@@ -632,7 +895,7 @@ const AdminInscriptions = () => {
                     {filtered.length === 0 ? (
                         <TableRow>
                           <TableCell
-                              colSpan={6}
+                              colSpan={7}
                               className="text-center py-16 text-muted-foreground text-sm"
                           >
                             Aucune inscription trouvée.
@@ -683,6 +946,11 @@ const AdminInscriptions = () => {
                               {/* Date */}
                               <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                                 {format(new Date(item.createdAt), "d MMM yyyy", { locale: fr })}
+                              </TableCell>
+
+                              {/* Paiement */}
+                              <TableCell className="hidden lg:table-cell">
+                                <PaymentStatusBadge status={item.paymentStatus ?? "UNPAID"} />
                               </TableCell>
 
                               {/* Statut */}

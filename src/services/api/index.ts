@@ -14,3 +14,4 @@ export { testimonialService } from './testimonialService';
 export { contactService } from './contactService';
 export { galleryService } from './galleryService';
 export { promoCodeService } from './promoCodeService';
+export { paymentService } from './paymentService';
