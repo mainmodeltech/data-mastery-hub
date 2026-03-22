@@ -3,7 +3,8 @@
  * Refactoree pour utiliser le hook useSendContactMessage et les constantes centralisees.
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,11 +21,19 @@ const Contact = () => {
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const sendMessage = useSendContactMessage();
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formEl = e.currentTarget;
     const data = new FormData(formEl);
+
+    if (!executeRecaptcha) {
+      toast({ title: 'Erreur', description: 'reCAPTCHA non disponible. Veuillez rafraîchir la page.', variant: 'destructive' });
+      return;
+    }
+
+    const recaptchaToken = await executeRecaptcha('contact_send');
 
     const messageData: CreateContactMessageDTO = {
       firstName: (data.get('firstName') as string).trim(),
@@ -34,6 +43,7 @@ const Contact = () => {
       company: (data.get('company') as string)?.trim() || null,
       subject: (data.get('subject') as string)?.trim() || null,
       message: (data.get('message') as string).trim(),
+      recaptchaToken,
     };
 
     sendMessage.mutate(messageData, {
@@ -45,7 +55,7 @@ const Contact = () => {
         toast({ title: "Erreur lors de l'envoi", description: 'Veuillez reessayer.', variant: 'destructive' });
       },
     });
-  };
+  }, [executeRecaptcha, sendMessage, toast]);
 
   return (
     <Layout>

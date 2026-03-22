@@ -269,7 +269,9 @@ export interface CreateRegistrationDTO {
   recaptchaToken: string | null;
 }
 
-export type CreateContactMessageDTO = Omit<ContactMessage, 'id' | 'status' | 'notes' | 'createdAt' | 'updatedAt'>;
+export type CreateContactMessageDTO = Omit<ContactMessage, 'id' | 'status' | 'notes' | 'createdAt' | 'updatedAt'> & {
+  recaptchaToken: string;
+};
 
 export type CreateBootcampDTO = Omit<Bootcamp, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateBootcampDTO = Partial<CreateBootcampDTO>;
