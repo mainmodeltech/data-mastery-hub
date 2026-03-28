@@ -133,8 +133,8 @@ export const STATIC_BY_CATEGORY: Record<string, StaticEnrichment> = {
         ],
         outcomes: [
             { stat: "94%", label: "taux de satisfaction alumni" },
-            { stat: "6 sem.", label: "pour devenir opérationnel" },
-            { stat: "100%", label: "pratique sur cas réels" },
+            { stat: "8 sem.", label: "pour devenir opérationnel" },
+            { stat: "100%", label: "pratique sur cas réels " },
         ],
         testimonial: {
             name: "Emmanuel BOUADI",
