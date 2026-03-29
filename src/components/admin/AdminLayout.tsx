@@ -17,7 +17,7 @@ import {
   X,
   ChevronRight,
   Users,
-  CalendarDays, Tag,
+  CalendarDays, Tag, Shield, KeyRound,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -35,6 +35,8 @@ const navItems = [
   { href: "/admin/alumni", label: "Alumni", icon: GraduationCap },
   { href: "/admin/projets", label: "Projets", icon: Users },
   // { href: "/admin/galerie", label: "Galerie", icon: Image },
+  { href: "/admin/utilisateurs", label: "Utilisateurs", icon: KeyRound },
+  { href: "/admin/roles", label: "Roles", icon: Shield },
 ];
 
 interface AdminLayoutProps {

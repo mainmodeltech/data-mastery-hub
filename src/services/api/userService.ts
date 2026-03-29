@@ -1,0 +1,26 @@
+import { httpClient } from '@/services/httpClient';
+import type { AdminUser, CreateUserDTO, UpdateUserDTO, ApiResponse, PaginatedResponse } from '@/types';
+
+const ADMIN_PATH = '/admin/users';
+
+export const userService = {
+  getAll: (page?: number, size?: number) =>
+    httpClient.get<ApiResponse<PaginatedResponse<AdminUser>>>(ADMIN_PATH, {
+      params: { page, size },
+    }),
+
+  getById: (id: string) =>
+    httpClient.get<ApiResponse<AdminUser>>(`${ADMIN_PATH}/${id}`),
+
+  create: (data: CreateUserDTO) =>
+    httpClient.post<ApiResponse<AdminUser>>(ADMIN_PATH, data),
+
+  update: (id: string, data: UpdateUserDTO) =>
+    httpClient.put<ApiResponse<AdminUser>>(`${ADMIN_PATH}/${id}`, data),
+
+  delete: (id: string) =>
+    httpClient.delete<void>(`${ADMIN_PATH}/${id}`),
+
+  regenerateCredentials: (id: string) =>
+    httpClient.post<ApiResponse<void>>(`${ADMIN_PATH}/${id}/regenerate-credentials`),
+};

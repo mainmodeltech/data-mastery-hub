@@ -17,6 +17,53 @@ export type ContactMessageStatus = 'unread' | 'read' | 'replied' | 'archived';
 
 export type ReferenceCategory = 'client' | 'school' | 'partner';
 
+export type PaymentStatus = 'UNPAID' | 'PARTIAL' | 'PAID';
+
+export type PaymentMethod = 'WAVE' | 'ORANGE_MONEY' | 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'OTHER';
+
+// ============================================================
+// Auth — Roles & Users
+// ============================================================
+
+export interface AdminRole {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: string;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  fullName: string;
+  active: boolean;
+  roles: AdminRole[];
+  lastLoginAt: string | null;
+  createdAt: string;
+  createdBy: string | null;
+}
+
+export interface CreateRoleDTO {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateRoleDTO {
+  description?: string;
+}
+
+export interface CreateUserDTO {
+  email: string;
+  fullName: string;
+  roleIds: string[];
+}
+
+export interface UpdateUserDTO {
+  fullName?: string;
+  roleIds?: string[];
+  active?: boolean;
+}
+
 // ============================================================
 // Entites Metier
 // ============================================================

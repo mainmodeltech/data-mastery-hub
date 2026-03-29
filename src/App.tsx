@@ -45,6 +45,8 @@ const AdminAlumni = lazy(() => import('./pages/admin/AdminAlumni'));
 const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
 const AdminGalerie = lazy(() => import('./pages/admin/AdminGalerie'));
 const AdminProjects = lazy(() => import('./pages/admin/AdminProjects'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminRoles = lazy(() => import('./pages/admin/AdminRoles'));
 
 
 // ============================================================
@@ -130,6 +132,8 @@ const App = () => (
                   <Route path="/admin/projets" element={<ProtectedRoute><AdminProjects /></ProtectedRoute>} />
                   <Route path="/admin/messages" element={<ProtectedRoute><AdminMessages /></ProtectedRoute>} />
                   <Route path="/admin/galerie" element={<ProtectedRoute><AdminGalerie /></ProtectedRoute>} />
+                  <Route path="/admin/utilisateurs" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+                  <Route path="/admin/roles" element={<ProtectedRoute><AdminRoles /></ProtectedRoute>} />
 
 
                   <Route path="*" element={<NotFound />} />
