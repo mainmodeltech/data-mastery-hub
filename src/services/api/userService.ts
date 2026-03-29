@@ -1,11 +1,24 @@
 import { httpClient } from '@/services/httpClient';
-import type { AdminUser, CreateUserDTO, UpdateUserDTO, ApiResponse, PaginatedResponse } from '@/types';
+import type { AdminUser, CreateUserDTO, UpdateUserDTO, ApiResponse } from '@/types';
 
 const ADMIN_PATH = '/admin/users';
 
+/** Structure retournee par ApiResponse.page() cote backend */
+interface PagedApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T[];
+  pagination: {
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
+
 export const userService = {
   getAll: (page?: number, size?: number) =>
-    httpClient.get<ApiResponse<PaginatedResponse<AdminUser>>>(ADMIN_PATH, {
+    httpClient.get<PagedApiResponse<AdminUser>>(ADMIN_PATH, {
       params: { page, size },
     }),
 

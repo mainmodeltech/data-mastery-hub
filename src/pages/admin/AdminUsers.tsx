@@ -42,7 +42,7 @@ export default function AdminUsers() {
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [active, setActive] = useState(true);
 
-  const users: AdminUser[] = data?.data?.content ?? [];
+  const users: AdminUser[] = data?.data ?? [];
   const allRoles: AdminRole[] = rolesData?.data ?? [];
 
   const filtered = useMemo(() => {
