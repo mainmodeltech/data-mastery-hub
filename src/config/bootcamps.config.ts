@@ -2,9 +2,19 @@
  * bootcamps.config.ts
  * Données statiques enrichissant les bootcamps retournés par l'API.
  * Extraites du composant page pour alléger celui-ci et faciliter la maintenance.
+ *
+ * Catalogue DataMasteryHub (B2C) — 4 bootcamps :
+ *   bi             → Bootcamp Power BI
+ *   python         → Bootcamp Python pour la data
+ *   sql            → Bootcamp SQL pour la data
+ *   excel-finance  → Bootcamp Excel pour Financiers & Contrôleurs de gestion
+ *
+ * La clé `data` est conservée pour compatibilité avec d'éventuels bootcamps
+ * encore tagués ainsi côté backend (ancien catalogue Python+SQL fusionné) :
+ * à faire migrer vers `python` / `sql` via l'admin (/admin/bootcamps).
  */
 
-import { BarChart3, Database, BookOpen } from "lucide-react";
+import { BarChart3, Code2, Table2, Calculator, Database, BookOpen } from "lucide-react";
 import type { ElementType } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -64,14 +74,14 @@ export interface StaticEnrichment {
 
 export const STATIC_BY_CATEGORY: Record<string, StaticEnrichment> = {
     bi: {
-        tagline: "Maîtrisez la Business Intelligence en 8 semaines",
+        tagline: "Du tableur au tableau de bord — préparez la certification PL-300",
         colorKey: "accent",
         icon: BarChart3,
         profiles: [
             { icon: "💼", label: "Contrôleurs de gestion" },
             { icon: "📊", label: "Responsables financiers" },
             { icon: "👥", label: "Managers & chefs de projet" },
-            { icon: "📈", label: "Commerciaux & marketing" },
+            { icon: "📈", label: "Indépendants & commerciaux" },
         ],
         tools: [
             { name: "Power BI", level: 80 },
@@ -116,7 +126,7 @@ export const STATIC_BY_CATEGORY: Record<string, StaticEnrichment> = {
                     "Design de dashboards professionnels",
                     "DAX avancé : fonctions Time Intelligence",
                 ],
-                project: "Dashboard commercial interactif",
+                project: "Dashboard commercial interactif — cas d'entreprise sénégalaise (FCFA, fournisseurs locaux)",
             },
             {
                 week: "Semaines 5-6",
@@ -126,15 +136,14 @@ export const STATIC_BY_CATEGORY: Record<string, StaticEnrichment> = {
                     "Power BI Service : partage et collaboration",
                     "Sécurité au niveau des lignes (RLS)",
                     "Préparation certification Microsoft PL-300",
-                    "Projet final de certification",
+                    "Simulation d'examen PL-300",
                 ],
                 project: "🏆 Projet final · Présentation devant jury",
             },
         ],
         outcomes: [
             { stat: "94%", label: "taux de satisfaction alumni" },
-            { stat: "8 sem.", label: "pour devenir opérationnel" },
-            { stat: "100%", label: "pratique sur cas réels " },
+            { stat: "100%", label: "pratique sur cas réels" },
         ],
         testimonial: {
             name: "Emmanuel BOUADI",
@@ -152,6 +161,233 @@ export const STATIC_BY_CATEGORY: Record<string, StaticEnrichment> = {
         },
     },
 
+    python: {
+        tagline: "La programmation appliquée à la data, pour sortir du low-code",
+        colorKey: "primary",
+        icon: Code2,
+        profiles: [
+            { icon: "🔄", label: "Reconversion technique" },
+            { icon: "🎓", label: "Étudiants en fin de cursus" },
+            { icon: "📈", label: "Futurs Data Analyst / Data Scientist" },
+        ],
+        tools: [
+            { name: "Python", level: 85 },
+            { name: "Pandas", level: 85 },
+            { name: "Numpy", level: 75 },
+            { name: "Matplotlib / Seaborn", level: 75 },
+            { name: "Jupyter Notebook", level: 80 },
+            { name: "Introduction Machine Learning", level: 60 },
+        ],
+        curriculum: [
+            {
+                week: "Bloc 1",
+                title: "Bases du langage Python",
+                hours: "—",
+                topics: [
+                    "Variables, structures de données, fonctions",
+                    "Boucles et logique conditionnelle",
+                    "Manipulation de fichiers",
+                    "Prise en main de Jupyter Notebook",
+                ],
+                project: "Premiers scripts d'automatisation",
+            },
+            {
+                week: "Bloc 2",
+                title: "Manipulation de données avec Pandas & Numpy",
+                hours: "—",
+                topics: [
+                    "Import, nettoyage et transformation de données",
+                    "Jointures et agrégations avec Pandas",
+                    "Calculs numériques avec Numpy",
+                    "Cas d'usage sur données sénégalaises",
+                ],
+                project: "Nettoyage et analyse d'un dataset réel",
+            },
+            {
+                week: "Bloc 3",
+                title: "Visualisation de données",
+                hours: "—",
+                topics: [
+                    "Matplotlib : graphiques et personnalisation",
+                    "Seaborn : visualisations statistiques",
+                    "Storytelling avec les données",
+                    "Notebooks commentés en français",
+                ],
+                project: "Rapport d'analyse visuel commenté",
+            },
+            {
+                week: "Bloc 4",
+                title: "Introduction au Machine Learning & Portfolio",
+                hours: "—",
+                topics: [
+                    "Notions de base du Machine Learning",
+                    "Premiers modèles de prédiction simples",
+                    "Constitution du portfolio de projets",
+                    "Préparation aux entretiens techniques",
+                ],
+                project: "🏆 Projet final · Notebook commenté présenté devant jury",
+            },
+        ],
+        outcomes: [],
+        testimonial: { name: "", role: "", company: "", content: "", initials: "" },
+        certification: {
+            name: "Attestation DataMasteryHub",
+            logo: "🎓",
+            description: "Délivrée à l'issue du bootcamp, accompagnée du portfolio de projets",
+        },
+    },
+
+    sql: {
+        tagline: "La brique fondamentale pour interroger n'importe quelle base de données",
+        colorKey: "accent",
+        icon: Table2,
+        profiles: [
+            { icon: "🌱", label: "Débutants en data" },
+            { icon: "📊", label: "Professionnels Excel en évolution" },
+            { icon: "🧩", label: "Complément aux bootcamps Power BI / Python" },
+        ],
+        tools: [
+            { name: "SQL (MySQL)", level: 85 },
+            { name: "Modèle relationnel", level: 80 },
+            { name: "Jointures & sous-requêtes", level: 80 },
+            { name: "Agrégations", level: 80 },
+            { name: "Bonnes pratiques de performance", level: 65 },
+        ],
+        curriculum: [
+            {
+                week: "Bloc 1",
+                title: "Modèle relationnel",
+                hours: "—",
+                topics: [
+                    "Comprendre une base de données relationnelle",
+                    "Tables, clés primaires et étrangères",
+                    "Lecture d'un schéma de base de données",
+                    "Prise en main de MySQL",
+                ],
+                project: "Exploration d'une base de données d'entreprise",
+            },
+            {
+                week: "Bloc 2",
+                title: "Requêtes et jointures",
+                hours: "—",
+                topics: [
+                    "SELECT, WHERE, ORDER BY",
+                    "Jointures : INNER, LEFT, RIGHT JOIN",
+                    "Filtres et conditions combinées",
+                    "Cas d'usage sur un schéma d'entreprise sénégalaise",
+                ],
+                project: "Requêtes croisées multi-tables",
+            },
+            {
+                week: "Bloc 3",
+                title: "Agrégations et sous-requêtes",
+                hours: "—",
+                topics: [
+                    "GROUP BY et fonctions d'agrégation",
+                    "Sous-requêtes imbriquées",
+                    "Vues et requêtes réutilisables",
+                    "Bonnes pratiques de performance",
+                ],
+                project: "Rapport d'analyse construit en SQL",
+            },
+            {
+                week: "Bloc 4",
+                title: "Projet final",
+                hours: "—",
+                topics: [
+                    "Construction d'une base de données d'entraînement",
+                    "Consolidation des acquis sur cas réel",
+                    "Documentation des requêtes",
+                    "Préparation à la suite du parcours (Power BI ou Python)",
+                ],
+                project: "🏆 Base de données d'entraînement réutilisable",
+            },
+        ],
+        outcomes: [],
+        testimonial: { name: "", role: "", company: "", content: "", initials: "" },
+        certification: {
+            name: "Attestation DataMasteryHub",
+            logo: "🎓",
+            description: "Délivrée à l'issue du bootcamp, avec la base de données d'entraînement réutilisable",
+        },
+    },
+
+    "excel-finance": {
+        tagline: "Excel spécialisé finance & contrôle de gestion — passerelle vers Power BI",
+        colorKey: "primary",
+        icon: Calculator,
+        profiles: [
+            { icon: "🧮", label: "Comptables & contrôleurs de gestion" },
+            { icon: "🔍", label: "Auditeurs" },
+            { icon: "🏦", label: "Profils banque, fintech, UEMOA" },
+        ],
+        tools: [
+            { name: "Excel avancé", level: 85 },
+            { name: "Modélisation financière", level: 80 },
+            { name: "Tableaux de bord EBITDA", level: 75 },
+            { name: "Consolidation multi-sources", level: 75 },
+            { name: "Fonctions financières avancées", level: 80 },
+        ],
+        curriculum: [
+            {
+                week: "Bloc 1",
+                title: "Modélisation financière sous Excel",
+                hours: "—",
+                topics: [
+                    "Structuration d'un modèle financier",
+                    "Fonctions financières avancées",
+                    "Bonnes pratiques de construction de classeurs",
+                    "Cas pratiques budget/reporting",
+                ],
+                project: "Modèle de budget réutilisable",
+            },
+            {
+                week: "Bloc 2",
+                title: "Pilotage & EBITDA",
+                hours: "—",
+                topics: [
+                    "Construction de tableaux de bord de pilotage",
+                    "Calcul et suivi de l'EBITDA",
+                    "Indicateurs de performance financière",
+                    "Mise en forme professionnelle des rapports",
+                ],
+                project: "Tableau de bord de pilotage EBITDA",
+            },
+            {
+                week: "Bloc 3",
+                title: "Consolidation multi-sources",
+                hours: "—",
+                topics: [
+                    "Power Query pour la consolidation de données",
+                    "Fusion de sources comptables multiples",
+                    "Automatisation des reportings récurrents",
+                    "Contrôles de cohérence des données",
+                ],
+                project: "Reporting consolidé automatisé",
+            },
+            {
+                week: "Bloc 4",
+                title: "Passerelle vers Power BI",
+                hours: "—",
+                topics: [
+                    "De la modélisation Excel au dashboard Power BI",
+                    "Connexion des classeurs Excel à Power BI",
+                    "Panorama des suites : quand passer à Power BI",
+                    "Plan de montée en compétence individuel",
+                ],
+                project: "🏆 Restitution des modèles Excel réutilisables",
+            },
+        ],
+        outcomes: [],
+        testimonial: { name: "", role: "", company: "", content: "", initials: "" },
+        certification: {
+            name: "Attestation DataMasteryHub",
+            logo: "🎓",
+            description: "Délivrée à l'issue du bootcamp, avec les modèles Excel réutilisables (budget, reporting, EBITDA)",
+        },
+    },
+
+    /** @deprecated Ancien catalogue Python+SQL fusionné — à migrer vers `python`/`sql` via l'admin */
     data: {
         tagline: "De zéro à Data Analyst opérationnel en 10 semaines",
         colorKey: "primary",

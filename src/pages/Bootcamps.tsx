@@ -723,7 +723,7 @@ export default function BootcampsPage() {
   useEffect(() => {
     if (!bootcamps || bootcamps.length === 0) return;
 
-    const tabParam = searchParams.get("tab"); // "bi" | "data" | null
+    const tabParam = searchParams.get("tab"); // "bi" | "python" | "sql" | "excel-finance" | null
     if (!tabParam) {
       // Pas de param → afficher le premier bootcamp (ordre du backend : featured first)
       setActiveIndex(0);
@@ -783,7 +783,7 @@ export default function BootcampsPage() {
                   className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-6 leading-tight opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.2s" }}
               >
-                {bootcamps?.length === 1 ? "1 bootcamp pour" : `${bootcamps?.length ?? 2} bootcamps pour`}{" "}
+                {bootcamps?.length === 1 ? "1 bootcamp pour" : `${bootcamps?.length ?? 4} bootcamps pour`}{" "}
                 <span className="text-accent">transformer</span>
                 <br />
                 votre carrière data
@@ -793,7 +793,7 @@ export default function BootcampsPage() {
                   style={{ animationDelay: "0.3s" }}
               >
                 Des programmes intensifs, conçus avec les entreprises qui recrutent à Dakar.
-                De la théorie à l'employabilité — en 8 ou 10 semaines.
+                De la théorie à l'employabilité.
               </p>
 
               {/* Trust strip */}
@@ -805,7 +805,7 @@ export default function BootcampsPage() {
                   { icon: Users,       text: "150+ alumni formés"        },
                   { icon: TrendingUp,  text: "90% en poste en 3 mois"    },
                   { icon: MapPin,      text: "Présentiel · Dakar"         },
-                  { icon: Award,       text: "Certification incluse"      },
+                  { icon: Award,       text: "Attestation incluse"      },
                 ] as const).map((t, i) => (
                     <div key={i} className="flex items-center gap-1.5">
                       <t.icon className="h-3.5 w-3.5" />

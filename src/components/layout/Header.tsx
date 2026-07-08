@@ -16,8 +16,8 @@
  * 3. Skeleton discret pendant le chargement (2 items placeholder)
  *    → pas de layout shift, UX fluide
  *
- * 4. servicesMenu reste en statique (section commentée, pas de données
- *    backend exposées pour les services pour l'instant)
+ * 4. servicesMenu (menu "Entreprises") reste en statique — contenu détaillé
+ *    sur /entreprises, piloté par src/config/b2b-offers.config.ts
  *
  * 5. Aucun any, typage strict conservé
  */
@@ -27,8 +27,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Menu, X, BarChart3, Database, Compass, Building2,
-  Users, ChevronDown, ArrowRight, Zap, GraduationCap,
+  Users, ChevronDown, ArrowRight, GraduationCap,
   Phone, LogIn, LogOut, LayoutDashboard, BookOpen,
+  Code2, Table2, Calculator,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -65,19 +66,41 @@ interface CategoryStyle {
 }
 
 const CATEGORY_STYLE: Record<string, CategoryStyle> = {
-  data: {
-    icon: Database,
-    iconBg: "bg-primary/15",
-    iconColor: "text-primary",
-    badgeColor: "bg-orange-500/15 text-orange-500",
-    fallbackDesc: "SQL & Python · 10 semaines",
-  },
   bi: {
     icon: BarChart3,
     iconBg: "bg-accent/15",
     iconColor: "text-accent",
     badgeColor: "bg-accent/15 text-accent",
-    fallbackDesc: "Maîtrisez la BI en 8 semaines",
+    fallbackDesc: "Power BI · Certification PL-300",
+  },
+  python: {
+    icon: Code2,
+    iconBg: "bg-primary/15",
+    iconColor: "text-primary",
+    badgeColor: "bg-primary/15 text-primary",
+    fallbackDesc: "Python pour la data",
+  },
+  sql: {
+    icon: Table2,
+    iconBg: "bg-accent/15",
+    iconColor: "text-accent",
+    badgeColor: "bg-accent/15 text-accent",
+    fallbackDesc: "SQL pour la data",
+  },
+  "excel-finance": {
+    icon: Calculator,
+    iconBg: "bg-primary/15",
+    iconColor: "text-primary",
+    badgeColor: "bg-primary/15 text-primary",
+    fallbackDesc: "Excel Financiers & Contrôle de gestion",
+  },
+  /** @deprecated ancien catalogue fusionné, conservé en fallback visuel */
+  data: {
+    icon: Database,
+    iconBg: "bg-primary/15",
+    iconColor: "text-primary",
+    badgeColor: "bg-orange-500/15 text-orange-500",
+    fallbackDesc: "SQL & Python",
   },
 };
 
@@ -120,7 +143,7 @@ function buildBootcampMenuItems(bootcamps: Bootcamp[]): MenuItem[] {
           title: bc.title,
           // Utilise duration du backend si disponible, sinon fallback statique
           desc: bc.duration ?? style.fallbackDesc,
-          href: bc.category == "bi" ? "/bootcamps?tab=bi" : "/bootcamps?tab=data",
+          href: `/bootcamps?tab=${bc.category}`,
           anchor: null,
           badge,
           badgeColor: badge ? style.badgeColor : "",
@@ -128,28 +151,28 @@ function buildBootcampMenuItems(bootcamps: Bootcamp[]): MenuItem[] {
       });
 }
 
-// ─── Services menu (statique — section B2B pas encore exposée) ───────────────
+// ─── Menu Entreprises (statique — contenu détaillé sur /entreprises) ─────────
 
 const servicesMenu: MenuItem[] = [
   {
-    icon: Zap,
+    icon: Database,
     iconBg: "bg-primary/15",
     iconColor: "text-primary",
-    title: "Data Project Sprint",
-    desc: "Projets data clé en main · 4-8 semaines",
-    href: "/services",
-    anchor: "sprint",
+    title: "Formation sur mesure en Data",
+    desc: "Diagnostic gratuit · sur vos données réelles",
+    href: "/entreprises",
+    anchor: "data-sur-mesure",
     badge: null,
     badgeColor: "",
   },
   {
-    icon: Users,
+    icon: BarChart3,
     iconBg: "bg-accent/15",
     iconColor: "text-accent",
-    title: "Model Talent Régie",
-    desc: "Placement d'analystes certifiés",
-    href: "/services",
-    anchor: "regie",
+    title: "Formation sur mesure Power BI",
+    desc: "Excel Opérationnel → Power BI · intra-entreprise",
+    href: "/entreprises",
+    anchor: "power-bi-entreprise",
     badge: null,
     badgeColor: "",
   },
@@ -157,10 +180,10 @@ const servicesMenu: MenuItem[] = [
     icon: GraduationCap,
     iconBg: "bg-secondary border border-border",
     iconColor: "text-foreground",
-    title: "Formation Intra-Entreprise",
-    desc: "Programme sur mesure pour vos équipes",
-    href: "/services",
-    anchor: "intra",
+    title: "Mise à niveau Excel",
+    desc: "Débutant · Intermédiaire · Avancé",
+    href: "/entreprises",
+    anchor: "excel-entreprise",
     badge: null,
     badgeColor: "",
   },
@@ -442,23 +465,20 @@ export function Header() {
                   }
               />
 
-              {/* Services B2B — décommenter quand la section sera prête */}
-              {/*
-            <NavDropdown
-              label="Services B2B"
-              items={servicesMenu}
-              active={isActive("/services")}
-              footer={
-                <Link to="/references" className="flex items-center justify-between text-xs font-medium text-primary hover:underline">
+              <NavDropdown
+                  label="Entreprises"
+                  items={servicesMenu}
+                  active={isActive("/entreprises")}
+                  footer={
+                    <Link to="/entreprises" className="flex items-center justify-between text-xs font-medium text-primary hover:underline">
                   <span className="flex items-center gap-1.5">
                     <Building2 className="h-3.5 w-3.5" />
-                    Voir nos références clients
+                    Voir toute l'offre entreprises
                   </span>
-                  <ArrowRight className="h-3 w-3" />
-                </Link>
-              }
-            />
-            */}
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  }
+              />
 
               <Link to="/orientation" className={navLinkClass("/orientation")}>
                 Orientation
@@ -632,17 +652,58 @@ export function Header() {
                       </div>
                   )}
 
-                  {/* Services B2B — décommenter quand la section sera prête */}
-                  {/*
-              <button onClick={() => setMobileExpanded(mobileExpanded === "services" ? null : "services")} ...>
-                Services B2B
-              </button>
-              {mobileExpanded === "services" && (
-                <div className="ml-4 ...">
-                  {servicesMenu.map(...)}
-                </div>
-              )}
-              */}
+                  {/* Entreprises */}
+                  <button
+                      onClick={() =>
+                          setMobileExpanded(
+                              mobileExpanded === "services" ? null : "services"
+                          )
+                      }
+                      className="flex items-center justify-between w-full px-3 py-3 rounded-xl hover:bg-secondary/50 text-left font-medium text-foreground/80"
+                  >
+                <span className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-primary" />
+                  Entreprises
+                </span>
+                    <ChevronDown
+                        className={cn(
+                            "h-4 w-4 transition-transform",
+                            mobileExpanded === "services" ? "rotate-180" : ""
+                        )}
+                    />
+                  </button>
+
+                  {mobileExpanded === "services" && (
+                      <div className="ml-4 flex flex-col gap-1 mb-2">
+                        {servicesMenu.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                              <button
+                                  key={item.title}
+                                  onClick={() => handleMobileServiceClick(item)}
+                                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-secondary/40 border border-border text-left"
+                              >
+                                <div
+                                    className={cn(
+                                        "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                                        item.iconBg
+                                    )}
+                                >
+                                  <Icon className={cn("h-4 w-4", item.iconColor)} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-foreground">
+                                    {item.title}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {item.desc}
+                                  </div>
+                                </div>
+                              </button>
+                          );
+                        })}
+                      </div>
+                  )}
 
                   {/* Liens plats */}
                   {(

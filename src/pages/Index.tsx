@@ -6,17 +6,19 @@ import { OrientationTeaser } from "@/components/home/OrientationTeaser";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { B2BSection } from "@/components/home/B2BSection";
 import { SessionsSection } from "@/components/home/SessionsSection";
+import { ReferencesSection } from "@/components/home/ReferencesSection";
 import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 
 const Index = () => {
     return (
         <Layout>
-            <SeoHead {...PAGE_SEO.bootcamps} />
+            <SeoHead {...PAGE_SEO.home} />
             <HeroSection />
             <StatsSection />
             <BootcampsSection />
             <OrientationTeaser />
-            {/*<B2BSection />*/}
+            <ReferencesSection />
+            <B2BSection />
             <SessionsSection />
             <TestimonialsSection />
 

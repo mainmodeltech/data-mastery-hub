@@ -81,13 +81,13 @@ export function SeoHead({
 
 export const PAGE_SEO = {
     home: {
-        title:       "Bootcamp Data Analyst & Power BI à Dakar",
-        description: "Formation intensive Data Analyst et Power BI à Dakar. Sessions soir & week-end. Python, SQL, Power BI. 90% d'alumni en poste en 3 mois.",
+        title:       "Formations Data, Power BI & Excel à Dakar — Entreprises & Particuliers",
+        description: "Model Technologie forme vos équipes (Data, Power BI, Excel) et les particuliers via DataMasteryHub (bootcamps Power BI, Python, SQL, Excel Finance) à Dakar.",
         path:        "/",
     },
     bootcamps: {
-        title:       "Nos Bootcamps Data — Python, SQL, Power BI à Dakar",
-        description: "Bootcamp Data Analyst (Python, SQL) et Power BI à Dakar. Formation pratique le soir et week-end. Places limitées — prochaine session bientôt.",
+        title:       "Bootcamps DataMasteryHub — Power BI, Python, SQL, Excel Finance",
+        description: "4 bootcamps pour particuliers à Dakar : Power BI (PL-300), Python pour la data, SQL pour la data, Excel pour Financiers & Contrôleurs de gestion.",
         path:        "/bootcamps",
     },
     alumni: {
@@ -95,10 +95,10 @@ export const PAGE_SEO = {
         description: "Découvrez les alumni de Model Technologie : leurs projets data, leurs entreprises et leur parcours depuis le bootcamp. 90% en poste en 3 mois.",
         path:        "/alumni",
     },
-    services: {
-        title:       "Services Data pour Entreprises à Dakar",
-        description: "Formations data sur-mesure, consulting BI et mise à disposition de talents data pour les entreprises à Dakar. Power BI, SQL, Python.",
-        path:        "/services",
+    entreprises: {
+        title:       "Formations Data, Power BI & Excel pour Entreprises à Dakar",
+        description: "Formation sur mesure en Data, formation sur mesure Power BI et mise à niveau Excel pour vos équipes. Diagnostic gratuit, contenu sur vos données réelles.",
+        path:        "/entreprises",
     },
     about: {
         title:       "À Propos — Model Technologie, École Data à Dakar",
@@ -109,5 +109,10 @@ export const PAGE_SEO = {
         title:       "Contact — Rejoindre Model Technologie",
         description: "Contactez Model Technologie pour rejoindre un bootcamp, former vos équipes ou en savoir plus sur nos formations data à Dakar.",
         path:        "/contact",
+    },
+    orientation: {
+        title:       "Quiz d'orientation — Quel bootcamp data choisir ?",
+        description: "Répondez à 5 questions pour découvrir le bootcamp DataMasteryHub le plus adapté à votre profil : Power BI, Python, SQL ou Excel Finance.",
+        path:        "/orientation",
     },
 } as const;

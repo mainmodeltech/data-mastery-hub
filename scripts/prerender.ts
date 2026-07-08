@@ -22,12 +22,13 @@ import path from "path";
 
 // ── Routes publiques à prérender ─────────────────────────────────────────────
 const ROUTES = [
-    { path: "/",          file: "index.html"          },
-    { path: "/bootcamps", file: "bootcamps/index.html" },
-    { path: "/alumni",    file: "alumni/index.html"    },
-    { path: "/services",  file: "services/index.html"  },
-    { path: "/a-propos",  file: "a-propos/index.html"  },
-    { path: "/contact",   file: "contact/index.html"   },
+    { path: "/",             file: "index.html"              },
+    { path: "/bootcamps",    file: "bootcamps/index.html"     },
+    { path: "/entreprises",  file: "entreprises/index.html"   },
+    { path: "/orientation",  file: "orientation/index.html"   },
+    { path: "/alumni",       file: "alumni/index.html"        },
+    { path: "/a-propos",     file: "a-propos/index.html"      },
+    { path: "/contact",      file: "contact/index.html"       },
 ];
 
 const DIST = path.resolve(process.cwd(), "dist");

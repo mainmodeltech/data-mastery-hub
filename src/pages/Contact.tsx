@@ -49,7 +49,7 @@ const Contact = () => {
 
   return (
     <Layout>
-      <SeoHead {...PAGE_SEO.bootcamps} />
+      <SeoHead {...PAGE_SEO.contact} />
       {/* Hero */}
       <section className="py-20 lg:py-28 bg-secondary">
         <div className="container mx-auto px-4 lg:px-8">

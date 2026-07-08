@@ -40,10 +40,9 @@ export const STATS = {
 export const PUBLIC_NAVIGATION = [
   { name: 'Accueil', href: '/' },
   { name: 'A propos', href: '/a-propos' },
-  // { name: 'Services', href: '/services' },
+  { name: 'Entreprises', href: '/entreprises' },
   { name: 'Bootcamps', href: '/bootcamps' },
   { name: 'Alumni', href: '/alumni' },
-  // { name: 'References', href: '/references' },
   { name: 'Contact', href: '/contact' },
 ] as const;
 
@@ -61,10 +60,10 @@ export const ADMIN_NAVIGATION = [
 ] as const;
 
 export const FOOTER_SERVICES = [
-  { name: 'Formation Power BI', href: '/bootcamps' },
-  { name: 'Bootcamps Data', href: '/bootcamps' },
-  // { name: 'Formation Intra-entreprise', href: '/services' },
-  // { name: 'Certification Microsoft', href: '/services' },
+  { name: 'Bootcamps DataMasteryHub', href: '/bootcamps' },
+  { name: 'Formation sur mesure Data', href: '/entreprises#data-sur-mesure' },
+  { name: 'Formation sur mesure Power BI', href: '/entreprises#power-bi-entreprise' },
+  { name: 'Mise à niveau Excel', href: '/entreprises#excel-entreprise' },
 ] as const;
 
 // ============================================================
@@ -92,166 +91,6 @@ export const QUERY_CONFIG = {
 // ============================================================
 // Donnees statiques de fallback (quand l'API n'est pas disponible)
 // ============================================================
-
-export const FALLBACK_SERVICES = [
-  {
-    icon: 'BarChart3',
-    title: 'Formation Power BI',
-    description: 'Maitrisez Microsoft Power BI, l\'outil de reference en Business Intelligence. Des fondamentaux a l\'expertise avancee.',
-    features: [
-      'Creation de tableaux de bord interactifs',
-      'DAX et modelisation de donnees',
-      'Connexion aux sources de donnees',
-      'Partage et collaboration',
-      'Bonnes pratiques de visualisation',
-    ],
-    duration: '3 a 5 jours selon le niveau',
-  },
-  {
-    icon: 'FileSpreadsheet',
-    title: 'Excel Avance & VBA',
-    description: 'Allez au-dela des bases d\'Excel. Automatisez vos taches et creez des outils de gestion puissants.',
-    features: [
-      'Fonctions avancees (INDEX, MATCH, XLOOKUP)',
-      'Tableaux croises dynamiques',
-      'Introduction a VBA et macros',
-      'Power Query pour l\'ETL',
-      'Automatisation des reportings',
-    ],
-    duration: '2 a 3 jours',
-  },
-  {
-    icon: 'Building',
-    title: 'Formations Intra-entreprise',
-    description: 'Programmes personnalises adaptes a vos problematiques metier et a votre contexte organisationnel.',
-    features: [
-      'Analyse de vos besoins specifiques',
-      'Contenu sur-mesure',
-      'Exercices bases sur vos donnees',
-      'Sessions dans vos locaux',
-      'Suivi post-formation inclus',
-    ],
-    duration: 'Sur mesure',
-  },
-  {
-    icon: 'Award',
-    title: 'Preparation Certification Microsoft',
-    description: 'Preparez et reussissez l\'examen PL-300 Microsoft Power BI Data Analyst Associate.',
-    features: [
-      'Revue complete du programme d\'examen',
-      'Exercices pratiques cibles',
-      'Examens blancs commentes',
-      'Conseils et astuces pour le jour J',
-      'Taux de reussite superieur a 90%',
-    ],
-    duration: '2 a 3 jours',
-  },
-  {
-    icon: 'Users',
-    title: 'Coaching & Accompagnement',
-    description: 'Accompagnement individuel ou en equipe pour vos projets data et la montee en competences continue.',
-    features: [
-      'Sessions de coaching personnalisees',
-      'Revue de vos tableaux de bord',
-      'Conseils d\'optimisation',
-      'Transfert de competences',
-      'Support continu',
-    ],
-    duration: 'A la demande',
-  },
-  {
-    icon: 'GraduationCap',
-    title: 'Bootcamps Intensifs',
-    description: 'Programmes courts et intensifs pour une montee en competences rapide et efficace.',
-    features: [
-      'Format immersif sur quelques jours',
-      'Projets pratiques fil rouge',
-      'Travail en groupe',
-      'Certification de fin de bootcamp',
-      'Acces a la communaute alumni',
-    ],
-    duration: '3 a 5 jours',
-  },
-] as const;
-
-export const FALLBACK_BOOTCAMPS = [
-  {
-    id: 'static-1',
-    title: 'Power BI pour la Finance',
-    description: 'Maitrisez Power BI avec des cas pratiques orientes finance : analyse de la rentabilite, suivi budgetaire, reporting financier automatise.',
-    duration: '5 jours (35h)',
-    audience: 'Controleurs de gestion, DAF, analystes financiers',
-    prerequisites: 'Maitrise d\'Excel, notions de comptabilite',
-    price: '450 000 FCFA',
-    nextSession: '20 - 24 Janvier 2026',
-    benefits: [
-      'Tableaux de bord financiers interactifs',
-      'Automatisation des reportings mensuels',
-      'Analyse de variance et KPIs',
-      'Connexion aux sources comptables',
-      'Certification de fin de formation',
-    ],
-    featured: true,
-    published: true,
-  },
-  {
-    id: 'static-2',
-    title: 'Data Analytics pour Managers',
-    description: 'Developpez une culture data-driven. Apprenez a interpreter les donnees et prendre des decisions eclairees basees sur les faits.',
-    duration: '3 jours (21h)',
-    audience: 'Managers, directeurs, chefs de projet',
-    prerequisites: 'Aucun prerequis technique',
-    price: '350 000 FCFA',
-    nextSession: '10 - 12 Fevrier 2026',
-    benefits: [
-      'Lecture et interpretation des donnees',
-      'Identification des KPIs pertinents',
-      'Prise de decision basee sur les donnees',
-      'Communication avec les equipes data',
-      'Initiation a Power BI',
-    ],
-    featured: false,
-    published: true,
-  },
-  {
-    id: 'static-3',
-    title: 'Reporting & Data Visualization',
-    description: 'Creez des visualisations impactantes et des rapports automatises qui communiquent efficacement vos insights.',
-    duration: '4 jours (28h)',
-    audience: 'Analystes, charges de reporting, data analysts',
-    prerequisites: 'Bases Excel, esprit analytique',
-    price: '400 000 FCFA',
-    nextSession: '3 - 6 Mars 2026',
-    benefits: [
-      'Principes de data visualization',
-      'Power BI Desktop complet',
-      'Conception de dashboards efficaces',
-      'Storytelling avec les donnees',
-      'Publication et partage',
-    ],
-    featured: false,
-    published: true,
-  },
-  {
-    id: 'static-4',
-    title: 'Preparation Certification PL-300',
-    description: 'Preparez-vous intensivement a l\'examen Microsoft PL-300 Power BI Data Analyst avec un taux de reussite superieur a 90%.',
-    duration: '3 jours (21h)',
-    audience: 'Utilisateurs Power BI confirmes',
-    prerequisites: 'Experience Power BI (6 mois minimum)',
-    price: '300 000 FCFA',
-    nextSession: '17 - 19 Mars 2026',
-    benefits: [
-      'Revision complete du syllabus',
-      'Exercices pratiques cibles',
-      '3 examens blancs commentes',
-      'Strategies de passage d\'examen',
-      'Support jusqu\'a l\'examen',
-    ],
-    featured: false,
-    published: true,
-  },
-] as const;
 
 export const FALLBACK_REFERENCES = [
   { name: 'SGBS', sector: 'Banque' },

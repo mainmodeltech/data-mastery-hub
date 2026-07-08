@@ -615,7 +615,7 @@ const AlumniPage = () => {
 
   return (
       <Layout>
-        <SeoHead {...PAGE_SEO.bootcamps} />
+        <SeoHead {...PAGE_SEO.alumni} />
         {/* ── HERO ─────────────────────────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-28 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">

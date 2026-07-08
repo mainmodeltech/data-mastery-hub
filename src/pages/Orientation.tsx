@@ -83,29 +83,29 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
         },
         category: "bi",
     },
-    dataanalyst: {
-        id: "dataanalyst",
+    python: {
+        id: "python",
         icon: Database,
         iconBg: "bg-primary/15", iconColor: "text-primary",
         accentBg: "bg-primary/8", accentBorder: "border-primary/25", accentText: "text-primary",
         gradient: "from-primary/20 via-primary/5 to-transparent",
         tag: "✦ Votre match idéal", tagColor: "bg-primary text-white",
-        subtitleFallback: "SQL & Python",
-        description: "Votre profil et vos objectifs pointent clairement vers le bootcamp Data Analyst. Ce programme intensif vous donnera toutes les armes pour devenir un data analyst opérationnel et décrocher le poste que vous visez.",
+        subtitleFallback: "Python pour la data",
+        description: "Votre profil et vos objectifs pointent clairement vers le bootcamp Python pour la data. Ce programme vous donnera une compétence de programmation différenciante pour devenir opérationnel et décrocher le poste que vous visez.",
         highlights: [
-            "Maîtriser SQL pour interroger n'importe quelle base de données",
-            "Analyser des données réelles avec Python & Pandas",
-            "Construire un portfolio de projets pour vos entretiens",
-            "Bénéficier du réseau alumni Model Technologie",
+            "Manipuler des données réelles avec Python, Pandas & Numpy",
+            "Visualiser et raconter vos analyses (Matplotlib, Seaborn)",
+            "Construire un portfolio de notebooks pour vos entretiens",
+            "Compléter avec le bootcamp SQL pour la data si besoin",
         ],
         ctaLabel: "Réserver ma place",
-        secondaryLabel: "En savoir plus", secondaryHref: "/bootcamps?tab=data",
+        secondaryLabel: "En savoir plus", secondaryHref: "/bootcamps?tab=python",
         testimonial: {
             name: "Khoudia DIAO", role: "Investment Analyst · Mazars",
-            content: "En 10 semaines j'ai appris Python et SQL, réalisé 3 projets réels et décroché un poste chez Mazars. Meilleur investissement de ma carrière.",
+            content: "J'ai appris Python, réalisé plusieurs projets réels et décroché un poste chez Mazars. Meilleur investissement de ma carrière.",
             initials: "KD",
         },
-        category: "data",
+        category: "python",
     },
     both: {
         id: "both",
@@ -114,13 +114,13 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
         accentBg: "bg-secondary/50", accentBorder: "border-border", accentText: "text-foreground",
         gradient: "from-primary/15 via-accent/8 to-transparent",
         tag: "✦ Parcours complet recommandé", tagColor: "bg-gradient-to-r from-primary to-accent text-white",
-        subtitleFallback: "Power BI + SQL & Python",
-        description: "Votre ambition et votre profil vous positionnent pour un parcours data complet. En combinant les deux bootcamps, vous deviendrez un data analyst polyvalent, capable de gérer la donnée de A à Z.",
+        subtitleFallback: "Power BI + Python (+ SQL en complément)",
+        description: "Votre ambition et votre profil vous positionnent pour un parcours data complet. En combinant plusieurs bootcamps DataMasteryHub, vous deviendrez polyvalent, capable de gérer la donnée de A à Z.",
         highlights: [
             "Power BI pour la visualisation et le reporting",
-            "SQL & Python pour l'analyse et l'automatisation",
-            "Portfolio solide avec 6+ projets réels",
-            "Accompagnement carrière dédié jusqu'au recrutement",
+            "Python pour l'analyse et l'automatisation",
+            "SQL en complément pour interroger vos bases de données",
+            "Portfolio solide avec plusieurs projets réels",
         ],
         ctaLabel: "Voir les bootcamps", ctaHref: "/bootcamps",
         secondaryLabel: "Appeler un conseiller", secondaryHref: "/contact",
@@ -139,15 +139,15 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
         gradient: "from-foreground/10 via-foreground/3 to-transparent",
         tag: "✦ Solution entreprise", tagColor: "bg-foreground text-background",
         subtitleFallback: "Sur mesure · Votre timing",
-        description: "Vous cherchez à monter en compétence toute une équipe ? Notre formule intra-entreprise est conçue pour vous. Nous adaptons le programme, les horaires et les cas pratiques à votre secteur et à vos outils.",
+        description: "Vous cherchez à monter en compétence toute une équipe ? Nos offres entreprises (Formation Data, Power BI ou mise à niveau Excel) sont conçues pour vous. Diagnostic gratuit, contenu construit sur vos données réelles.",
         highlights: [
-            "Programme 100% adapté à votre secteur",
-            "Cas pratiques sur vos données réelles",
+            "Diagnostic gratuit avant-vente",
+            "Contenu construit sur vos données réelles",
             "Formateurs experts avec expérience entreprise",
-            "Support post-formation inclus (3 mois)",
+            "Engagement sur livrable mesurable",
         ],
-        ctaLabel: "Demander un devis", ctaHref: "/contact",
-        secondaryLabel: "Voir nos services B2B", secondaryHref: "/contact",
+        ctaLabel: "Voir l'offre entreprises", ctaHref: "/entreprises",
+        secondaryLabel: "Demander un devis", secondaryHref: "/contact",
         testimonial: {
             name: "Directeur RH", role: "Institution Financière · Dakar",
             content: "Model Technologie a formé toute notre équipe finance en 3 semaines. Résultat : nos reportings sont automatisés et notre DG est bluffé.",
@@ -223,9 +223,9 @@ function computeResult(answers: Record<string, string>): string {
     const { situation, tools, goal, availability } = answers;
     if (availability === "corporate" || (situation === "manager" && goal === "team")) return "b2b";
     if (goal === "job" && (situation === "reorientation" || situation === "student")) {
-        return (tools === "code" || tools === "tech") ? "dataanalyst" : "both";
+        return (tools === "code" || tools === "tech") ? "python" : "both";
     }
-    if (goal === "analysis" || goal === "job" || tools === "code" || tools === "tech" || situation === "reorientation") return "dataanalyst";
+    if (goal === "analysis" || goal === "job" || tools === "code" || tools === "tech" || situation === "reorientation") return "python";
     if (goal === "dashboard" || tools === "excel" || situation === "employed" || situation === "manager") return "powerbi";
     return "both";
 }
@@ -367,10 +367,10 @@ function ResultScreen({
 
     // Titre dynamique : priorité au backend, fallback au titre config
     const displayTitle = matchedBootcamp?.title ?? {
-        powerbi:    "Bootcamp Microsoft Power BI ",
-        dataanalyst:"Bootcamp Data Analyst Python & SQL",
-        both:       "Parcours Data Complet",
-        b2b:        "Formation Intra-Entreprise",
+        powerbi: "Bootcamp Power BI",
+        python:  "Bootcamp Python pour la data",
+        both:    "Parcours Data Complet",
+        b2b:     "Offre entreprises",
     }[resultKey] ?? "Bootcamp";
 
     // Sous-titre : catégorie + durée backend
@@ -647,7 +647,7 @@ const Orientation = () => {
 
     return (
         <Layout>
-            <SeoHead {...PAGE_SEO.bootcamps} />
+            <SeoHead {...PAGE_SEO.orientation} />
             <div className="min-h-screen bg-background">
 
                 {/* ── INTRO ────────────────────────────────────────────────── */}

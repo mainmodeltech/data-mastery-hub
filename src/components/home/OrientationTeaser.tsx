@@ -19,7 +19,7 @@ const results = [
     },
     {
         icon: Database,
-        label: "SQL & Python",
+        label: "Python",
         color: "text-primary",
         bg: "bg-primary/10",
         border: "border-primary/20",

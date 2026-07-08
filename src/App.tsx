@@ -24,6 +24,7 @@ import AdminResetPassword from "@/pages/admin/AdminResetPassword.tsx";
 // Pages publiques
 const Index = lazy(() => import('./pages/Index'));
 const About = lazy(() => import('./pages/About'));
+const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Bootcamps = lazy(() => import('./pages/Bootcamps'));
 const Alumni = lazy(() => import('./pages/Alumni'));
 const Orientation = lazy(() => import('./pages/Orientation'));
@@ -94,7 +95,7 @@ const App = () => (
                   {/* ── Site public ─────────────────────────────── */}
                   <Route path="/" element={<Index />} />
                   <Route path="/a-propos" element={<About />} />
-                  {/*<Route path="/services" element={<Services />} />*/}
+                  <Route path="/entreprises" element={<Entreprises />} />
                   <Route path="/bootcamps" element={<Bootcamps />} />
                   <Route path="/alumni" element={<Alumni />} />
                   <Route path="/orientation" element={<Orientation />} />

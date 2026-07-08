@@ -1,53 +1,7 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Zap, Users, Building, CheckCircle, ChevronRight } from "lucide-react";
+import { ArrowRight, Building, CheckCircle, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const services = [
-    {
-        icon: Zap,
-        tag: "Nouveau",
-        tagColor: "bg-accent text-white",
-        title: "Data Project Sprint",
-        subtitle: "4 à 8 semaines",
-        description:
-            "Confiez vos projets data à nos équipes d'apprenants avancés encadrés par nos formateurs. Tableaux de bord, analyses, automatisations — livrés en mode sprint.",
-        features: [
-            "Équipe dédiée de 2-4 data analysts juniors",
-            "Encadrement senior Model Technologie",
-            "Méthodologie agile avec points hebdomadaires",
-            "Livrables documentés et prise en main",
-        ],
-        useCases: ["Dashboard de suivi KPIs", "Analyse du portefeuille clients", "Automatisation des reportings"],
-        cta: "Lancer un sprint",
-        href: "/services",
-        gradient: "from-accent/10 via-transparent to-transparent",
-        border: "border-accent/20",
-        accentColor: "text-accent",
-    },
-    {
-        icon: Users,
-        tag: "Placement",
-        tagColor: "bg-primary text-white",
-        title: "Model Talent Régie",
-        subtitle: "Placement d'alumni qualifiés",
-        description:
-            "Accédez à notre réseau d'alumni certifiés, immédiatement opérationnels. Missions de renfort ponctuel ou intégration CDD/CDI — avec une garantie de résultat.",
-        features: [
-            "Sélection rigoureuse sur compétences réelles",
-            "Profils validés Power BI, SQL, Python",
-            "Disponibilité sous 2 semaines",
-            "Accompagnement pendant la mission",
-        ],
-        useCases: ["Renfort data pour projet stratégique", "Remplacement congé maternité/maladie", "Intégration long terme"],
-        cta: "Recruter un talent",
-        href: "/services",
-        gradient: "from-primary/10 via-transparent to-transparent",
-        border: "border-primary/20",
-        accentColor: "text-primary",
-    },
-];
-
-const clients = ["BICIS", "Baobab Groupe", "Wave Mobile Money", "Sonatel", "CBAO", "BHS"];
+import { B2B_OFFERS } from "@/config/b2b-offers.config";
 
 export function B2BSection() {
     return (
@@ -74,11 +28,11 @@ export function B2BSection() {
                             Pour les entreprises
                         </div>
                         <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-background mb-4 leading-tight">
-                            Accélérez votre{" "}
-                            <span className="text-accent">transformation data</span>
+                            Rendez vos équipes{" "}
+                            <span className="text-accent">autonomes sur la donnée</span>
                         </h2>
                         <p className="text-background/60 text-lg">
-                            Nos services B2B connectent vos besoins aux meilleurs talents data formés à Dakar.
+                            De l'Excel au Power BI, jusqu'à la formation data sur mesure — un diagnostic gratuit et un contenu construit sur vos données réelles.
                         </p>
                     </div>
                     <Button
@@ -87,91 +41,65 @@ export function B2BSection() {
                         size="lg"
                         className="border-background/25 text-background hover:bg-background/10 group flex-shrink-0"
                     >
-                        <Link to="/contact">
-                            Parler à un expert
+                        <Link to="/entreprises">
+                            Voir l'offre entreprises
                             <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </Button>
                 </div>
 
-                {/* Service Cards */}
-                <div className="grid lg:grid-cols-2 gap-8 mb-16">
-                    {services.map((s, index) => (
-                        <div
-                            key={s.title}
-                            className={`relative rounded-2xl border ${s.border} bg-background/5 backdrop-blur-sm p-8 hover:bg-background/8 transition-all duration-300 opacity-0 animate-fade-in overflow-hidden group`}
-                            style={{ animationDelay: `${0.1 + index * 0.15}s` }}
-                        >
-                            {/* Gradient background */}
-                            <div className={`absolute top-0 left-0 right-0 h-48 bg-gradient-to-b ${s.gradient} pointer-events-none`} />
+                {/* Offer Cards */}
+                <div className="grid lg:grid-cols-3 gap-6">
+                    {B2B_OFFERS.map((offer, index) => {
+                        const isAccent = offer.colorKey === "accent";
+                        return (
+                            <div
+                                key={offer.id}
+                                className={`relative rounded-2xl border ${isAccent ? "border-accent/20" : "border-primary/20"} bg-background/5 backdrop-blur-sm p-8 hover:bg-background/8 transition-all duration-300 opacity-0 animate-fade-in overflow-hidden group`}
+                                style={{ animationDelay: `${0.1 + index * 0.15}s` }}
+                            >
+                                {/* Gradient background */}
+                                <div className={`absolute top-0 left-0 right-0 h-48 bg-gradient-to-b ${isAccent ? "from-accent/15" : "from-primary/15"} via-transparent to-transparent pointer-events-none`} />
 
-                            <div className="relative z-10">
-                                {/* Header */}
-                                <div className="flex items-start justify-between mb-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-xl ${s.tagColor === "bg-accent text-white" ? "bg-accent/20" : "bg-primary/20"} border border-background/10 flex items-center justify-center`}>
-                                            <s.icon className={`h-6 w-6 ${s.accentColor}`} />
+                                <div className="relative z-10">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between mb-6">
+                                        <div className={`w-12 h-12 rounded-xl ${isAccent ? "bg-accent/20" : "bg-primary/20"} border border-background/10 flex items-center justify-center`}>
+                                            <offer.icon className={`h-6 w-6 ${isAccent ? "text-accent" : "text-primary"}`} />
                                         </div>
-                                        <div>
-                                            <h3 className="font-heading font-bold text-xl text-background">{s.title}</h3>
-                                            <span className={`${s.accentColor} text-sm font-medium`}>{s.subtitle}</span>
-                                        </div>
+                                        <span className={`${isAccent ? "bg-accent text-white" : "bg-primary text-white"} text-xs font-bold px-3 py-1 rounded-full`}>{offer.ref}</span>
                                     </div>
-                                    <span className={`${s.tagColor} text-xs font-bold px-3 py-1 rounded-full`}>{s.tag}</span>
-                                </div>
 
-                                {/* Description */}
-                                <p className="text-background/60 text-sm leading-relaxed mb-6">{s.description}</p>
+                                    <h3 className="font-heading font-bold text-xl text-background mb-1">{offer.title}</h3>
+                                    <p className={`${isAccent ? "text-accent" : "text-primary"} text-sm font-medium mb-4`}>{offer.tagline}</p>
 
-                                {/* Features */}
-                                <ul className="space-y-2.5 mb-6">
-                                    {s.features.map((f) => (
-                                        <li key={f} className="flex items-start gap-2.5 text-sm text-background/80">
-                                            <CheckCircle className={`h-4 w-4 ${s.accentColor} flex-shrink-0 mt-0.5`} />
-                                            {f}
-                                        </li>
-                                    ))}
-                                </ul>
+                                    {/* Description */}
+                                    <p className="text-background/60 text-sm leading-relaxed mb-6">{offer.objectif}</p>
 
-                                {/* Use cases */}
-                                <div className="mb-6">
-                                    <div className="text-xs font-semibold text-background/40 uppercase tracking-widest mb-3">Exemples de missions</div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {s.useCases.map((uc) => (
-                                            <span key={uc} className="text-xs px-3 py-1.5 rounded-lg bg-background/8 border border-background/15 text-background/70">
-                        {uc}
-                      </span>
+                                    {/* Différenciateurs */}
+                                    <ul className="space-y-2.5 mb-6">
+                                        {offer.differenciateurs.slice(0, 2).map((d) => (
+                                            <li key={d} className="flex items-start gap-2.5 text-sm text-background/80">
+                                                <CheckCircle className={`h-4 w-4 ${isAccent ? "text-accent" : "text-primary"} flex-shrink-0 mt-0.5`} />
+                                                {d}
+                                            </li>
                                         ))}
-                                    </div>
+                                    </ul>
+
+                                    {/* CTA */}
+                                    <Button
+                                        asChild
+                                        className={`group ${isAccent ? "bg-accent hover:bg-accent/90" : "bg-primary hover:bg-primary/90"} text-white font-semibold w-full`}
+                                    >
+                                        <Link to={`/entreprises#${offer.id}`}>
+                                            {offer.ctaLabel}
+                                            <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        </Link>
+                                    </Button>
                                 </div>
-
-                                {/* CTA */}
-                                <Button
-                                    asChild
-                                    className={`group ${s.tagColor === "bg-accent text-white" ? "bg-accent hover:bg-accent/90" : "bg-primary hover:bg-primary/90"} text-white font-semibold w-full`}
-                                >
-                                    <Link to={s.href}>
-                                        {s.cta}
-                                        <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                                    </Link>
-                                </Button>
                             </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Social proof — ils nous font confiance */}
-                <div className="text-center">
-                    <div className="text-sm text-background/40 uppercase tracking-widest mb-6">
-                        Ils nous font confiance
-                    </div>
-                    <div className="flex flex-wrap justify-center gap-x-10 gap-y-4">
-                        {clients.map((c) => (
-                            <span key={c} className="text-background/30 font-heading font-bold text-lg hover:text-background/50 transition-colors cursor-default">
-                {c}
-              </span>
-                        ))}
-                    </div>
+                        );
+                    })}
                 </div>
             </div>
         </section>
