@@ -149,11 +149,11 @@ const About = () => {
         {/* ── HERO ─────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-24 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(217,45%,16%)] to-[hsl(199,89%,10%)]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)]" />
             <div
                 className="absolute inset-0 opacity-[0.04]"
                 style={{
-                  backgroundImage: `linear-gradient(hsl(199,89%,48%) 1px, transparent 1px), linear-gradient(to right, hsl(199,89%,48%) 1px, transparent 1px)`,
+                  backgroundImage: `linear-gradient(hsl(16,92%,47%) 1px, transparent 1px), linear-gradient(to right, hsl(16,92%,47%) 1px, transparent 1px)`,
                   backgroundSize: "60px 60px",
                 }}
             />
@@ -407,7 +407,7 @@ const About = () => {
           <div className="container mx-auto px-4 lg:px-8">
             <div className="max-w-3xl mx-auto">
               <div className="rounded-3xl bg-foreground p-10 lg:p-14 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(217,45%,16%)] to-[hsl(199,89%,10%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)] pointer-events-none" />
                 <div className="relative z-10 grid lg:grid-cols-2 gap-8 items-center">
                   <div>
                     <div className="inline-flex items-center gap-2 mb-4">

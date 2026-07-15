@@ -480,14 +480,8 @@ export function Header() {
                   }
               />
 
-              <Link to="/orientation" className={navLinkClass("/orientation")}>
-                Orientation
-              </Link>
               <Link to="/alumni" className={navLinkClass("/alumni")}>
                 Alumni
-              </Link>
-              <Link to="/a-propos" className={navLinkClass("/a-propos")}>
-                À propos
               </Link>
               <Link to="/contact" className={navLinkClass("/contact")}>
                 Contact
@@ -705,12 +699,10 @@ export function Header() {
                       </div>
                   )}
 
-                  {/* Liens plats */}
+                  {/* Liens plats — à propos et orientation restent accessibles via le footer / le dropdown Bootcamps */}
                   {(
                       [
-                        { label: "Orientation", href: "/orientation", icon: Compass },
                         { label: "Alumni", href: "/alumni", icon: Users },
-                        { label: "À propos", href: "/a-propos", icon: null },
                         { label: "Contact", href: "/contact", icon: Phone },
                       ] as const
                   ).map((item) => (

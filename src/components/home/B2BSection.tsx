@@ -11,7 +11,7 @@ export function B2BSection() {
                 <div
                     className="absolute inset-0 opacity-[0.035]"
                     style={{
-                        backgroundImage: `radial-gradient(circle, hsl(199,89%,48%) 1px, transparent 1px)`,
+                        backgroundImage: `radial-gradient(circle, hsl(16,92%,47%) 1px, transparent 1px)`,
                         backgroundSize: "32px 32px",
                     }}
                 />

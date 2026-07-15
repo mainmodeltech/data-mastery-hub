@@ -39,11 +39,11 @@ export const STATS = {
 
 export const PUBLIC_NAVIGATION = [
   { name: 'Accueil', href: '/' },
-  { name: 'A propos', href: '/a-propos' },
-  { name: 'Entreprises', href: '/entreprises' },
   { name: 'Bootcamps', href: '/bootcamps' },
+  { name: 'Entreprises', href: '/entreprises' },
   { name: 'Alumni', href: '/alumni' },
   { name: 'Contact', href: '/contact' },
+  { name: 'A propos', href: '/a-propos' },
 ] as const;
 
 export const ADMIN_NAVIGATION = [

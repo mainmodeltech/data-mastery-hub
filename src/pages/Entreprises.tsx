@@ -22,9 +22,10 @@ import {
   Phone, Mail, FileText, Target, Wallet,
 } from "lucide-react";
 import { PAGE_SEO, SeoHead } from "@/components/SeoHead.tsx";
-import { COMPANY } from "@/config/constants";
+import { COMPANY, STATS } from "@/config/constants";
 import { B2B_OFFERS, type B2BOffer } from "@/config/b2b-offers.config";
 import type { CreateContactMessageDTO } from "@/types";
+import teamTrainingPhoto from "@/assets/gallery/bootcamp-1.jpg";
 
 // ─── Contact Modal ────────────────────────────────────────────────────────────
 
@@ -229,7 +230,7 @@ function OfferCard({ offer, index, onContact }: { offer: B2BOffer; index: number
                   {offer.contenuType.map((c) => (
                       <div key={c} className="flex items-start gap-3">
                         <Target className={cn("h-4 w-4 flex-shrink-0 mt-0.5", accentText)} />
-                        <span className="text-sm text-foreground leading-snug">{c}</span>
+                        <span className="text-base text-foreground leading-snug">{c}</span>
                       </div>
                   ))}
                 </div>
@@ -241,7 +242,7 @@ function OfferCard({ offer, index, onContact }: { offer: B2BOffer; index: number
                   {offer.differenciateurs.map((d) => (
                       <div key={d} className="flex items-start gap-2.5">
                         <Sparkles className={cn("h-4 w-4 flex-shrink-0 mt-0.5", accentText)} />
-                        <span className="text-sm text-muted-foreground leading-snug">{d}</span>
+                        <span className="text-base text-muted-foreground leading-snug">{d}</span>
                       </div>
                   ))}
                 </div>
@@ -259,7 +260,7 @@ function OfferCard({ offer, index, onContact }: { offer: B2BOffer; index: number
                   {offer.livrables.map((l) => (
                       <div key={l} className="flex items-start gap-3">
                         <CheckCircle className={cn("h-5 w-5 flex-shrink-0 mt-0.5", accentText)} />
-                        <span className="text-sm text-foreground leading-snug">{l}</span>
+                        <span className="text-base text-foreground leading-snug">{l}</span>
                       </div>
                   ))}
                 </div>
@@ -318,11 +319,11 @@ const Entreprises = () => {
         {/* ── HERO ─────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-24 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(217,45%,16%)] to-[hsl(199,89%,10%)]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)]" />
             <div
                 className="absolute inset-0 opacity-[0.04]"
                 style={{
-                  backgroundImage: `linear-gradient(hsl(199,89%,48%) 1px, transparent 1px), linear-gradient(to right, hsl(199,89%,48%) 1px, transparent 1px)`,
+                  backgroundImage: `linear-gradient(hsl(16,92%,47%) 1px, transparent 1px), linear-gradient(to right, hsl(16,92%,47%) 1px, transparent 1px)`,
                   backgroundSize: "60px 60px",
                 }}
             />
@@ -370,6 +371,26 @@ const Entreprises = () => {
           </div>
         </section>
 
+        {/* ── PHOTO — formation en situation ──────────────────── */}
+        <section className="py-16">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="max-w-5xl mx-auto rounded-3xl overflow-hidden relative shadow-xl">
+              <img
+                  src={teamTrainingPhoto}
+                  alt="Session de formation Model Technologie en entreprise"
+                  className="w-full h-full object-cover aspect-[21/9]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-center gap-4">
+                <div className="bg-background/95 backdrop-blur-sm rounded-2xl px-5 py-3">
+                  <span className="font-heading text-2xl font-bold text-primary">{STATS.partners}</span>
+                  <span className="text-sm text-foreground/70 ml-2">entreprises partenaires</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── OFFRES ────────────────────────────────────────── */}
         <section className="py-20 lg:py-28">
           <div className="container mx-auto px-4 lg:px-8">
@@ -389,7 +410,7 @@ const Entreprises = () => {
           <div className="container mx-auto px-4 lg:px-8">
             <div className="max-w-3xl mx-auto">
               <div className="rounded-3xl bg-foreground p-10 lg:p-14 text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(217,45%,16%)] to-[hsl(199,89%,10%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)] pointer-events-none" />
                 <div className="relative z-10">
                   <div className="inline-flex items-center gap-2 mb-6">
                     <Sparkles className="h-4 w-4 text-accent" />

@@ -321,7 +321,7 @@ function StickyCard({
             ].map((t, i) => (
                 <div
                     key={i}
-                    className="flex items-start gap-2 text-xs text-muted-foreground"
+                    className="flex items-start gap-2 text-sm text-muted-foreground"
                 >
                   <t.icon
                       className={cn("h-3.5 w-3.5 flex-shrink-0 mt-0.5", accentClass)}
@@ -401,6 +401,20 @@ function BootcampDetail({
                 </p>
               </div>
 
+              {/* Prix/CTA rapide — mobile uniquement, la StickyCard couvre déjà le desktop */}
+              <div className="lg:hidden flex items-center justify-between gap-4 mb-12 p-5 rounded-2xl border-2 border-border bg-card opacity-0 animate-fade-in" style={{ animationDelay: "0.12s" }}>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-0.5">Tarif</div>
+                  <div className="font-heading text-2xl font-bold text-foreground">
+                    {session?.price ?? bootcamp.price ?? "—"}
+                  </div>
+                </div>
+                <Button onClick={() => onRegister(bootcamp)} className={cn("font-bold h-12 px-6", btnClass)}>
+                  Réserver ma place
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+
               {/* Outcomes */}
               {staticData.outcomes.length > 0 && (
                   <div
@@ -424,7 +438,7 @@ function BootcampDetail({
                           >
                             {o.stat}
                           </div>
-                          <div className="text-xs text-muted-foreground leading-snug">
+                          <div className="text-sm text-muted-foreground leading-snug">
                             {o.label}
                           </div>
                         </div>
@@ -510,29 +524,15 @@ function BootcampDetail({
                         Outils maîtrisés
                       </h3>
                     </div>
-                    <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
                       {staticData.tools.map((tool) => (
-                          <div key={tool.name}>
-                            <div className="flex justify-between text-sm mb-1.5">
-                        <span className="font-medium text-foreground">
-                          {tool.name}
-                        </span>
-                              <span className="text-muted-foreground text-xs">
-                          {tool.level}%
-                        </span>
-                            </div>
-                            <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                              <div
-                                  className={cn(
-                                      "h-full rounded-full transition-all duration-1000",
-                                      isAccent
-                                          ? "bg-gradient-to-r from-accent/60 to-accent"
-                                          : "bg-gradient-to-r from-primary/60 to-primary"
-                                  )}
-                                  style={{ width: `${tool.level}%` }}
-                              />
-                            </div>
-                          </div>
+                          <Badge
+                              key={tool.name}
+                              variant="secondary"
+                              className={cn("text-sm font-medium px-3 py-1.5", accentBg, accentClass)}
+                          >
+                            {tool.name}
+                          </Badge>
                       ))}
                     </div>
                   </div>
@@ -758,11 +758,11 @@ export default function BootcampsPage() {
         {/* ── Hero ──────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-0 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(217,45%,16%)] to-[hsl(199,89%,10%)]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)]" />
             <div
                 className="absolute inset-0 opacity-[0.04]"
                 style={{
-                  backgroundImage: `linear-gradient(hsl(199,89%,48%) 1px, transparent 1px), linear-gradient(to right, hsl(199,89%,48%) 1px, transparent 1px)`,
+                  backgroundImage: `linear-gradient(hsl(16,92%,47%) 1px, transparent 1px), linear-gradient(to right, hsl(16,92%,47%) 1px, transparent 1px)`,
                   backgroundSize: "60px 60px",
                 }}
             />
@@ -915,8 +915,8 @@ export default function BootcampsPage() {
           <div className="container mx-auto px-4 lg:px-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-3xl mx-auto">
               <div>
-                <p className="font-semibold text-foreground">Indécis entre les deux bootcamps ?</p>
-                <p className="text-sm text-muted-foreground">Notre quiz d'orientation vous guide en 2 minutes.</p>
+                <p className="font-semibold text-foreground">Indécis entre les bootcamps ?</p>
+                <p className="text-base text-muted-foreground">Notre quiz d'orientation vous guide en 2 minutes.</p>
               </div>
               <Button asChild variant="outline" className="group flex-shrink-0">
                 <Link to="/orientation">

@@ -286,7 +286,7 @@ function ProjectCard({ project, onClick }: { project: ProjectSummary; onClick: (
             ) : (
                 <>
                   <div className="absolute inset-0 opacity-[0.03]" style={{
-                    backgroundImage: `linear-gradient(${isPowerBI ? "hsl(199,89%,48%)" : "hsl(217,71%,53%)"} 1px, transparent 1px), linear-gradient(to right, ${isPowerBI ? "hsl(199,89%,48%)" : "hsl(217,71%,53%)"} 1px, transparent 1px)`,
+                    backgroundImage: `linear-gradient(${isPowerBI ? "hsl(16,92%,47%)" : "hsl(211,55%,50%)"} 1px, transparent 1px), linear-gradient(to right, ${isPowerBI ? "hsl(16,92%,47%)" : "hsl(211,55%,50%)"} 1px, transparent 1px)`,
                     backgroundSize: "30px 30px",
                   }} />
                   {isPowerBI
@@ -619,9 +619,9 @@ const AlumniPage = () => {
         {/* ── HERO ─────────────────────────────────────────────────────────────── */}
         <section className="relative bg-foreground pt-20 pb-28 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(217,45%,16%)] to-[hsl(199,89%,10%)]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)]" />
             <div className="absolute inset-0 opacity-[0.04]" style={{
-              backgroundImage: `linear-gradient(hsl(199,89%,48%) 1px, transparent 1px), linear-gradient(to right, hsl(199,89%,48%) 1px, transparent 1px)`,
+              backgroundImage: `linear-gradient(hsl(16,92%,47%) 1px, transparent 1px), linear-gradient(to right, hsl(16,92%,47%) 1px, transparent 1px)`,
               backgroundSize: "60px 60px",
             }} />
             <div className="absolute -top-40 right-0 w-[700px] h-[700px] rounded-full bg-primary/8 blur-3xl" />
@@ -653,7 +653,7 @@ const AlumniPage = () => {
                   <div key={s.label} className="text-center p-5 rounded-2xl bg-background/6 border border-background/12">
                     <s.icon className={cn("h-5 w-5 mx-auto mb-2", s.color)} />
                     <div className="font-heading text-3xl font-bold text-background mb-1">{s.value}</div>
-                    <div className="text-xs text-background/45">{s.label}</div>
+                    <div className="text-sm text-background/45">{s.label}</div>
                   </div>
               ))}
             </div>
@@ -807,7 +807,7 @@ const AlumniPage = () => {
             <div className="grid lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {/* Candidats */}
               <div className="rounded-3xl bg-foreground p-8 lg:p-10 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(217,45%,16%)] to-[hsl(199,89%,10%)]" />
+                <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)]" />
                 <div className="relative z-10">
                   <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center mb-5">
                     <GraduationCap className="h-6 w-6 text-accent" />

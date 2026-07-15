@@ -45,7 +45,7 @@ export function Footer() {
           <div>
             <h3 className="font-heading font-semibold text-lg mb-4">Navigation</h3>
             <ul className="space-y-3">
-              {PUBLIC_NAVIGATION.slice(0, 5).map((item) => (
+              {PUBLIC_NAVIGATION.map((item) => (
                 <li key={item.name}>
                   <Link to={item.href} className="text-background/70 hover:text-background transition-colors duration-200 text-sm">
                     {item.name}
