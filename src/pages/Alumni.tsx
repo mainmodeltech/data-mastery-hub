@@ -617,43 +617,38 @@ const AlumniPage = () => {
       <Layout>
         <SeoHead {...PAGE_SEO.alumni} />
         {/* ── HERO ─────────────────────────────────────────────────────────────── */}
-        <section className="relative bg-foreground pt-20 pb-28 overflow-hidden">
+        <section className="relative bg-background pt-20 pb-28 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)]" />
-            <div className="absolute inset-0 opacity-[0.04]" style={{
-              backgroundImage: `linear-gradient(hsl(16,92%,47%) 1px, transparent 1px), linear-gradient(to right, hsl(16,92%,47%) 1px, transparent 1px)`,
-              backgroundSize: "60px 60px",
-            }} />
-            <div className="absolute -top-40 right-0 w-[700px] h-[700px] rounded-full bg-primary/8 blur-3xl" />
+            <div className="absolute -top-40 right-0 w-[700px] h-[700px] rounded-full bg-primary/6 blur-3xl" />
             <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] rounded-full bg-accent/6 blur-3xl" />
           </div>
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/15 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                 <Trophy className="h-3.5 w-3.5" />
                 30+ alumni · 90% en poste en 3 mois
               </div>
-              <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
                 Leurs réussites parlent<br /><span className="text-accent">mieux que nous</span>
               </h1>
-              <p className="text-lg text-background/65 leading-relaxed mb-10 opacity-0 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+              <p className="text-lg text-muted-foreground leading-relaxed mb-10 opacity-0 animate-fade-in" style={{ animationDelay: "0.3s" }}>
                 Découvrez les parcours de nos alumni, leurs projets concrets et ce que leur formation chez Model Technologie a réellement changé dans leur carrière.
               </p>
               <div className="flex flex-wrap justify-center gap-3 opacity-0 animate-fade-in" style={{ animationDelay: "0.35s" }}>
                 <Button asChild className="bg-accent hover:bg-accent/90 text-white font-bold group">
                   <Link to="/bootcamps">Rejoindre la prochaine promo<ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" /></Link>
                 </Button>
-                <Button asChild variant="outline" className="border-background/20 text-accent hover:bg-background/10">
+                <Button asChild variant="outline">
                   <Link to="/contact"><Building2 className="h-4 w-4 mr-2" />Recruter nos alumni</Link>
                 </Button>
               </div>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-3xl mx-auto mt-14 opacity-0 animate-fade-in" style={{ animationDelay: "0.4s" }}>
               {impactStats.map(s => (
-                  <div key={s.label} className="text-center p-5 rounded-2xl bg-background/6 border border-background/12">
+                  <div key={s.label} className="text-center p-5 rounded-2xl bg-secondary border border-border">
                     <s.icon className={cn("h-5 w-5 mx-auto mb-2", s.color)} />
-                    <div className="font-heading text-3xl font-bold text-background mb-1">{s.value}</div>
-                    <div className="text-sm text-background/45">{s.label}</div>
+                    <div className="font-heading text-3xl font-bold text-foreground mb-1">{s.value}</div>
+                    <div className="text-sm text-muted-foreground">{s.label}</div>
                   </div>
               ))}
             </div>

@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { bootcampService } from "@/services/bootcampService";
 import { QUERY_CONFIG } from "@/config/constants";
+import { MOCK_BOOTCAMP_CATALOG } from "@/config/mockBootcampCatalog";
 import type { Bootcamp } from "@/types/bootcamp.type";
 import logo from "@/assets/logo.png";
 
@@ -374,7 +375,9 @@ export function Header() {
     retry: 1,
   });
 
-  const bootcampMenuItems = buildBootcampMenuItems(bootcamps ?? []);
+  const bootcampMenuItems = buildBootcampMenuItems(
+      bootcamps?.length ? bootcamps : bootcampsLoading ? [] : MOCK_BOOTCAMP_CATALOG
+  );
 
   // ── Scroll ─────────────────────────────────────────────────────────────────
   useEffect(() => {

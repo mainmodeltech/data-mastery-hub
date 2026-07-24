@@ -38,7 +38,8 @@ import {
 import type { Bootcamp, BootcampSession } from "@/types/bootcamp.type";
 import { COMPANY, QUERY_CONFIG } from "@/config/constants";
 import { RegistrationModal } from "./RegistrationModal";
-import {getBootcampStatic, StaticEnrichment} from "@/config/bootcamps.config.ts";
+import {getBootcampStatic, resolveBootcampContent, StaticEnrichment} from "@/config/bootcamps.config.ts";
+import { MOCK_BOOTCAMP_CATALOG } from "@/config/mockBootcampCatalog";
 import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -75,6 +76,19 @@ function formatSessionFormat(fmt: BootcampSession["format"]): string {
     HYBRID: "Hybride",
   };
   return map[fmt];
+}
+
+/** Une session est sélectionnable si elle n'est ni complète, ni close, ni terminée */
+function isSessionSelectable(s: BootcampSession): boolean {
+  return !s.isFull && !["CLOSED", "COMPLETED", "CANCELLED"].includes(s.status);
+}
+
+function sessionStatusLabel(s: BootcampSession): string | null {
+  if (s.isFull || s.status === "CLOSED") return "Complet";
+  if (s.status === "COMPLETED") return "Terminée";
+  if (s.status === "CANCELLED") return "Annulée";
+  if (s.status === "IN_PROGRESS") return "En cours";
+  return null;
 }
 
 // ─── CurriculumAccordion ──────────────────────────────────────────────────────
@@ -163,19 +177,100 @@ function CurriculumAccordion({ curriculum, colorKey, }: {
   );
 }
 
+// ─── SessionPicker ──────────────────────────────────────────────────────────
+// Une formation peut avoir plusieurs cohortes ouvertes en parallèle —
+// l'apprenant choisit celle qui l'arrange avant de s'inscrire.
+
+function SessionPicker({
+                          sessions,
+                          selectedId,
+                          onSelect,
+                          colorKey,
+                        }: {
+  sessions: BootcampSession[];
+  selectedId: string | null;
+  onSelect: (session: BootcampSession) => void;
+  colorKey: StaticEnrichment["colorKey"];
+}) {
+  if (sessions.length === 0) {
+    return (
+        <div className="flex items-center gap-2.5 p-4 rounded-xl bg-secondary/40 border border-border text-sm text-muted-foreground mb-12">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          Aucune session planifiée pour le moment — inscrivez-vous pour être notifié.
+        </div>
+    );
+  }
+
+  const isAccent = colorKey === "accent";
+
+  return (
+      <div className="mb-12">
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar className={cn("h-5 w-5", isAccent ? "text-accent" : "text-primary")} />
+          <h3 className="font-heading text-xl font-bold text-foreground">Choisissez votre session</h3>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {sessions.map((s) => {
+            const selectable = isSessionSelectable(s);
+            const isSelected = s.id === selectedId;
+            const statusLabel = sessionStatusLabel(s);
+            return (
+                <button
+                    key={s.id}
+                    type="button"
+                    disabled={!selectable}
+                    onClick={() => selectable && onSelect(s)}
+                    className={cn(
+                        "text-left p-4 rounded-2xl border-2 transition-all",
+                        !selectable
+                            ? "border-border bg-secondary/30 opacity-50 cursor-not-allowed"
+                            : isSelected
+                                ? isAccent ? "border-accent bg-accent/8" : "border-primary bg-primary/8"
+                                : "border-border bg-card hover:border-muted-foreground/30",
+                    )}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="font-semibold text-base text-foreground">{formatSessionLabel(s)}</span>
+                    {statusLabel ? (
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">{statusLabel}</Badge>
+                    ) : isSelected ? (
+                        <CheckCircle className={cn("h-5 w-5 flex-shrink-0", isAccent ? "text-accent" : "text-primary")} />
+                    ) : null}
+                  </div>
+                  <div className="text-sm text-muted-foreground mb-1">
+                    {formatDateShort(s.startDate)} → {formatDateShort(s.endDate)}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                    <span>{formatSessionFormat(s.format)}</span>
+                    {s.spotsRemaining !== null && selectable && (
+                        <span className={cn("font-semibold", s.spotsRemaining <= 3 ? "text-orange-500" : "text-green-600")}>
+                          {s.spotsRemaining} place{s.spotsRemaining > 1 ? "s" : ""} restante{s.spotsRemaining > 1 ? "s" : ""}
+                        </span>
+                    )}
+                    {s.price && <span className="font-semibold text-foreground ml-auto">{s.price}</span>}
+                  </div>
+                </button>
+            );
+          })}
+        </div>
+      </div>
+  );
+}
+
 // ─── StickyCard ───────────────────────────────────────────────────────────────
 
 function StickyCard({
                       bootcamp,
+                      session,
                       staticData,
                       onRegister,
                     }: {
   bootcamp: Bootcamp;
+  session: BootcampSession | null;
   staticData: StaticEnrichment;
   onRegister: () => void;
 }) {
   const isAccent = staticData.colorKey === "accent";
-  const session = bootcamp.nextSession;
 
   const maxParticipants = session?.maxParticipants ?? 20;
   const currentParticipants = session?.currentParticipants ?? 0;
@@ -218,8 +313,8 @@ function StickyCard({
               [
                 {
                   icon: Calendar,
-                  label: "Prochaine session",
-                  value: formatDateShort(session?.startDate ?? null),
+                  label: "Session sélectionnée",
+                  value: formatSessionLabel(session),
                 },
                 {
                   icon: Clock,
@@ -342,12 +437,36 @@ function BootcampDetail({
                           onRegister,
                         }: {
   bootcamp: Bootcamp;
-  onRegister: (b: Bootcamp) => void;
+  onRegister: (b: Bootcamp, session: BootcampSession | null) => void;
 }) {
-  const staticData = getBootcampStatic(bootcamp.category);
+  const staticData = resolveBootcampContent(bootcamp);
   const isAccent = staticData.colorKey === "accent";
   const Icon = staticData.icon;
-  const session = bootcamp.nextSession;
+
+  // ── Sessions (cohortes) ────────────────────────────────────────────────────
+  // Une formation peut avoir plusieurs sessions ouvertes en parallèle.
+  // bootcamp.sessions est déjà chargé si l'API le fournit (page détail) ; sinon
+  // on va chercher via bootcampService.findSessions, avec repli sur nextSession seul.
+  const { data: fetchedSessions } = useQuery({
+    queryKey: ["bootcamp-sessions", bootcamp.id],
+    queryFn: () => bootcampService.findSessions(bootcamp.id),
+    enabled: !bootcamp.sessions?.length,
+    staleTime: QUERY_CONFIG.staleTime,
+    retry: 1,
+  });
+
+  const sessions: BootcampSession[] = bootcamp.sessions?.length
+      ? bootcamp.sessions
+      : fetchedSessions?.length
+          ? fetchedSessions
+          : bootcamp.nextSession
+              ? [bootcamp.nextSession]
+              : [];
+
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+      bootcamp.nextSession?.id ?? sessions.find(isSessionSelectable)?.id ?? null
+  );
+  const session = sessions.find((s) => s.id === selectedSessionId) ?? sessions[0] ?? null;
 
   const accentClass = isAccent ? "text-accent" : "text-primary";
   const accentBg = isAccent ? "bg-accent/10" : "bg-primary/10";
@@ -409,11 +528,19 @@ function BootcampDetail({
                     {session?.price ?? bootcamp.price ?? "—"}
                   </div>
                 </div>
-                <Button onClick={() => onRegister(bootcamp)} className={cn("font-bold h-12 px-6", btnClass)}>
+                <Button onClick={() => onRegister(bootcamp, session)} disabled={!session} className={cn("font-bold h-12 px-6", btnClass)}>
                   Réserver ma place
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
+
+              {/* Sélecteur de session (cohorte) */}
+              <SessionPicker
+                  sessions={sessions}
+                  selectedId={selectedSessionId}
+                  onSelect={(s) => setSelectedSessionId(s.id)}
+                  colorKey={staticData.colorKey}
+              />
 
               {/* Outcomes */}
               {staticData.outcomes.length > 0 && (
@@ -674,7 +801,8 @@ function BootcampDetail({
                 )}
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button
-                      onClick={() => onRegister(bootcamp)}
+                      onClick={() => onRegister(bootcamp, session)}
+                      disabled={!session}
                       className={cn("font-bold group", btnClass)}
                   >
                     Réserver ma place
@@ -694,12 +822,25 @@ function BootcampDetail({
               <div className="sticky top-24">
                 <StickyCard
                     bootcamp={bootcamp}
+                    session={session}
                     staticData={staticData}
-                    onRegister={() => onRegister(bootcamp)}
+                    onRegister={() => onRegister(bootcamp, session)}
                 />
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ── CTA mobile sticky — reflète la session choisie ──────────── */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
+          <Button
+              onClick={() => onRegister(bootcamp, session)}
+              disabled={!session}
+              className={cn("w-full h-12 font-bold", btnClass)}
+          >
+            Réserver ma place{session?.price ? ` · ${session.price}` : bootcamp.price ? ` · ${bootcamp.price}` : ""}
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
         </div>
       </div>
   );
@@ -710,13 +851,18 @@ function BootcampDetail({
 export default function BootcampsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeIndex, setActiveIndex]   = useState(0);
-  const [registerFor, setRegisterFor]   = useState<Bootcamp | null>(null);
+  const [registerFor, setRegisterFor]   = useState<{ bootcamp: Bootcamp; session: BootcampSession | null } | null>(null);
 
-  const { data: bootcamps, isLoading, isError } = useQuery({
+  const { data: fetchedBootcamps, isLoading } = useQuery({
     queryKey: ["bootcamps", "public"],
     queryFn:  bootcampService.list,
     staleTime: QUERY_CONFIG.staleTime,
+    retry: 1,
   });
+
+  // Repli sur le catalogue de démonstration si l'API est indisponible ou vide
+  // (voir docs/redesign-diagnostic.md — pas de backend accessible en dev ici).
+  const bootcamps = fetchedBootcamps?.length ? fetchedBootcamps : MOCK_BOOTCAMP_CATALOG;
 
   // ── Synchroniser l'index actif depuis ?tab= dans l'URL ──────────────────────
   // Fonctionne au premier chargement ET quand l'URL change (ex: lien externe).
@@ -749,38 +895,29 @@ export default function BootcampsPage() {
   };
 
   const activeBootcamp = bootcamps?.[activeIndex];
-  const activeStatic   = activeBootcamp ? getBootcampStatic(activeBootcamp.category) : null;
 
   return (
       <Layout>
         <SeoHead {...PAGE_SEO.bootcamps} />
 
         {/* ── Hero ──────────────────────────────────────────── */}
-        <section className="relative bg-foreground pt-20 pb-0 overflow-hidden">
+        <section className="relative bg-background pt-20 pb-16 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)]" />
-            <div
-                className="absolute inset-0 opacity-[0.04]"
-                style={{
-                  backgroundImage: `linear-gradient(hsl(16,92%,47%) 1px, transparent 1px), linear-gradient(to right, hsl(16,92%,47%) 1px, transparent 1px)`,
-                  backgroundSize: "60px 60px",
-                }}
-            />
-            <div className="absolute -top-32 right-0 w-[600px] h-[600px] rounded-full bg-primary/8 blur-3xl" />
+            <div className="absolute -top-32 right-0 w-[600px] h-[600px] rounded-full bg-primary/6 blur-3xl" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-accent/6 blur-3xl" />
           </div>
 
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             <div className="max-w-3xl mx-auto text-center pb-16">
               <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/15 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.1s" }}
               >
                 <GraduationCap className="h-3.5 w-3.5" />
                 Nos bootcamps · Dakar, Sénégal
               </div>
               <h1
-                  className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-6 leading-tight opacity-0 animate-fade-in"
+                  className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.2s" }}
               >
                 {bootcamps?.length === 1 ? "1 bootcamp pour" : `${bootcamps?.length ?? 4} bootcamps pour`}{" "}
@@ -789,7 +926,7 @@ export default function BootcampsPage() {
                 votre carrière data
               </h1>
               <p
-                  className="text-lg text-background/65 mb-8 leading-relaxed opacity-0 animate-fade-in"
+                  className="text-lg text-muted-foreground mb-8 leading-relaxed opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.3s" }}
               >
                 Des programmes intensifs, conçus avec les entreprises qui recrutent à Dakar.
@@ -798,7 +935,7 @@ export default function BootcampsPage() {
 
               {/* Trust strip */}
               <div
-                  className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-background/40 text-sm mb-10 opacity-0 animate-fade-in"
+                  className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-muted-foreground text-sm mb-10 opacity-0 animate-fade-in"
                   style={{ animationDelay: "0.35s" }}
               >
                 {([
@@ -820,19 +957,14 @@ export default function BootcampsPage() {
                 <div className="flex justify-center pb-16">
                   <Loader2 className="h-8 w-8 animate-spin text-accent" />
                 </div>
-            ) : isError ? (
-                <div className="flex justify-center pb-16 text-amber-500 text-sm">
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  Erreur de chargement. Veuillez rafraîchir la page.
-                </div>
             ) : bootcamps && bootcamps.length > 1 ? (
                 <div
                     className="flex justify-center pb-0 opacity-0 animate-fade-in"
                     style={{ animationDelay: "0.4s" }}
                 >
-                  <div className="inline-flex bg-background/8 border border-background/15 rounded-2xl p-1.5 gap-1.5">
+                  <div className="inline-flex bg-secondary border border-border rounded-2xl p-1.5 gap-1.5 flex-wrap justify-center">
                     {bootcamps.map((bc, idx) => {
-                      const s          = getBootcampStatic(bc.category);
+                      const s          = resolveBootcampContent(bc);
                       const isActive   = activeIndex === idx;
                       const TabIcon    = s.icon;
                       const tabSession = bc.nextSession;
@@ -849,13 +981,13 @@ export default function BootcampsPage() {
                                   "flex items-center gap-3 px-6 py-4 rounded-xl font-semibold text-sm transition-all duration-200",
                                   isActive
                                       ? "bg-background text-foreground shadow-sm"
-                                      : "text-background/60 hover:text-background/80 hover:bg-background/5"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-background/60"
                               )}
                           >
                             <TabIcon className={cn("h-4 w-4", isActive ? (s.colorKey === "accent" ? "text-accent" : "text-primary") : "")} />
                             <span className="hidden sm:block">{bc.title}</span>
                             <span className="sm:hidden">
-                              {bc.category === "bi" ? "Power BI" : "Data & Python"}
+                              {bc.title.split(" ").slice(0, 2).join(" ")}
                             </span>
                             {urgentSpots && tabSession && (
                                 <span className="hidden sm:block text-xs bg-orange-500/15 text-orange-500 font-bold px-2 py-0.5 rounded-full">
@@ -869,13 +1001,6 @@ export default function BootcampsPage() {
                 </div>
             ) : null}
           </div>
-
-          {/* Wave */}
-          <div className="relative z-10">
-            <svg viewBox="0 0 1440 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-              <path d="M0 48 L0 24 Q360 0 720 24 Q1080 48 1440 24 L1440 48 Z" fill="hsl(var(--background))" />
-            </svg>
-          </div>
         </section>
 
         {/* ── Détail bootcamp ──────────────────────────────── */}
@@ -883,32 +1008,13 @@ export default function BootcampsPage() {
             <div className="flex justify-center py-32">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
-        ) : isError ? (
-            <div className="text-center py-32 text-muted-foreground">
-              <AlertCircle className="h-10 w-10 mx-auto mb-4" />
-              <p>Impossible de charger les bootcamps.</p>
-              <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>Réessayer</Button>
-            </div>
         ) : activeBootcamp ? (
-            <BootcampDetail key={activeBootcamp.id} bootcamp={activeBootcamp} onRegister={setRegisterFor} />
+            <BootcampDetail
+                key={activeBootcamp.id}
+                bootcamp={activeBootcamp}
+                onRegister={(b, session) => setRegisterFor({ bootcamp: b, session })}
+            />
         ) : null}
-
-        {/* ── CTA mobile sticky ────────────────────────────── */}
-        {activeBootcamp && (
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
-              <Button
-                  onClick={() => setRegisterFor(activeBootcamp)}
-                  disabled={!activeBootcamp.nextSession}
-                  className={cn(
-                      "w-full h-12 font-bold",
-                      activeStatic?.colorKey === "accent" ? "bg-accent hover:bg-accent/90 text-white" : "bg-primary hover:bg-primary/90 text-white"
-                  )}
-              >
-                Réserver ma place{activeBootcamp.price ? ` · ${activeBootcamp.price}` : ""}
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-        )}
 
         {/* ── Compare strip ─────────────────────────────────── */}
         <section className="py-12 bg-secondary/50 border-t border-border">
@@ -932,9 +1038,9 @@ export default function BootcampsPage() {
         {/* ── Modale d'inscription ──────────────────────────── */}
         {registerFor && (
             <RegistrationModal
-                bootcamp={registerFor}
-                session={registerFor.nextSession}
-                staticData={getBootcampStatic(registerFor.category)}
+                bootcamp={registerFor.bootcamp}
+                session={registerFor.session}
+                staticData={resolveBootcampContent(registerFor.bootcamp)}
                 onClose={() => setRegisterFor(null)}
             />
         )}

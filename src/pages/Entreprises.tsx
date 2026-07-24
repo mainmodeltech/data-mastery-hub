@@ -317,31 +317,23 @@ const Entreprises = () => {
         <SeoHead {...PAGE_SEO.entreprises} />
 
         {/* ── HERO ─────────────────────────────────────────── */}
-        <section className="relative bg-foreground pt-20 pb-24 overflow-hidden">
+        <section className="relative bg-background pt-20 pb-20 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)]" />
-            <div
-                className="absolute inset-0 opacity-[0.04]"
-                style={{
-                  backgroundImage: `linear-gradient(hsl(16,92%,47%) 1px, transparent 1px), linear-gradient(to right, hsl(16,92%,47%) 1px, transparent 1px)`,
-                  backgroundSize: "60px 60px",
-                }}
-            />
-            <div className="absolute -top-32 right-0 w-[600px] h-[600px] rounded-full bg-primary/8 blur-3xl" />
+            <div className="absolute -top-32 right-0 w-[600px] h-[600px] rounded-full bg-primary/6 blur-3xl" />
             <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] rounded-full bg-accent/6 blur-3xl" />
           </div>
 
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/15 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                 <Building2 className="h-3.5 w-3.5" />
                 Offre entreprises
               </div>
-              <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
                 Rendez vos équipes{" "}
                 <span className="text-accent">autonomes sur la donnée</span>
               </h1>
-              <p className="text-lg text-background/65 mb-10 leading-relaxed opacity-0 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+              <p className="text-lg text-muted-foreground mb-10 leading-relaxed opacity-0 animate-fade-in" style={{ animationDelay: "0.3s" }}>
                 De l'Excel au Power BI, jusqu'à la formation data sur mesure. Un diagnostic gratuit,
                 un contenu construit sur vos données réelles, un livrable mesurable.
               </p>
@@ -353,7 +345,7 @@ const Entreprises = () => {
                       <button
                           key={o.id}
                           onClick={() => scrollTo(o.id)}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-background/8 border border-background/15 text-background/70 hover:bg-background/15 hover:text-background text-sm font-medium transition-all"
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-secondary border border-border text-foreground/70 hover:bg-muted hover:text-foreground text-sm font-medium transition-all"
                       >
                         <Icon className="h-4 w-4" />
                         {o.title}
@@ -362,12 +354,6 @@ const Entreprises = () => {
                 })}
               </div>
             </div>
-          </div>
-
-          <div className="absolute bottom-0 left-0 right-0">
-            <svg viewBox="0 0 1440 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-              <path d="M0 48 L0 24 Q360 0 720 24 Q1080 48 1440 24 L1440 48 Z" fill="hsl(var(--background))" />
-            </svg>
           </div>
         </section>
 

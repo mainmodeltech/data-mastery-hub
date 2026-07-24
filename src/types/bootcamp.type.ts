@@ -55,6 +55,58 @@ export interface Bootcamp {
     sessions?: BootcampSession[];    // chargé uniquement sur la page détail
     createdAt: string;
     updatedAt: string;
+
+    // ── Contenu entièrement configurable par formation ──────────────────────
+    // Objectif : que chaque formation ajoutée (5, 10, N...) porte son propre
+    // contenu au lieu de dépendre d'un mapping figé par catégorie côté
+    // frontend (voir src/config/bootcamps.config.ts, conservé en fallback
+    // pour les formations qui n'ont pas encore ces champs renseignés).
+    // Champs backend à ajouter — voir docs/redesign-diagnostic.md §8.
+    tagline?: string | null;
+    colorKey?: "accent" | "primary" | null;
+    profiles?: BootcampProfile[];
+    tools?: BootcampTool[];
+    curriculum?: BootcampCurriculumWeek[];
+    outcomes?: BootcampOutcome[];
+    testimonial?: BootcampTestimonial | null;
+    certification?: BootcampCertification | null;
+}
+
+export interface BootcampProfile {
+    icon: string;
+    label: string;
+}
+
+export interface BootcampTool {
+    name: string;
+    level: number; // 0–100
+}
+
+export interface BootcampCurriculumWeek {
+    week: string;
+    title: string;
+    hours: string;
+    topics: string[];
+    project: string;
+}
+
+export interface BootcampOutcome {
+    stat: string;
+    label: string;
+}
+
+export interface BootcampTestimonial {
+    name: string;
+    role: string;
+    company: string;
+    content: string;
+    initials: string;
+}
+
+export interface BootcampCertification {
+    name: string;
+    logo: string;
+    description: string;
 }
 
 export interface CreateBootcampPayload {

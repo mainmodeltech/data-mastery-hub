@@ -16,6 +16,7 @@
 
 import { BarChart3, Code2, Table2, Calculator, Database, BookOpen } from "lucide-react";
 import type { ElementType } from "react";
+import type { Bootcamp } from "@/types/bootcamp.type";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -493,4 +494,27 @@ export const STATIC_FALLBACK: StaticEnrichment = {
 /** Retourne les données statiques enrichissant un bootcamp selon sa catégorie */
 export function getBootcampStatic(category: string): StaticEnrichment {
     return STATIC_BY_CATEGORY[category] ?? STATIC_FALLBACK;
+}
+
+/**
+ * Résout le contenu d'affichage d'une formation : priorité aux champs portés
+ * par la formation elle-même (une fois le backend étendu — voir
+ * docs/redesign-diagnostic.md §8), avec repli sur l'ancien mapping par
+ * catégorie pour les formations qui n'ont pas encore ces champs renseignés.
+ * C'est le point d'entrée à utiliser dans les pages plutôt que
+ * `getBootcampStatic(bootcamp.category)` directement.
+ */
+export function resolveBootcampContent(bootcamp: Bootcamp): StaticEnrichment {
+    const fallback = getBootcampStatic(bootcamp.category);
+    return {
+        tagline: bootcamp.tagline ?? fallback.tagline,
+        colorKey: bootcamp.colorKey ?? fallback.colorKey,
+        icon: fallback.icon,
+        profiles: bootcamp.profiles?.length ? bootcamp.profiles : fallback.profiles,
+        tools: bootcamp.tools?.length ? bootcamp.tools : fallback.tools,
+        curriculum: bootcamp.curriculum?.length ? bootcamp.curriculum : fallback.curriculum,
+        outcomes: bootcamp.outcomes?.length ? bootcamp.outcomes : fallback.outcomes,
+        testimonial: bootcamp.testimonial ?? fallback.testimonial,
+        certification: bootcamp.certification ?? fallback.certification,
+    };
 }

@@ -147,17 +147,9 @@ const About = () => {
       <Layout>
         <SeoHead {...PAGE_SEO.about} />
         {/* ── HERO ─────────────────────────────────────────── */}
-        <section className="relative bg-foreground pt-20 pb-24 overflow-hidden">
+        <section className="relative bg-background pt-20 pb-24 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-[hsl(211,45%,16%)] to-[hsl(16,45%,10%)]" />
-            <div
-                className="absolute inset-0 opacity-[0.04]"
-                style={{
-                  backgroundImage: `linear-gradient(hsl(16,92%,47%) 1px, transparent 1px), linear-gradient(to right, hsl(16,92%,47%) 1px, transparent 1px)`,
-                  backgroundSize: "60px 60px",
-                }}
-            />
-            <div className="absolute -top-40 right-0 w-[700px] h-[700px] rounded-full bg-primary/8 blur-3xl" />
+            <div className="absolute -top-40 right-0 w-[700px] h-[700px] rounded-full bg-primary/6 blur-3xl" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-accent/6 blur-3xl" />
           </div>
 
@@ -165,16 +157,16 @@ const About = () => {
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               {/* Left */}
               <div>
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/15 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/25 text-accent text-sm font-medium mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                   <MapPin className="h-3.5 w-3.5" />
                   Dakar, Sénégal · Depuis 2023
                 </div>
-                <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+                <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
                   Former la génération data
                   <br />
                   <span className="text-accent">d'Afrique de l'Ouest</span>
                 </h1>
-                <p className="text-lg text-background/65 leading-relaxed mb-8 opacity-0 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+                <p className="text-lg text-muted-foreground leading-relaxed mb-8 opacity-0 animate-fade-in" style={{ animationDelay: "0.3s" }}>
                   Model Technologie est née d'un constat simple : les entreprises africaines avaient besoin de talents data locaux, formés sur des données réelles, avec un accès à l'emploi dès la sortie.
                 </p>
                 <div className="flex flex-wrap gap-3 opacity-0 animate-fade-in" style={{ animationDelay: "0.35s" }}>
@@ -184,7 +176,7 @@ const About = () => {
                       <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" className="border-background/20 text-accent hover:bg-background/10">
+                  <Button asChild variant="outline">
                     <Link to="/contact">Nous contacter</Link>
                   </Button>
                 </div>
@@ -193,10 +185,10 @@ const About = () => {
               {/* Right — stats */}
               <div className="grid grid-cols-2 gap-4 opacity-0 animate-fade-in" style={{ animationDelay: "0.4s" }}>
                 {stats.map((s) => (
-                    <div key={s.label} className="p-6 rounded-2xl bg-background/6 border border-background/12 text-center">
+                    <div key={s.label} className="p-6 rounded-2xl bg-secondary border border-border text-center">
                       <s.icon className="h-5 w-5 text-accent mx-auto mb-3" />
-                      <div className="font-heading text-4xl font-bold text-background mb-1">{s.value}</div>
-                      <div className="text-sm text-background/45">{s.label}</div>
+                      <div className="font-heading text-4xl font-bold text-foreground mb-1">{s.value}</div>
+                      <div className="text-sm text-muted-foreground">{s.label}</div>
                     </div>
                 ))}
               </div>

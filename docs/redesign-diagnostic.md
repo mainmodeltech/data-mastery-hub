@@ -119,3 +119,41 @@ Appliqué :
 Non traité dans cette passe (pertes de priorité assumées, cf. section 4) : refonte structurelle profonde de About/Alumni/Contact, échelle typographique globale dans `tailwind.config.ts` (les redesigns appliqués utilisent des tailles explicites par composant plutôt qu'un changement de token global, pour ne pas affecter l'admin).
 
 **Photo hero actuelle** : placeholder (`bootcamp-3.jpg`, banque d'images existante du site). Une planche de composition a été produite séparément pour cadrer une vraie séance photo (cadrage 4:5, règle des tiers, lumière, palette de marque) — à remplacer dès que la photo définitive est disponible (un seul import à changer par composant : `HeroSection.tsx`, `HumanProofSection.tsx`, `Entreprises.tsx`).
+
+Un dossier Drive de photos réelles (cohorte + demoday) a été fourni pour choisir la photo définitive. Les outils de navigateur de cette session n'ont pas permis de télécharger les fichiers de façon fiable (accès réseau direct bloqué en sandbox, capture d'écran instable) — un seul aperçu confirmé (`IMG_0102_edited.jpg`, salle de classe). Action à faire côté client : déposer 2-3 photos choisies directement dans `src/assets/gallery/` pour remplacer les placeholders — ou les partager autrement pour intégration.
+
+## 9. Refonte plus claire, moins sombre (itération 2)
+
+Retour client : le site restait trop sombre malgré la passe précédente, et l'information formation/inscription n'était pas assez directe.
+
+**Fond des sections hero** : converti de `bg-foreground` (navy plein écran) vers `bg-background` (blanc/clair) sur `HeroSection.tsx` (accueil), `Bootcamps.tsx`, `Entreprises.tsx`, `About.tsx`, `Alumni.tsx` et `B2BSection.tsx`. Le navy et l'orange restent utilisés comme couleurs de texte/accent/CTA — mais ne dominent plus l'écran dès l'arrivée sur une page. Les blocs CTA de fin de page (cartes arrondies contenues, pas des sections pleine largeur) restent en `bg-foreground` volontairement : un seul moment de contraste fort par page, pas la totalité.
+
+**Catalogue formation entièrement dynamique** (répond à « le contenu est statique, ça ne marchera pas avec 5 ou 10 formations ») :
+- `src/types/bootcamp.type.ts` — le type `Bootcamp` porte maintenant directement `tagline`, `colorKey`, `profiles`, `tools`, `curriculum`, `outcomes`, `testimonial`, `certification`. Plus aucune formation n'est obligée de passer par un mapping par catégorie codé en dur.
+- `src/config/bootcamps.config.ts` — nouvelle fonction `resolveBootcampContent(bootcamp)` : priorité aux champs portés par la formation, repli sur l'ancien mapping par catégorie uniquement si absents (transition en douceur, zéro régression sur les formations existantes).
+- `src/config/mockBootcampCatalog.ts` — catalogue de démonstration (4 formations réelles, chacune avec son propre contenu ET plusieurs sessions), utilisé comme repli quand l'API est indisponible/vide. Sert aussi de référence pour la forme exacte attendue côté backend.
+- Ajouter une 5ᵉ ou 10ᵉ formation = ajouter un enregistrement de plus (ou, une fois le backend étendu, une ligne de plus en base) — **aucune modification de code requise**.
+
+**Sélecteur de session (cohorte)** — la fonctionnalité manquante identifiée par le client :
+- Nouveau composant `SessionPicker` dans `Bootcamps.tsx` : liste toutes les sessions d'une formation (date, format, places restantes, prix), l'apprenant choisit celle qui l'arrange. Les sessions complètes/closes sont visibles mais non sélectionnables.
+- `StickyCard`, la barre de prix mobile et le CTA final reflètent tous la session **sélectionnée**, pas systématiquement la "prochaine" session.
+- Le flux d'inscription (`RegistrationModal`) recevait déjà une prop `session` et envoyait déjà `sessionId` à l'API — l'infrastructure backend existait, il manquait uniquement l'interface pour choisir *laquelle*. `bootcampService.findSessions(id)` (déjà présent) est maintenant appelé pour charger toutes les cohortes d'une formation sur la page détail.
+
+### Champs backend à ajouter pour que ce soit piloté depuis l'admin (pas seulement simulé)
+
+Sur l'entité `Bootcamp` / `BootcampResponse` (Spring Boot), ajouter :
+
+| Champ | Type | Description |
+|---|---|---|
+| `tagline` | `string \| null` | Accroche courte affichée sous le titre |
+| `colorKey` | `"accent" \| "primary"` | Couleur d'accent de la fiche |
+| `profiles` | `{ icon: string; label: string }[]` | "Pour qui est ce bootcamp ?" |
+| `tools` | `{ name: string; level: number }[]` | Outils maîtrisés |
+| `curriculum` | `{ week: string; title: string; hours: string; topics: string[]; project: string }[]` | Programme semaine par semaine |
+| `outcomes` | `{ stat: string; label: string }[]` | Chiffres clés (optionnel — ne pas inventer si non mesuré) |
+| `testimonial` | `{ name: string; role: string; company: string; content: string; initials: string } \| null` | Témoignage alumni associé |
+| `certification` | `{ name: string; logo: string; description: string } \| null` | Certification/attestation délivrée |
+
+Ces structures imbriquées peuvent vivre en JSON dans une seule colonne (le plus simple côté migration) ou en tables associées si l'admin doit éditer chaque ligne séparément (curriculum notamment, probablement le plus demandé en édition fine). Recommandation : commencer en JSON pour livrer vite, migrer vers des tables si le volume d'édition admin le justifie.
+
+Le endpoint `GET /bootcamps/:id/sessions` existe déjà côté frontend (`bootcampService.findSessions`) — à vérifier qu'il est bien implémenté et retourne toutes les sessions (pas seulement la prochaine) côté backend.

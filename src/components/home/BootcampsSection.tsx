@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { bootcampService } from "@/services/bootcampService";
 import { cn } from "@/lib/utils";
 import type { ElementType } from "react";
-import type { Bootcamp } from "@/types/bootcamp.type";
+import { MOCK_BOOTCAMP_CATALOG } from "@/config/mockBootcampCatalog";
 
 const CATEGORY_ICON: Record<string, ElementType> = {
     bi: BarChart3,
@@ -32,22 +32,16 @@ const CATEGORY_COLOR: Record<string, "accent" | "primary"> = {
     "excel-finance": "primary",
 };
 
-/** Fallback statique si l'API est indisponible — mêmes 4 formations que le catalogue */
-const FALLBACK_BOOTCAMPS: Bootcamp[] = [
-    { id: "f-bi", title: "Bootcamp Power BI", description: "Du tableur au tableau de bord interactif, certification PL-300.", duration: "8 semaines", price: "150 000 FCFA", category: "bi", audience: null, prerequisites: null, benefits: [], tag: null, iconName: null, featured: true, published: true, displayOrder: 0, nextSession: null, createdAt: "", updatedAt: "" },
-    { id: "f-python", title: "Bootcamp Python pour la data", description: "Python, Pandas et un portfolio de projets réels.", duration: "10 semaines", price: "100 000 FCFA", category: "python", audience: null, prerequisites: null, benefits: [], tag: null, iconName: null, featured: false, published: true, displayOrder: 1, nextSession: null, createdAt: "", updatedAt: "" },
-    { id: "f-sql", title: "Bootcamp SQL pour la data", description: "La brique fondamentale pour interroger vos bases de données.", duration: "2 à 3 semaines", price: "60 000 FCFA", category: "sql", audience: null, prerequisites: null, benefits: [], tag: null, iconName: null, featured: false, published: true, displayOrder: 2, nextSession: null, createdAt: "", updatedAt: "" },
-    { id: "f-excel", title: "Excel Financiers & Contrôle de gestion", description: "Modélisation financière, EBITDA, passerelle vers Power BI.", duration: "5 à 8 jours", price: "120 000 FCFA", category: "excel-finance", audience: null, prerequisites: null, benefits: [], tag: null, iconName: null, featured: false, published: true, displayOrder: 3, nextSession: null, createdAt: "", updatedAt: "" },
-];
-
 export function BootcampsSection() {
     const { data: bootcamps, isLoading } = useQuery({
         queryKey: ["bootcamps", "public"],
         queryFn: bootcampService.list,
         staleTime: 5 * 60 * 1000,
+        retry: 1,
     });
 
-    const items = bootcamps && bootcamps.length > 0 ? bootcamps : FALLBACK_BOOTCAMPS;
+    // Repli sur le catalogue de démonstration si l'API est indisponible ou vide
+    const items = bootcamps && bootcamps.length > 0 ? bootcamps : MOCK_BOOTCAMP_CATALOG;
     const visible = [...items].sort((a, b) => a.displayOrder - b.displayOrder).slice(0, 4);
 
     return (
