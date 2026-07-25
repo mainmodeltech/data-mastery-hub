@@ -157,3 +157,20 @@ Sur l'entité `Bootcamp` / `BootcampResponse` (Spring Boot), ajouter :
 Ces structures imbriquées peuvent vivre en JSON dans une seule colonne (le plus simple côté migration) ou en tables associées si l'admin doit éditer chaque ligne séparément (curriculum notamment, probablement le plus demandé en édition fine). Recommandation : commencer en JSON pour livrer vite, migrer vers des tables si le volume d'édition admin le justifie.
 
 Le endpoint `GET /bootcamps/:id/sessions` existe déjà côté frontend (`bootcampService.findSessions`) — à vérifier qu'il est bien implémenté et retourne toutes les sessions (pas seulement la prochaine) côté backend.
+
+## 10. Backoffice admin — bootcamp entièrement configurable
+
+`src/pages/admin/BootcampForm.tsx` (`/admin/bootcamps/new` et `/:id/edit`) expose maintenant tous les nouveaux champs configurables en plus des champs existants :
+- **Accroche courte** (`tagline`) et **couleur d'accent** (`colorKey`) — champs simples.
+- **Profils cibles** ("Pour qui est ce bootcamp ?") — éditeur emoji + libellé, ajout/suppression.
+- **Outils maîtrisés** — éditeur nom + niveau (0-100%), ajout/suppression.
+- **Chiffres clés** — éditeur stat + libellé, avec rappel explicite de ne pas inventer de chiffre non mesuré.
+- **Programme semaine par semaine** — blocs répétables (période, titre, volume horaire, sujets en zone de texte une ligne = un sujet, projet du bloc), ajout/suppression de blocs.
+- **Témoignage alumni** et **certification/attestation** — sections optionnelles à objet unique ; laisser le nom vide = rien n'est envoyé, la fiche retombe sur le contenu générique de repli (`resolveBootcampContent`).
+- Catégorie **Excel Financiers & Contrôle de gestion** ajoutée à la liste déroulante (manquait).
+
+**Nettoyage effectué en passant** : `src/pages/admin/AdminBootcamps.tsx` (liste) contenait son propre formulaire de création/édition dans une boîte de dialogue, complètement dupliqué et moins complet que `BootcampForm.tsx` — et c'est CE formulaire que le bouton "Nouveau bootcamp" ouvrait réellement, pas la page dédiée. Autrement dit, sans ce nettoyage, le nouveau formulaire enrichi aurait été inaccessible depuis le flux normal. Le bouton "Nouveau bootcamp" et le crayon "Modifier" pointent maintenant vers la page dédiée ; la liste ne garde que consultation / publier-dépublier / supprimer / lien vers les sessions.
+
+**Sessions (cohortes)** : `src/pages/admin/AdminAllSessions.tsx` couvrait déjà tous les champs nécessaires (statut, format, dates, prix, places, mise en avant) — aucune modification requise, l'écran de gestion des sessions était déjà aligné avec le sélecteur de session ajouté côté public.
+
+**Non vérifiable dans cette session** : les pages admin sont derrière `ProtectedRoute` (authentification requise) et aucun backend n'est accessible ici — impossible de se connecter pour un test visuel en conditions réelles. Vérifié à la place : `tsc --noEmit` propre, build de production réussi, relecture manuelle du JSX (mêmes patterns que le code existant déjà en production dans ce fichier).

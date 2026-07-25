@@ -123,6 +123,16 @@ export interface CreateBootcampPayload {
     featured?: boolean;
     published?: boolean;
     displayOrder?: number;
+
+    // ── Contenu configurable (voir Bootcamp) ─────────────────────────────────
+    tagline?: string;
+    colorKey?: "accent" | "primary";
+    profiles?: BootcampProfile[];
+    tools?: BootcampTool[];
+    curriculum?: BootcampCurriculumWeek[];
+    outcomes?: BootcampOutcome[];
+    testimonial?: BootcampTestimonial | null;
+    certification?: BootcampCertification | null;
 }
 
 export interface UpdateBootcampPayload extends Partial<CreateBootcampPayload> {}

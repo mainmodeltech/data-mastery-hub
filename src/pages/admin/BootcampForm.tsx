@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminBootcampService } from "@/services/Adminbootcampservice.ts";
@@ -16,19 +16,31 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select.tsx";
-import { ArrowLeft, Plus, X, Loader2, Save, CalendarDays } from "lucide-react";
+import { ArrowLeft, Plus, X, Loader2, Save, CalendarDays, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast.ts";
-import type { CreateBootcampPayload } from "@/types/bootcamp.type.ts";
+import type {
+    CreateBootcampPayload,
+    BootcampProfile,
+    BootcampTool,
+    BootcampOutcome,
+    BootcampCurriculumWeek,
+    BootcampTestimonial,
+    BootcampCertification,
+} from "@/types/bootcamp.type.ts";
 
 const CATEGORIES = [
     { value: "bi", label: "Business Intelligence / Power BI" },
     { value: "python", label: "Python" },
     { value: "sql", label: "SQL & Bases de données" },
-    { value: "data", label: "Data Analytics" },
+    { value: "excel-finance", label: "Excel Financiers & Contrôle de gestion" },
+    { value: "data", label: "Data Analytics (général)" },
     { value: "ai", label: "Intelligence Artificielle" },
 ];
 
-const ICONS = ["BarChart3", "Database", "Code2", "Brain", "TrendingUp", "PieChart", "Table", "Cpu"];
+const ICONS = ["BarChart3", "Database", "Code2", "Calculator", "Table2", "Brain", "TrendingUp", "PieChart", "Table", "Cpu"];
+
+const EMPTY_TESTIMONIAL: BootcampTestimonial = { name: "", role: "", company: "", content: "", initials: "" };
+const EMPTY_CERTIFICATION: BootcampCertification = { name: "", logo: "🎓", description: "" };
 
 type FormState = {
     title: string;
@@ -44,6 +56,16 @@ type FormState = {
     featured: boolean;
     published: boolean;
     displayOrder: number;
+
+    // Contenu configurable — voir docs/redesign-diagnostic.md §8
+    tagline: string;
+    colorKey: "accent" | "primary";
+    profiles: BootcampProfile[];
+    tools: BootcampTool[];
+    outcomes: BootcampOutcome[];
+    curriculum: BootcampCurriculumWeek[];
+    testimonial: BootcampTestimonial;
+    certification: BootcampCertification;
 };
 
 const defaultForm: FormState = {
@@ -60,7 +82,157 @@ const defaultForm: FormState = {
     featured: false,
     published: true,
     displayOrder: 0,
+    tagline: "",
+    colorKey: "primary",
+    profiles: [],
+    tools: [],
+    outcomes: [],
+    curriculum: [],
+    testimonial: EMPTY_TESTIMONIAL,
+    certification: EMPTY_CERTIFICATION,
 };
+
+// ─── Petits éditeurs réutilisables ─────────────────────────────────────────────
+
+function ToolsEditor({ tools, onChange }: { tools: BootcampTool[]; onChange: (tools: BootcampTool[]) => void }) {
+    const update = (i: number, patch: Partial<BootcampTool>) =>
+        onChange(tools.map((t, j) => (j === i ? { ...t, ...patch } : t)));
+    const remove = (i: number) => onChange(tools.filter((_, j) => j !== i));
+    const add = () => onChange([...tools, { name: "", level: 70 }]);
+
+    return (
+        <div className="space-y-2">
+            {tools.map((tool, i) => (
+                <div key={i} className="flex items-center gap-2">
+                    <Input
+                        className="flex-1"
+                        placeholder="ex: Power BI"
+                        value={tool.name}
+                        onChange={(e) => update(i, { name: e.target.value })}
+                    />
+                    <Input
+                        type="number" min={0} max={100} className="w-24"
+                        value={tool.level}
+                        onChange={(e) => update(i, { level: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })}
+                    />
+                    <span className="text-xs text-muted-foreground w-4">%</span>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={add}>
+                <Plus className="h-4 w-4" /> Ajouter un outil
+            </Button>
+        </div>
+    );
+}
+
+function OutcomesEditor({ outcomes, onChange }: { outcomes: BootcampOutcome[]; onChange: (outcomes: BootcampOutcome[]) => void }) {
+    const update = (i: number, patch: Partial<BootcampOutcome>) =>
+        onChange(outcomes.map((o, j) => (j === i ? { ...o, ...patch } : o)));
+    const remove = (i: number) => onChange(outcomes.filter((_, j) => j !== i));
+    const add = () => onChange([...outcomes, { stat: "", label: "" }]);
+
+    return (
+        <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+                Chiffres clés affichés sur la fiche formation — ne pas inventer, laisser vide si non mesuré.
+            </p>
+            {outcomes.map((o, i) => (
+                <div key={i} className="flex items-center gap-2">
+                    <Input className="w-28" placeholder="ex: 94%" value={o.stat} onChange={(e) => update(i, { stat: e.target.value })} />
+                    <Input className="flex-1" placeholder="ex: taux de satisfaction alumni" value={o.label} onChange={(e) => update(i, { label: e.target.value })} />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={add}>
+                <Plus className="h-4 w-4" /> Ajouter un chiffre clé
+            </Button>
+        </div>
+    );
+}
+
+function ProfilesEditor({ profiles, onChange }: { profiles: BootcampProfile[]; onChange: (profiles: BootcampProfile[]) => void }) {
+    const update = (i: number, patch: Partial<BootcampProfile>) =>
+        onChange(profiles.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+    const remove = (i: number) => onChange(profiles.filter((_, j) => j !== i));
+    const add = () => onChange([...profiles, { icon: "💼", label: "" }]);
+
+    return (
+        <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">"Pour qui est ce bootcamp ?" — un emoji + un profil par ligne.</p>
+            {profiles.map((p, i) => (
+                <div key={i} className="flex items-center gap-2">
+                    <Input className="w-16 text-center" value={p.icon} onChange={(e) => update(i, { icon: e.target.value })} />
+                    <Input className="flex-1" placeholder="ex: Contrôleurs de gestion" value={p.label} onChange={(e) => update(i, { label: e.target.value })} />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={add}>
+                <Plus className="h-4 w-4" /> Ajouter un profil
+            </Button>
+        </div>
+    );
+}
+
+function CurriculumEditor({ curriculum, onChange }: { curriculum: BootcampCurriculumWeek[]; onChange: (c: BootcampCurriculumWeek[]) => void }) {
+    const update = (i: number, patch: Partial<BootcampCurriculumWeek>) =>
+        onChange(curriculum.map((w, j) => (j === i ? { ...w, ...patch } : w)));
+    const remove = (i: number) => onChange(curriculum.filter((_, j) => j !== i));
+    const add = () => onChange([...curriculum, { week: "", title: "", hours: "", topics: [], project: "" }]);
+
+    return (
+        <div className="space-y-4">
+            {curriculum.map((week, i) => (
+                <div key={i} className="rounded-xl border border-border p-4 space-y-3 bg-secondary/20">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Bloc {i + 1}</span>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </div>
+                    <div className="grid sm:grid-cols-3 gap-3">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Période</Label>
+                            <Input placeholder="ex: Semaines 1-2" value={week.week} onChange={(e) => update(i, { week: e.target.value })} />
+                        </div>
+                        <div className="space-y-1.5 sm:col-span-2">
+                            <Label className="text-xs">Titre du bloc</Label>
+                            <Input placeholder="ex: Fondamentaux & Excel Avancé" value={week.title} onChange={(e) => update(i, { title: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Volume horaire</Label>
+                        <Input className="w-32" placeholder="ex: 18h" value={week.hours} onChange={(e) => update(i, { hours: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Sujets abordés (un par ligne)</Label>
+                        <Textarea
+                            rows={3}
+                            placeholder={"ex:\nTableaux croisés dynamiques avancés\nPower Query : import et transformation"}
+                            value={week.topics.join("\n")}
+                            onChange={(e) => update(i, { topics: e.target.value.split("\n").map((t) => t.trim()).filter(Boolean) })}
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Projet du bloc</Label>
+                        <Input placeholder="ex: Tableau de bord financier Excel" value={week.project} onChange={(e) => update(i, { project: e.target.value })} />
+                    </div>
+                </div>
+            ))}
+            <Button type="button" variant="outline" onClick={add}>
+                <Plus className="h-4 w-4" /> Ajouter un bloc au programme
+            </Button>
+        </div>
+    );
+}
+
+// ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function BootcampForm() {
     const { id } = useParams<{ id?: string }>();
@@ -92,6 +264,14 @@ export default function BootcampForm() {
                 featured: data.featured ?? false,
                 published: data.published ?? true,
                 displayOrder: data.displayOrder ?? 0,
+                tagline: data.tagline ?? "",
+                colorKey: data.colorKey ?? "primary",
+                profiles: data.profiles ?? [],
+                tools: data.tools ?? [],
+                outcomes: data.outcomes ?? [],
+                curriculum: data.curriculum ?? [],
+                testimonial: data.testimonial ?? EMPTY_TESTIMONIAL,
+                certification: data.certification ?? EMPTY_CERTIFICATION,
             });
             return data;
         },
@@ -118,7 +298,7 @@ export default function BootcampForm() {
         },
     });
 
-    const set = (field: keyof FormState, value: unknown) =>
+    const set = <K extends keyof FormState>(field: K, value: FormState[K]) =>
         setForm((prev) => ({ ...prev, [field]: value }));
 
     const addBenefit = () => {
@@ -141,6 +321,11 @@ export default function BootcampForm() {
             ...form,
             tag: form.tag.trim() || undefined,
             displayOrder: Number(form.displayOrder) || 0,
+            tagline: form.tagline.trim() || undefined,
+            // Testimonial/certification vides (name non renseigné) → non envoyés,
+            // la fiche formation retombe alors sur le contenu générique de repli.
+            testimonial: form.testimonial.name.trim() ? form.testimonial : null,
+            certification: form.certification.name.trim() ? form.certification : null,
         });
     };
 
@@ -201,6 +386,18 @@ export default function BootcampForm() {
                     </div>
 
                     <div className="space-y-2">
+                        <Label htmlFor="tagline">Accroche courte</Label>
+                        <Input
+                            id="tagline"
+                            placeholder="ex: Du tableur au tableau de bord — préparez la certification PL-300"
+                            value={form.tagline}
+                            onChange={(e) => set("tagline", e.target.value)}
+                            maxLength={120}
+                        />
+                        <p className="text-xs text-muted-foreground">Affichée sous le titre sur la fiche formation.</p>
+                    </div>
+
+                    <div className="space-y-2">
                         <Label htmlFor="description">Description</Label>
                         <Textarea
                             id="description"
@@ -235,6 +432,17 @@ export default function BootcampForm() {
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="colorKey">Couleur d'accent de la fiche</Label>
+                        <Select value={form.colorKey} onValueChange={(v) => set("colorKey", v as "accent" | "primary")}>
+                            <SelectTrigger id="colorKey" className="w-56"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="accent">Orange (accent)</SelectItem>
+                                <SelectItem value="primary">Navy (primary)</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
@@ -295,13 +503,15 @@ export default function BootcampForm() {
                             rows={2}
                         />
                     </div>
+
+                    <ProfilesEditor profiles={form.profiles} onChange={(v) => set("profiles", v)} />
                 </section>
 
                 {/* Section : Compétences acquises */}
                 <section className="bg-card rounded-xl border border-border p-6 space-y-4">
                     <h2 className="font-semibold text-foreground">Compétences acquises</h2>
                     <p className="text-sm text-muted-foreground">
-                        Points listés dans "Ce que vous apprendrez" sur la card bootcamp.
+                        Points listés dans "Ce que vous apprendrez" sur la fiche formation.
                     </p>
 
                     <div className="flex gap-2">
@@ -334,6 +544,72 @@ export default function BootcampForm() {
                             ))}
                         </div>
                     )}
+                </section>
+
+                {/* Section : Outils maîtrisés */}
+                <section className="bg-card rounded-xl border border-border p-6 space-y-4">
+                    <h2 className="font-semibold text-foreground">Outils maîtrisés</h2>
+                    <ToolsEditor tools={form.tools} onChange={(v) => set("tools", v)} />
+                </section>
+
+                {/* Section : Chiffres clés */}
+                <section className="bg-card rounded-xl border border-border p-6 space-y-4">
+                    <h2 className="font-semibold text-foreground">Chiffres clés (optionnel)</h2>
+                    <OutcomesEditor outcomes={form.outcomes} onChange={(v) => set("outcomes", v)} />
+                </section>
+
+                {/* Section : Programme */}
+                <section className="bg-card rounded-xl border border-border p-6 space-y-4">
+                    <h2 className="font-semibold text-foreground">Programme semaine par semaine</h2>
+                    <CurriculumEditor curriculum={form.curriculum} onChange={(v) => set("curriculum", v)} />
+                </section>
+
+                {/* Section : Témoignage */}
+                <section className="bg-card rounded-xl border border-border p-6 space-y-4">
+                    <h2 className="font-semibold text-foreground">Témoignage alumni (optionnel)</h2>
+                    <p className="text-xs text-muted-foreground">Laisser le nom vide pour ne pas afficher de témoignage.</p>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Nom</Label>
+                            <Input value={form.testimonial.name} onChange={(e) => set("testimonial", { ...form.testimonial, name: e.target.value })} placeholder="ex: Emmanuel BOUADI" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Initiales</Label>
+                            <Input value={form.testimonial.initials} onChange={(e) => set("testimonial", { ...form.testimonial, initials: e.target.value })} placeholder="ex: EB" maxLength={3} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Rôle</Label>
+                            <Input value={form.testimonial.role} onChange={(e) => set("testimonial", { ...form.testimonial, role: e.target.value })} placeholder="ex: Data analyst" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Entreprise</Label>
+                            <Input value={form.testimonial.company} onChange={(e) => set("testimonial", { ...form.testimonial, company: e.target.value })} placeholder="ex: WAVE" />
+                        </div>
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Citation</Label>
+                        <Textarea rows={2} value={form.testimonial.content} onChange={(e) => set("testimonial", { ...form.testimonial, content: e.target.value })} />
+                    </div>
+                </section>
+
+                {/* Section : Certification */}
+                <section className="bg-card rounded-xl border border-border p-6 space-y-4">
+                    <h2 className="font-semibold text-foreground">Certification / Attestation (optionnel)</h2>
+                    <p className="text-xs text-muted-foreground">Laisser le nom vide pour ne rien afficher.</p>
+                    <div className="grid sm:grid-cols-[1fr,80px] gap-3">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Nom</Label>
+                            <Input value={form.certification.name} onChange={(e) => set("certification", { ...form.certification, name: e.target.value })} placeholder="ex: Microsoft Power BI Data Analyst (PL-300)" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Icône</Label>
+                            <Input className="text-center" value={form.certification.logo} onChange={(e) => set("certification", { ...form.certification, logo: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Description</Label>
+                        <Textarea rows={2} value={form.certification.description} onChange={(e) => set("certification", { ...form.certification, description: e.target.value })} />
+                    </div>
                 </section>
 
                 {/* Section : Publication */}
