@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminBootcampService } from "@/services/Adminbootcampservice.ts";
@@ -244,38 +244,45 @@ export default function BootcampForm() {
     const [form, setForm] = useState<FormState>(defaultForm);
     const [newBenefit, setNewBenefit] = useState("");
 
-    const { isLoading: isLoadingBootcamp } = useQuery({
+    const { data: existingBootcamp, isLoading: isLoadingBootcamp } = useQuery({
         queryKey: ["admin", "bootcamps", id],
         queryFn: () => adminBootcampService.get(id!),
         enabled: isEdit,
-        select: (data) => {
-            // Pre-fill dès que la donnée arrive
-            setForm({
-                title: data.title ?? "",
-                description: data.description ?? "",
-                duration: data.duration ?? "",
-                audience: data.audience ?? "",
-                prerequisites: data.prerequisites ?? "",
-                price: data.price ?? "",
-                benefits: data.benefits ?? [],
-                category: data.category ?? "data",
-                tag: data.tag ?? "",
-                iconName: data.iconName ?? "BarChart3",
-                featured: data.featured ?? false,
-                published: data.published ?? true,
-                displayOrder: data.displayOrder ?? 0,
-                tagline: data.tagline ?? "",
-                colorKey: data.colorKey ?? "primary",
-                profiles: data.profiles ?? [],
-                tools: data.tools ?? [],
-                outcomes: data.outcomes ?? [],
-                curriculum: data.curriculum ?? [],
-                testimonial: data.testimonial ?? EMPTY_TESTIMONIAL,
-                certification: data.certification ?? EMPTY_CERTIFICATION,
-            });
-            return data;
-        },
     });
+
+    // Pré-remplissage à l'arrivée des données — dans un effet, pas dans `select`.
+    // `select` réexécute à chaque re-render (nouvelle référence de fonction),
+    // et appeler setState() depuis `select` déclenche alors une boucle de
+    // re-renders ("Too many re-renders") dès qu'on atteint /admin/bootcamps/:id/edit
+    // (notamment juste après la création, quand la page bascule automatiquement
+    // en mode édition).
+    useEffect(() => {
+        if (!existingBootcamp) return;
+        const data = existingBootcamp;
+        setForm({
+            title: data.title ?? "",
+            description: data.description ?? "",
+            duration: data.duration ?? "",
+            audience: data.audience ?? "",
+            prerequisites: data.prerequisites ?? "",
+            price: data.price ?? "",
+            benefits: data.benefits ?? [],
+            category: data.category ?? "data",
+            tag: data.tag ?? "",
+            iconName: data.iconName ?? "BarChart3",
+            featured: data.featured ?? false,
+            published: data.published ?? true,
+            displayOrder: data.displayOrder ?? 0,
+            tagline: data.tagline ?? "",
+            colorKey: data.colorKey ?? "primary",
+            profiles: data.profiles ?? [],
+            tools: data.tools ?? [],
+            outcomes: data.outcomes ?? [],
+            curriculum: data.curriculum ?? [],
+            testimonial: data.testimonial ?? EMPTY_TESTIMONIAL,
+            certification: data.certification ?? EMPTY_CERTIFICATION,
+        });
+    }, [existingBootcamp]);
 
     const mutation = useMutation({
         mutationFn: (payload: CreateBootcampPayload) =>
