@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import teamPhoto from "@/assets/gallery/bootcamp-3.jpg";
+import teamPhoto from "@/assets/gallery/bootcamp-5.jpg";
 
 export function HeroSection() {
   return (

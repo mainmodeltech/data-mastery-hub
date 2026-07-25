@@ -42,7 +42,10 @@ export function BootcampsSection() {
 
     // Repli sur le catalogue de démonstration si l'API est indisponible ou vide
     const items = bootcamps && bootcamps.length > 0 ? bootcamps : MOCK_BOOTCAMP_CATALOG;
-    const visible = [...items].sort((a, b) => a.displayOrder - b.displayOrder).slice(0, 4);
+    // Vitrine, pas le catalogue complet (→ /bootcamps) : on plafonne à 8 pour
+    // ne pas surcharger l'accueil si le catalogue grandit, mais la grille
+    // elle-même (flex-wrap) s'adapte à n'importe quel nombre en dessous.
+    const visible = [...items].sort((a, b) => a.displayOrder - b.displayOrder).slice(0, 8);
 
     return (
         <section className="py-20 lg:py-28 bg-secondary/50">
@@ -61,13 +64,16 @@ export function BootcampsSection() {
                 </div>
 
                 {isLoading ? (
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                    <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
                         {[0, 1, 2, 3].map((i) => (
-                            <div key={i} className="rounded-2xl border-2 border-border bg-card p-7 h-80 animate-pulse" />
+                            <div key={i} className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.125rem)] rounded-2xl border-2 border-border bg-card p-7 h-80 animate-pulse" />
                         ))}
                     </div>
                 ) : (
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                    // flex-wrap + justify-center (pas grid-cols fixe) : la rangée reste
+                    // centrée quel que soit le nombre de formations (1, 2, 3, 4, 5+),
+                    // sans espace vide qui donnerait l'impression d'un catalogue incomplet.
+                    <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
                         {visible.map((bc, index) => {
                             const Icon = CATEGORY_ICON[bc.category] ?? BookOpen;
                             const isAccent = (CATEGORY_COLOR[bc.category] ?? "primary") === "accent";
@@ -75,7 +81,7 @@ export function BootcampsSection() {
                                 <div
                                     key={bc.id}
                                     className={cn(
-                                        "rounded-2xl border-2 bg-card p-7 flex flex-col hover:shadow-lg transition-shadow opacity-0 animate-fade-in",
+                                        "w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.125rem)] rounded-2xl border-2 bg-card p-7 flex flex-col hover:shadow-lg transition-shadow opacity-0 animate-fade-in",
                                         isAccent ? "border-accent/25" : "border-primary/25",
                                     )}
                                     style={{ animationDelay: `${0.1 + index * 0.1}s` }}

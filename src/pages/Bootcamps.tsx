@@ -437,7 +437,7 @@ function BootcampDetail({
                           onRegister,
                         }: {
   bootcamp: Bootcamp;
-  onRegister: (b: Bootcamp, session: BootcampSession | null) => void;
+  onRegister: (b: Bootcamp, session: BootcampSession | null, sessions: BootcampSession[]) => void;
 }) {
   const staticData = resolveBootcampContent(bootcamp);
   const isAccent = staticData.colorKey === "accent";
@@ -481,7 +481,10 @@ function BootcampDetail({
   return (
       <div className="pt-24 pb-20" id={bootcamp.id}>
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid lg:grid-cols-[1fr,380px] gap-12 items-start">
+          {/* Pas de items-start ici : la colonne droite doit s'étirer à la hauteur
+              de la ligne de grille pour que le sticky de StickyCard ait de la place
+              pour "voyager" en scrollant — sinon il colle immédiatement en bas. */}
+          <div className="grid lg:grid-cols-[1fr,380px] gap-12">
 
             {/* ── Colonne gauche ──────────────────────────── */}
             <div>
@@ -528,7 +531,7 @@ function BootcampDetail({
                     {session?.price ?? bootcamp.price ?? "—"}
                   </div>
                 </div>
-                <Button onClick={() => onRegister(bootcamp, session)} disabled={!session} className={cn("font-bold h-12 px-6", btnClass)}>
+                <Button onClick={() => onRegister(bootcamp, session, sessions)} disabled={!session} className={cn("font-bold h-12 px-6", btnClass)}>
                   Réserver ma place
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -801,7 +804,7 @@ function BootcampDetail({
                 )}
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button
-                      onClick={() => onRegister(bootcamp, session)}
+                      onClick={() => onRegister(bootcamp, session, sessions)}
                       disabled={!session}
                       className={cn("font-bold group", btnClass)}
                   >
@@ -824,7 +827,7 @@ function BootcampDetail({
                     bootcamp={bootcamp}
                     session={session}
                     staticData={staticData}
-                    onRegister={() => onRegister(bootcamp, session)}
+                    onRegister={() => onRegister(bootcamp, session, sessions)}
                 />
               </div>
             </div>
@@ -834,7 +837,7 @@ function BootcampDetail({
         {/* ── CTA mobile sticky — reflète la session choisie ──────────── */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
           <Button
-              onClick={() => onRegister(bootcamp, session)}
+              onClick={() => onRegister(bootcamp, session, sessions)}
               disabled={!session}
               className={cn("w-full h-12 font-bold", btnClass)}
           >
@@ -851,7 +854,7 @@ function BootcampDetail({
 export default function BootcampsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeIndex, setActiveIndex]   = useState(0);
-  const [registerFor, setRegisterFor]   = useState<{ bootcamp: Bootcamp; session: BootcampSession | null } | null>(null);
+  const [registerFor, setRegisterFor]   = useState<{ bootcamp: Bootcamp; session: BootcampSession | null; sessions: BootcampSession[] } | null>(null);
 
   const { data: fetchedBootcamps, isLoading } = useQuery({
     queryKey: ["bootcamps", "public"],
@@ -1012,7 +1015,7 @@ export default function BootcampsPage() {
             <BootcampDetail
                 key={activeBootcamp.id}
                 bootcamp={activeBootcamp}
-                onRegister={(b, session) => setRegisterFor({ bootcamp: b, session })}
+                onRegister={(b, session, sessions) => setRegisterFor({ bootcamp: b, session, sessions })}
             />
         ) : null}
 
@@ -1040,6 +1043,7 @@ export default function BootcampsPage() {
             <RegistrationModal
                 bootcamp={registerFor.bootcamp}
                 session={registerFor.session}
+                sessions={registerFor.sessions}
                 staticData={resolveBootcampContent(registerFor.bootcamp)}
                 onClose={() => setRegisterFor(null)}
             />

@@ -215,13 +215,28 @@ function validateForm(form: FormValues): string | null {
 export interface RegistrationModalProps {
     bootcamp: Bootcamp;
     session: BootcampSession | null;
+    /** Sessions ouvertes proposées en alternative — permet de changer sans fermer la modale */
+    sessions?: BootcampSession[];
     staticData: StaticEnrichment;
     onClose: () => void;
 }
 
+/** Une session est proposable dans le formulaire si elle est ouverte aux inscriptions */
+function isSessionOpen(s: BootcampSession): boolean {
+    return !s.isFull && !["CLOSED", "COMPLETED", "CANCELLED"].includes(s.status);
+}
+
+function formatSessionOptionLabel(s: BootcampSession): string {
+    const date = s.startDate
+        ? new Date(s.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+        : null;
+    const label = s.sessionName ?? date ?? "Session";
+    return date && s.sessionName ? `${label} — ${date}` : label;
+}
+
 // ─── Composant ────────────────────────────────────────────────────────────────
 
-export function RegistrationModal({ bootcamp, session, staticData, onClose }: RegistrationModalProps) {
+export function RegistrationModal({ bootcamp, session, sessions, staticData, onClose }: RegistrationModalProps) {
     const { toast }           = useToast();
     const { executeRecaptcha } = useGoogleReCaptcha();
 
@@ -236,8 +251,16 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
     const [submitted, setSubmitted]   = useState(false);
     const promo                       = usePromoCode();
 
+    // Sessions ouvertes uniquement (la session déjà sélectionnée reste visible
+    // même si elle n'est plus "ouverte" au moment du rendu, pour ne pas la faire
+    // disparaître sous les yeux de l'utilisateur — mais elle reste non cliquable
+    // dans le <select> car le formulaire ne doit jamais soumettre une session fermée).
+    const selectableSessions = (sessions ?? []).filter(isSessionOpen);
+    const [selectedSessionId, setSelectedSessionId] = useState<string>(session?.id ?? "");
+    const activeSession = selectableSessions.find((s) => s.id === selectedSessionId) ?? session;
+
     // Hook appelé inconditionnellement (règle des Hooks React)
-    const sessionId = session?.id ?? "";
+    const sessionId = activeSession?.id ?? "";
     const { data: availabilityRaw } = useSessionAvailability(sessionId);
     void availabilityRaw; // évite le warning "unused variable"
 
@@ -281,7 +304,7 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
             await registrationService.create({
                 bootcampId:    bootcamp.id,
                 bootcampTitle: bootcamp.title,
-                sessionId:     session?.id ?? null,
+                sessionId:     activeSession?.id ?? null,
                 promoCode:     form.promoCode.trim() || null,
                 firstName:     form.firstName.trim(),
                 lastName:      form.lastName.trim(),
@@ -349,20 +372,38 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
                             <p className="text-muted-foreground mb-2">
                                 Nous vous contacterons dans les <strong>24 heures</strong> pour confirmer votre place.
                             </p>
-                            {session && (
+                            {activeSession && (
                                 <div className="flex flex-col items-center gap-2 mb-6">
                                     <p className="text-sm text-muted-foreground">
-                                        Session : <strong>{formatSessionLabel(session)}</strong>
+                                        Session : <strong>{formatSessionLabel(activeSession)}</strong>
                                     </p>
-                                    <SessionAvailabilityBadge sessionId={session.id} />
+                                    <SessionAvailabilityBadge sessionId={activeSession.id} />
                                 </div>
                             )}
                             <Button onClick={onClose} variant="outline" className="w-full">Fermer</Button>
                         </div>
                     ) : (
                         <>
+                            {/* ── Sélecteur de session (si plusieurs cohortes ouvertes) ── */}
+                            {selectableSessions.length > 1 && (
+                                <div className="mb-4">
+                                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                                        Session choisie *
+                                    </label>
+                                    <select
+                                        value={selectedSessionId}
+                                        onChange={(e) => setSelectedSessionId(e.target.value)}
+                                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none"
+                                    >
+                                        {selectableSessions.map((s) => (
+                                            <option key={s.id} value={s.id}>{formatSessionOptionLabel(s)}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
                             {/* ── Récap session ─────────────────────────── */}
-                            {session && (
+                            {activeSession && (
                                 <div className={cn(
                                     "flex items-start gap-3 p-4 rounded-xl border mb-6",
                                     isAccent ? "bg-accent/8 border-accent/20" : "bg-primary/8 border-primary/20"
@@ -370,12 +411,12 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
                                     <Calendar className={cn("h-5 w-5 flex-shrink-0 mt-0.5", accentClass)} />
                                     <div className="flex-1 min-w-0">
                                         <div className="font-semibold text-sm text-foreground mb-0.5">
-                                            {formatSessionLabel(session)}
+                                            {formatSessionLabel(activeSession)}
                                         </div>
                                         <div className="text-xs text-muted-foreground mb-2">
-                                            {formatDateShort(session.startDate)} → {formatDateShort(session.endDate)} · {formatSessionFormat(session.format)}
+                                            {formatDateShort(activeSession.startDate)} → {formatDateShort(activeSession.endDate)} · {formatSessionFormat(activeSession.format)}
                                         </div>
-                                        <SessionAvailabilityBadge sessionId={session.id} />
+                                        <SessionAvailabilityBadge sessionId={activeSession.id} />
                                     </div>
                                 </div>
                             )}
