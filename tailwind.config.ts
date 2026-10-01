@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        heading: ['Poppins', 'system-ui', 'sans-serif'],
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        heading: ['Bricolage Grotesque', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -61,11 +61,42 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+
+        // Nouvelle palette design system (Lot 0) — additive, ne remplace rien
+        // ci-dessus. Utilisée uniquement par src/components/shared/** et
+        // src/components/layouts/**. Valeurs définies dans src/index.css (--ds-*).
+        navy: {
+          DEFAULT: "var(--ds-navy)",
+          dark: "var(--ds-navy-dark)",
+          medium: "var(--ds-navy-medium)",
+        },
+        "site-bg": "var(--ds-site-bg)",
+        "app-bg": "var(--ds-app-bg)",
+        "surface-sand": "var(--ds-surface-sand)",
+        cta: {
+          DEFAULT: "var(--ds-cta)",
+          "on-navy": "var(--ds-cta-on-navy)",
+        },
+        ink: {
+          DEFAULT: "var(--ds-text)",
+          secondary: "var(--ds-text-secondary)",
+        },
+        success: { DEFAULT: "var(--ds-success)", bg: "var(--ds-success-bg)" },
+        warning: { DEFAULT: "var(--ds-warning)", bg: "var(--ds-warning-bg)" },
+        error: { DEFAULT: "var(--ds-error)", bg: "var(--ds-error-bg)" },
+        info: { bg: "var(--ds-info-bg)" },
+        linkedin: "var(--ds-linkedin)",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        // Nouveaux paliers design system (Lot 0)
+        pill: "999px",
+        stat: "18px",
+        card: "20px",
+        callout: "24px",
+        hero: "28px",
       },
       boxShadow: {
         soft: "var(--shadow-soft)",
@@ -114,6 +145,10 @@ export default {
     },
   },
   plugins: [require("tailwindcss-animate")],
+  // NOTE: ce bloc keyframes/animation top-level (sibling de theme/plugins au lieu
+  // d'être nesté dans theme.extend) est mort — Tailwind ne lit que
+  // theme.extend.keyframes/animation. Bug pré-existant, non introduit par le Lot 0,
+  // laissé tel quel (hors périmètre de ce lot).
   keyframes: {
     marquee: {
       "0%":   { transform: "translateX(0)" },

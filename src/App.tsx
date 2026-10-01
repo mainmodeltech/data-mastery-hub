@@ -46,6 +46,9 @@ const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
 const AdminGalerie = lazy(() => import('./pages/admin/AdminGalerie'));
 const AdminProjects = lazy(() => import('./pages/admin/AdminProjects'));
 
+// Lot 0 design-system — dev-only visual check, absent from production builds
+const DesignSystemPreview = lazy(() => import('./pages/_dev/DesignSystemPreview'));
+
 
 // ============================================================
 // Configuration React Query
@@ -131,6 +134,10 @@ const App = () => (
                   <Route path="/admin/messages" element={<ProtectedRoute><AdminMessages /></ProtectedRoute>} />
                   <Route path="/admin/galerie" element={<ProtectedRoute><AdminGalerie /></ProtectedRoute>} />
 
+
+                  {import.meta.env.DEV && (
+                    <Route path="/_dev/design-system" element={<DesignSystemPreview />} />
+                  )}
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>

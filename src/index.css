@@ -53,6 +53,33 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 215 25% 15%;
     --sidebar-border: 215 20% 88%;
     --sidebar-ring: 217 72% 42%;
+
+    /* Nouvelle palette design system (Lot 0) — consommée par src/components/shared/** et
+       src/components/layouts/** uniquement. components/ui/** et les pages existantes
+       continuent d'utiliser --primary/--accent/etc. sans changement. */
+    --ds-site-bg: #FAF7F2;
+    --ds-app-bg: #F6F3EE;
+    --ds-surface: #FFFFFF;
+    --ds-surface-border: #E7E0D4;
+    --ds-surface-sand: #F1ECE3;
+    --ds-navy: #1A3A5B;
+    --ds-navy-dark: #10263C;
+    --ds-navy-medium: #234A70;
+    --ds-cta: #C73A08;
+    --ds-cta-on-navy: #FFB08A;
+    --ds-text: #16202E;
+    --ds-text-secondary: #4A5566;
+    --ds-success: #1F6B4F;
+    --ds-success-bg: #E3F2EA;
+    --ds-warning: #8A5A00;
+    --ds-warning-bg: #FDF1D8;
+    --ds-error: #9A2E06;
+    --ds-error-bg: #FDE8DF;
+    --ds-info-bg: #E6EEF6;
+    --ds-linkedin: #0A66C2;
+    /* Pas d'équivalents .dark définis — le spec design (docs/design/README.md §1) et
+       les écrans de référence sont light-mode uniquement. À revisiter si le dark mode
+       est requis pour ce nouveau système. */
   }
 
   .dark {
