@@ -176,7 +176,7 @@ function ClosedModal() {
                         <div className="flex items-center justify-center gap-3 mb-7">
                             {[
                                 { label: "LinkedIn",  href: "https://linkedin.com/company/model-technologie" },
-                                { label: "WhatsApp",  href: "https://wa.me/221786310432" },
+                                { label: "WhatsApp",  href: "https://wa.me/221788625238" },
                             ].map(({ label, href }) => (
                                 <a
                                     key={label}

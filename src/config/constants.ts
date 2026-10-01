@@ -12,10 +12,10 @@ export const COMPANY = {
   tagline: 'Toujours plus haut !',
   description: 'Expert en formations Power BI et Data Analytics. Accompagnement des entreprises vers l\'excellence data.',
   address: 'Dakar, Senegal',
-  phone: '+221 78 631 04 32',
-  phoneRaw: '+221786310432',
+  phone: '+221 78 862 52 38',
+  phoneRaw: '+221788625238',
   email: 'admin@model-technologie.com',
-  whatsappUrl: 'https://wa.me/221786310432',
+  whatsappUrl: 'https://wa.me/221788625238',
   social: {
     linkedin: 'https://www.linkedin.com/company/model-technologie/?viewAsMember=true',
     instagram: 'https://www.instagram.com/model.technologie/',
