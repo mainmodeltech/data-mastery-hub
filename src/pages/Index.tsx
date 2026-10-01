@@ -28,12 +28,12 @@ const PROOF_STATS = [
 const COMPANIES = ["Wave", "UBA Sénégal", "CETUD", "Afrika Banque", "[+ logos validés]"];
 
 const COHORT_FACTS = [
-  { label: "Démarrage", value: "[date de démarrage]" },
-  { label: "Rythme", value: "[soirs / samedi] — compatible emploi" },
-  { label: "Format", value: "Présentiel Dakar ou en ligne" },
-  { label: "Prérequis", value: "Aucun pour Excel · bases Excel pour Power BI" },
-  { label: "Tarif", value: "dès 75 000 FCFA · [facilités de paiement]" },
-  { label: "Sélection", value: "un cas d'usage de votre métier" },
+  { label: "Démarrage", value: "[date de démarrage]", mobile: true },
+  { label: "Rythme", value: "[soirs / samedi] — compatible emploi", mobile: true },
+  { label: "Format", value: "Présentiel Dakar ou en ligne", mobile: false },
+  { label: "Prérequis", value: "Aucun pour Excel · bases Excel pour Power BI", mobile: false },
+  { label: "Tarif", value: "dès 75 000 FCFA · [facilités de paiement]", mobile: true },
+  { label: "Sélection", value: "un cas d'usage de votre métier", mobile: false },
 ];
 
 const BY_ROLE = [
@@ -82,13 +82,21 @@ export default function Index() {
           <span className="h-2 w-2 rounded-pill bg-success" />
           Prochaine cohorte — candidatures ouvertes · Dakar &amp; en ligne
         </span>
-        <h1 className="max-w-4xl font-heading text-[clamp(36px,6vw,84px)] font-extrabold leading-[0.98] tracking-[-2.5px] text-navy">
+        {/* Copie mobile dédiée (plus courte, cf. Mobile.dc.html) */}
+        <h1 className="max-w-4xl font-heading text-[40px] font-extrabold leading-[1] tracking-[-1.2px] text-navy sm:hidden">
+          La data au service de <span className="text-cta">votre métier.</span>
+        </h1>
+        <p className="max-w-2xl text-lg text-ink-secondary sm:hidden">
+          Banquiers, comptables, RH, commerciaux : maîtrisez Excel, Power BI et Python sur vos propres cas.
+        </p>
+        {/* Copie desktop (Main.dc.html) */}
+        <h1 className="hidden max-w-4xl font-heading text-[clamp(44px,6vw,84px)] font-extrabold leading-[0.98] tracking-[-2.5px] text-navy sm:block">
           Des compétences concrètes pour <span className="text-cta">votre métier.</span>
         </h1>
-        <p className="max-w-2xl text-xl text-ink-secondary">
+        <p className="hidden max-w-2xl text-xl text-ink-secondary sm:block">
           Data, Power BI, gestion de projet : des formations courtes, sur vos propres cas, pour les banquiers, comptables, RH et managers en poste.
         </p>
-        <div className="flex flex-wrap justify-center gap-3.5">
+        <div className="flex w-full flex-col gap-3.5 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-center">
           <Button asChild variant="primary" shape="pill" size="lg">
             <a href="#cohorte">Rejoindre la prochaine cohorte</a>
           </Button>
@@ -102,26 +110,31 @@ export default function Index() {
       </section>
 
       {/* Visuel + citation */}
-      <section className="px-6 pb-24 lg:px-20">
-        <div className="relative flex h-[320px] items-end overflow-hidden rounded-hero bg-navy lg:h-[520px]">
+      <section className="px-5 pb-16 sm:px-6 lg:pb-24 lg:px-20">
+        <div className="relative flex h-[240px] items-end overflow-hidden rounded-hero bg-navy sm:h-[320px] lg:h-[520px]">
           <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm tracking-wide text-[#9FB3C8]">
             [ PHOTO RÉELLE — session de cohorte à Dakar, apprenants au travail sur Power BI ]
           </div>
-          <Card radius="card" className="relative m-6 flex max-w-xl flex-col gap-3 p-7">
-            <p className="font-heading text-2xl font-bold leading-tight text-navy">
+          <Card radius="card" className="relative m-4 flex max-w-xl flex-col gap-2 p-5 sm:m-6 sm:gap-3 sm:p-7">
+            <p className="font-heading text-lg font-bold leading-tight text-navy sm:text-2xl">
               « Mon reporting mensuel prenait 2 jours. Maintenant 2 heures. »
             </p>
-            <p className="text-sm text-ink-secondary">Emmanuel Bouadi — Data Analyst, Wave · alumni Power BI</p>
+            <p className="text-sm text-ink-secondary">
+              Emmanuel Bouadi — Data Analyst, Wave<span className="hidden sm:inline"> · alumni Power BI</span>
+            </p>
           </Card>
         </div>
       </section>
 
       {/* Bandeau preuve */}
-      <section className="px-6 pb-24 lg:px-20">
+      <section className="px-5 pb-16 sm:px-6 lg:pb-24 lg:px-20">
         <div className="grid grid-cols-2 gap-px overflow-hidden border-y border-[#E7E0D4] bg-[#E7E0D4] lg:grid-cols-4">
-          {PROOF_STATS.map((s) => (
-            <div key={s.label} className="flex flex-col gap-1.5 bg-site-bg p-7">
-              <span className="font-heading text-4xl font-extrabold text-navy lg:text-[52px]">{s.value}</span>
+          {PROOF_STATS.map((s, i) => (
+            <div
+              key={s.label}
+              className={`flex flex-col gap-1.5 bg-site-bg p-5 sm:p-7 ${i >= 2 ? "hidden lg:flex" : ""}`}
+            >
+              <span className="font-heading text-[34px] font-extrabold text-navy lg:text-[52px]">{s.value}</span>
               <span className="text-sm text-ink-secondary">{s.label}</span>
             </div>
           ))}
@@ -151,17 +164,20 @@ export default function Index() {
               de votre travail — vous repartez avec le tableau de bord ou l'automatisation qui le règle.
             </p>
             <div className="flex flex-wrap gap-3.5">
-              <Button asChild variant="primary" shape="pill" size="lg">
+              <Button asChild variant="primary" shape="pill" size="lg" className="w-full sm:w-auto">
                 <Link to="/formations">Candidater</Link>
               </Button>
-              <Button asChild variant="outline" shape="pill" size="lg" className="border-transparent">
+              <Button asChild variant="outline" shape="pill" size="lg" className="hidden border-transparent sm:inline-flex">
                 <Link to="/formations">Comparer les parcours →</Link>
               </Button>
             </div>
           </div>
           <div className="flex flex-col border-t border-[#E7E0D4]">
             {COHORT_FACTS.map((f) => (
-              <div key={f.label} className="flex justify-between gap-4 border-b border-[#E7E0D4] py-5 text-base last:border-b-0">
+              <div
+                key={f.label}
+                className={`flex justify-between gap-4 border-b border-[#E7E0D4] py-5 text-base last:border-b-0 ${f.mobile ? "" : "hidden sm:flex"}`}
+              >
                 <span className="text-ink-secondary">{f.label}</span>
                 <span className="text-right font-semibold text-navy">{f.value}</span>
               </div>
@@ -178,13 +194,13 @@ export default function Index() {
             Commencez par ce qui vous fait perdre du temps.
           </h2>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {BY_ROLE.map((r) => (
             <Link key={r.title} to="/formations">
-              <Card radius="card" className="flex h-full flex-col gap-3.5 p-7">
-                <span className="font-heading text-2xl font-bold text-navy">{r.title}</span>
-                <span className="text-base text-ink-secondary">{r.description}</span>
-                <span className="mt-auto text-sm font-semibold text-cta">{r.path}</span>
+              <Card radius="card" className="flex h-full flex-row items-center justify-between gap-3 p-5 sm:flex-col sm:items-stretch sm:justify-start sm:gap-3.5 sm:p-7">
+                <span className="font-heading text-lg font-bold text-navy sm:text-2xl">{r.title}</span>
+                <span className="hidden text-base text-ink-secondary sm:block">{r.description}</span>
+                <span className="shrink-0 text-right text-sm font-semibold text-cta sm:mt-auto sm:text-left">{r.path}</span>
               </Card>
             </Link>
           ))}
