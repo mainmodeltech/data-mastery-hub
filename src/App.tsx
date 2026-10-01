@@ -30,6 +30,10 @@ const FormationDetail = lazy(() => import('./pages/FormationDetail'));
 const Alumni = lazy(() => import('./pages/Alumni'));
 const Orientation = lazy(() => import('./pages/Orientation'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Coaching = lazy(() => import('./pages/Coaching'));
+const Entreprises = lazy(() => import('./pages/Entreprises'));
+const Ressources = lazy(() => import('./pages/Ressources'));
+const Partenaires = lazy(() => import('./pages/Partenaires'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Pages admin
@@ -109,6 +113,11 @@ const App = () => (
                   <Route path="/alumni" element={<Alumni />} />
                   <Route path="/orientation" element={<Orientation />} />
                   <Route path="/contact" element={<Contact />} />
+                  {/* Lot 2 — nouvelles pages publiques (docs/design/README.md §2) */}
+                  <Route path="/coaching" element={<Coaching />} />
+                  <Route path="/entreprises" element={<Entreprises />} />
+                  <Route path="/ressources" element={<Ressources />} />
+                  <Route path="/partenaires" element={<Partenaires />} />
                   <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
 
                   {/* ── Backoffice admin ─────────────────────────── */}

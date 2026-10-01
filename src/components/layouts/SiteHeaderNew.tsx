@@ -1,14 +1,20 @@
 /**
- * Design-system site header (Lot 0+, docs/design/README.md §2 — screens/site/Main.dc.html).
+ * Design-system site header (Lot 0-2, docs/design/README.md §2 — screens/site/Main.dc.html).
  * Net-new, separate from @/components/layout/Header.tsx (the current, data-driven
- * header kept unchanged for the 8 existing pages). Static nav for now — no new
- * routes are wired in Lot 0, items are placeholders matching the reference screen.
+ * header kept unchanged for the 8 pre-existing pages).
  */
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/shared/Button";
 
-const NAV_ITEMS = ["Formations", "Coaching", "Entreprises", "Alumni", "Ressources", "Contact"];
+const NAV_ITEMS = [
+  { label: "Formations", href: "/formations" },
+  { label: "Coaching", href: "/coaching" },
+  { label: "Entreprises", href: "/entreprises" },
+  { label: "Alumni", href: "/alumni" },
+  { label: "Ressources", href: "/ressources" },
+  { label: "Contact", href: "/contact" },
+];
 
 export function SiteHeaderNew() {
   return (
@@ -23,13 +29,14 @@ export function SiteHeaderNew() {
       </Link>
 
       <nav className="hidden items-center gap-7 lg:flex">
-        {NAV_ITEMS.map((label) => (
-          <span
-            key={label}
-            className="cursor-pointer font-sans text-sm font-medium text-ink hover:text-cta"
+        {NAV_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            to={item.href}
+            className="font-sans text-sm font-medium text-ink hover:text-cta"
           >
-            {label}
-          </span>
+            {item.label}
+          </Link>
         ))}
       </nav>
 
@@ -37,8 +44,8 @@ export function SiteHeaderNew() {
         <Link to="/admin/login" className="font-sans text-sm font-medium text-navy hover:text-cta">
           Connexion
         </Link>
-        <Button variant="primary" shape="pill" size="sm">
-          Candidater
+        <Button asChild variant="primary" shape="pill" size="sm">
+          <Link to="/formations">Candidater</Link>
         </Button>
       </div>
     </header>

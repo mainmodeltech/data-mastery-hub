@@ -110,4 +110,24 @@ export const PAGE_SEO = {
         description: "Contactez Model Technologie pour rejoindre un bootcamp, former vos équipes ou en savoir plus sur nos formations data à Dakar.",
         path:        "/contact",
     },
+    coaching: {
+        title:       "Coaching individuel Excel & Power BI à Dakar",
+        description: "Coaching 1:1 sur vos propres fichiers Excel et Power BI. Appel diagnostic offert, séances en visio ou à Dakar.",
+        path:        "/coaching",
+    },
+    entreprises: {
+        title:       "Formations Data pour Entreprises à Dakar",
+        description: "Formations Excel, Power BI et data sur-mesure pour vos équipes. Diagnostic gratuit, facturation entreprise.",
+        path:        "/entreprises",
+    },
+    ressources: {
+        title:       "Ressources Data — Blog, modèles et quiz d'orientation",
+        description: "Articles, modèles téléchargeables et quiz d'orientation pour progresser en Excel, Power BI, Python et SQL.",
+        path:        "/ressources",
+    },
+    partenaires: {
+        title:       "Devenir partenaire formateur — Model Technologie",
+        description: "Proposez vos formations sur la plateforme Model Technologie : nous gérons la plateforme, le paiement et l'audience.",
+        path:        "/partenaires",
+    },
 } as const;

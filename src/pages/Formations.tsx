@@ -7,8 +7,8 @@
  * entités Domain/Partner côté backend — coexiste avec /bootcamps (page de
  * production actuelle, données réelles) plutôt que de la remplacer.
  */
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { SectionHeader } from "@/components/shared/SectionHeader";
@@ -39,6 +39,14 @@ export default function Formations() {
   const { data: domains = [] } = useDomains();
   const { data: sessions = [] } = useAllFormationSessions();
   const [filters, setFilters] = useState<FormationFilters>(EMPTY_FILTERS);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const domainSlug = searchParams.get("domaine");
+    if (!domainSlug || domains.length === 0) return;
+    const domain = domains.find((d) => d.slug === domainSlug);
+    if (domain) setFilters((prev) => ({ ...prev, domainId: domain.id }));
+  }, [searchParams, domains]);
 
   const targetRoles = useMemo(
     () => Array.from(new Set(formations.flatMap((f) => f.targetRoles))).sort(),

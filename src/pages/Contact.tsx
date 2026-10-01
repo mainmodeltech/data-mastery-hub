@@ -1,137 +1,198 @@
 /**
- * Page Contact - Formulaire de contact et informations.
- * Refactoree pour utiliser le hook useSendContactMessage et les constantes centralisees.
+ * Contact.tsx — Lot 2 (docs/design/README.md §2, screens/site/Contact.dc.html)
+ * Réutilise useSendContactMessage/contactService (inchangés).
  */
+import { useState } from "react";
+import { Mail, MapPin, Clock, MessageCircle, CheckCircle, Loader2 } from "lucide-react";
 
-import { useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Mail, Phone, MapPin, MessageCircle, Linkedin, Instagram, Send, CheckCircle, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useSendContactMessage } from '@/hooks/useContacts';
-import { COMPANY } from '@/config/constants';
-import type { CreateContactMessageDTO } from '@/types';
-import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
+import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
+import { SiteLayout } from "@/components/layouts/SiteLayout";
+import { Button, Card, SectionHeader, FaqAccordion } from "@/components/shared";
+import { useSendContactMessage } from "@/hooks/useContacts";
+import { COMPANY } from "@/config/constants";
+import type { CreateContactMessageDTO } from "@/types";
 
-const Contact = () => {
-  const { toast } = useToast();
-  const [isSubmitted, setIsSubmitted] = useState(false);
+const inputClass =
+  "w-full rounded-card border border-[#D6CEC0] bg-white px-4 py-2.5 font-sans text-sm text-ink outline-none focus:border-navy";
+
+const CONTACT_METHODS = [
+  { icon: MessageCircle, label: "WhatsApp", value: COMPANY.phone, helper: "Réponse dans la journée", href: COMPANY.whatsappUrl, highlight: true },
+  { icon: Mail, label: "E-mail", value: COMPANY.email, helper: "Pour les devis et documents", href: `mailto:${COMPANY.email}`, highlight: false },
+  { icon: MapPin, label: "Adresse", value: COMPANY.address, helper: "Sur rendez-vous", href: null, highlight: false },
+  { icon: Clock, label: "Horaires", value: "Lun–Ven 9h–18h · Sam 9h–13h", helper: "Heure de Dakar (GMT)", href: null, highlight: false },
+];
+
+const FAQ_ITEMS = [
+  { question: "Quand démarre la prochaine cohorte ?", answer: "Consultez le calendrier des sessions sur la page Formations pour la prochaine date disponible." },
+  { question: "Quels moyens de paiement acceptez-vous ?", answer: "Wave, Orange Money et virement bancaire." },
+  { question: "Proposez-vous des facilités de paiement ?", answer: "Oui, un paiement en plusieurs fois est possible — précisez-le dans votre message." },
+  { question: "Les formations sont-elles accessibles à distance ?", answer: "Cela dépend de la formation — le format est indiqué sur chaque fiche formation." },
+  { question: "Pouvez-vous facturer mon entreprise ?", answer: "Oui, nous émettons une facture ou un bon de commande entreprise sur demande." },
+];
+
+type Role = "particulier" | "entreprise";
+
+export default function Contact() {
+  const [role, setRole] = useState<Role>("particulier");
+  const [submitted, setSubmitted] = useState(false);
   const sendMessage = useSendContactMessage();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formEl = e.currentTarget;
-    const data = new FormData(formEl);
+    const data = new FormData(e.currentTarget);
+    const fullName = (data.get("name") as string).trim();
+    const [firstName, ...rest] = fullName.split(" ");
 
-    const messageData: CreateContactMessageDTO = {
-      firstName: (data.get('firstName') as string).trim(),
-      lastName: (data.get('lastName') as string).trim(),
-      email: (data.get('email') as string).trim(),
-      phone: (data.get('phone') as string)?.trim() || null,
-      company: (data.get('company') as string)?.trim() || null,
-      subject: (data.get('subject') as string)?.trim() || null,
-      message: (data.get('message') as string).trim(),
+    const payload: CreateContactMessageDTO = {
+      firstName: firstName || fullName,
+      lastName: rest.join(" ") || "",
+      email: (data.get("email") as string).trim(),
+      phone: (data.get("phone") as string)?.trim() || null,
+      company: role === "entreprise" ? ((data.get("company") as string)?.trim() || null) : null,
+      subject: (data.get("subject") as string) || null,
+      message: (data.get("message") as string).trim(),
     };
 
-    sendMessage.mutate(messageData, {
-      onSuccess: () => {
-        setIsSubmitted(true);
-        toast({ title: 'Message envoye !', description: 'Nous vous repondrons dans les plus brefs delais.' });
-      },
-      onError: () => {
-        toast({ title: "Erreur lors de l'envoi", description: 'Veuillez reessayer.', variant: 'destructive' });
-      },
+    sendMessage.mutate(payload, {
+      onSuccess: () => setSubmitted(true),
     });
   };
 
   return (
-    <Layout>
-      <SeoHead {...PAGE_SEO.bootcamps} />
-      {/* Hero */}
-      <section className="py-20 lg:py-28 bg-secondary">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="font-heading text-4xl md:text-5xl font-bold text-foreground mb-6">Contactez-nous</h1>
-            <p className="text-muted-foreground text-lg leading-relaxed">Vous avez un projet de formation ? Une question sur nos programmes ? Nous sommes la pour vous accompagner.</p>
-          </div>
-        </div>
-      </section>
+    <SiteLayout>
+      <SeoHead {...PAGE_SEO.contact} />
 
-      {/* Contact Form & Info */}
-      <section className="py-20 lg:py-28">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid lg:grid-cols-[1fr,400px] gap-16">
-            {/* Form */}
-            <div className="order-2 lg:order-1">
-              <h2 className="font-heading text-2xl font-bold text-foreground mb-6">Envoyez-nous un message</h2>
-              {isSubmitted ? (
-                <div className="p-8 bg-accent/10 rounded-2xl border border-accent/30 text-center">
-                  <CheckCircle className="h-16 w-16 text-accent mx-auto mb-4" />
-                  <h3 className="font-heading text-xl font-bold text-foreground mb-2">Message envoye avec succes !</h3>
-                  <p className="text-muted-foreground mb-6">Merci pour votre message. Notre equipe vous repondra dans les 24 heures.</p>
-                  <Button onClick={() => setIsSubmitted(false)}>Envoyer un autre message</Button>
+      <section className="grid gap-10 px-6 py-20 lg:grid-cols-[1fr,1.2fr] lg:px-20">
+        {/* Left: intro + contact methods */}
+        <div className="flex flex-col gap-6">
+          <div>
+            <span className="font-sans text-sm font-bold uppercase tracking-[1.5px] text-cta">CONTACT</span>
+            <h1 className="mt-3 font-heading text-[clamp(32px,4.5vw,48px)] font-extrabold tracking-[-1.5px] text-navy">
+              Parlons de votre projet.
+            </h1>
+            <p className="mt-3 text-ink-secondary">Le plus rapide reste WhatsApp.</p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {CONTACT_METHODS.map((m) => {
+              const content = (
+                <div
+                  className={
+                    m.highlight
+                      ? "flex items-center gap-4 rounded-card bg-navy p-5 text-white"
+                      : "flex items-center gap-4 rounded-card border border-[#E7E0D4] bg-white p-5"
+                  }
+                >
+                  <span
+                    className={
+                      m.highlight
+                        ? "flex h-11 w-11 items-center justify-center rounded-card bg-white/10"
+                        : "flex h-11 w-11 items-center justify-center rounded-card bg-app-bg"
+                    }
+                  >
+                    <m.icon className={m.highlight ? "h-5 w-5 text-white" : "h-5 w-5 text-navy"} />
+                  </span>
+                  <div>
+                    <p className={m.highlight ? "text-xs text-cta-on-navy" : "text-xs text-ink-secondary"}>{m.label}</p>
+                    <p className={m.highlight ? "font-semibold text-white" : "font-semibold text-navy"}>{m.value}</p>
+                    <p className={m.highlight ? "text-xs text-[#C9D4E0]" : "text-xs text-ink-secondary"}>{m.helper}</p>
+                  </div>
                 </div>
+              );
+              return m.href ? (
+                <a key={m.label} href={m.href} target="_blank" rel="noreferrer">
+                  {content}
+                </a>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2"><Label htmlFor="firstName">Prenom *</Label><Input id="firstName" name="firstName" placeholder="Votre prenom" required /></div>
-                    <div className="space-y-2"><Label htmlFor="lastName">Nom *</Label><Input id="lastName" name="lastName" placeholder="Votre nom" required /></div>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2"><Label htmlFor="email">Email professionnel *</Label><Input id="email" name="email" type="email" placeholder="votre@email.com" required /></div>
-                    <div className="space-y-2"><Label htmlFor="phone">Telephone</Label><Input id="phone" name="phone" type="tel" placeholder={COMPANY.phone} /></div>
-                  </div>
-                  <div className="space-y-2"><Label htmlFor="company">Entreprise</Label><Input id="company" name="company" placeholder="Nom de votre entreprise" /></div>
-                  <div className="space-y-2"><Label htmlFor="subject">Objet *</Label><Input id="subject" name="subject" placeholder="Comment pouvons-nous vous aider ?" required /></div>
-                  <div className="space-y-2"><Label htmlFor="message">Message *</Label><Textarea id="message" name="message" placeholder="Decrivez votre projet ou votre demande..." rows={6} required /></div>
-                  <Button type="submit" size="lg" disabled={sendMessage.isPending}>
-                    {sendMessage.isPending ? (<><Loader2 className="h-4 w-4 animate-spin" />Envoi en cours...</>) : (<><Send className="h-4 w-4" />Envoyer le message</>)}
-                  </Button>
-                </form>
-              )}
-            </div>
-
-            {/* Contact Info */}
-            <div className="order-1 lg:order-2">
-              <div className="sticky top-28 space-y-8">
-                <div className="p-8 bg-card rounded-2xl border border-border">
-                  <h3 className="font-heading text-xl font-bold text-card-foreground mb-6">Informations de contact</h3>
-                  <div className="space-y-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0"><MapPin className="h-5 w-5 text-primary" /></div>
-                      <div><p className="font-medium text-card-foreground">Adresse</p><p className="text-muted-foreground text-sm">{COMPANY.address}</p></div>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0"><Phone className="h-5 w-5 text-primary" /></div>
-                      <div><p className="font-medium text-card-foreground">Telephone</p><a href={`tel:${COMPANY.phoneRaw}`} className="text-muted-foreground text-sm hover:text-primary transition-colors">{COMPANY.phone}</a></div>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0"><Mail className="h-5 w-5 text-primary" /></div>
-                      <div><p className="font-medium text-card-foreground">Email</p><a href={`mailto:${COMPANY.email}`} className="text-muted-foreground text-sm hover:text-primary transition-colors">{COMPANY.email}</a></div>
-                    </div>
-                  </div>
-                </div>
-                <Button asChild className="w-full bg-[#25D366] hover:bg-[#25D366]/90 text-white" size="lg">
-                  <a href={COMPANY.whatsappUrl} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-5 w-5" />Discuter sur WhatsApp</a>
-                </Button>
-                <div className="p-8 bg-card rounded-2xl border border-border">
-                  <h3 className="font-heading text-lg font-bold text-card-foreground mb-4">Suivez-nous</h3>
-                  <div className="flex gap-4">
-                    <a href={COMPANY.social.linkedin} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"><Linkedin className="h-5 w-5" /></a>
-                    <a href={COMPANY.social.instagram} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"><Instagram className="h-5 w-5" /></a>
-                  </div>
-                </div>
-              </div>
-            </div>
+                <div key={m.label}>{content}</div>
+              );
+            })}
           </div>
+        </div>
+
+        {/* Right: form */}
+        <Card radius="card" className="p-8">
+          {submitted ? (
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <CheckCircle className="h-12 w-12 text-success" />
+              <p className="font-heading text-lg font-bold text-navy">Message envoyé !</p>
+              <p className="text-sm text-ink-secondary">Nous vous répondrons sous 24h ouvrées.</p>
+              <Button variant="outline" onClick={() => setSubmitted(false)}>
+                Envoyer un autre message
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex gap-2">
+                {(["particulier", "entreprise"] as Role[]).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    aria-pressed={role === r}
+                    onClick={() => setRole(r)}
+                    className={
+                      role === r
+                        ? "rounded-pill bg-navy px-4 py-2 font-sans text-sm font-semibold text-white"
+                        : "rounded-pill border border-[#D6CEC0] px-4 py-2 font-sans text-sm text-ink-secondary"
+                    }
+                  >
+                    {r === "particulier" ? "Je suis un particulier" : "Je représente une entreprise"}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <input name="name" required placeholder="Awa Ndiaye" className={inputClass} aria-label="Nom et prénom" />
+                <input name="phone" type="tel" placeholder="+221 …" className={inputClass} aria-label="Téléphone / WhatsApp" />
+                <input name="email" type="email" required placeholder="vous@exemple.com" className={inputClass} aria-label="E-mail" />
+                <select name="subject" required defaultValue="" className={inputClass} aria-label="Sujet">
+                  <option value="" disabled>Sujet</option>
+                  <option value="Candidater à une cohorte">Candidater à une cohorte</option>
+                  <option value="Réserver un coaching">Réserver un coaching</option>
+                  <option value="Formation pour mon entreprise">Formation pour mon entreprise</option>
+                  <option value="Partenariat">Partenariat</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+
+              {role === "entreprise" && (
+                <input name="company" placeholder="Nom de l'entreprise" className={inputClass} aria-label="Entreprise" />
+              )}
+
+              <textarea
+                name="message"
+                required
+                rows={4}
+                placeholder="Dites-nous en quelques lignes ce dont vous avez besoin."
+                className={inputClass}
+                aria-label="Votre message"
+              />
+
+              <Button type="submit" variant="primary" shape="pill" disabled={sendMessage.isPending}>
+                {sendMessage.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Envoyer le message"}
+              </Button>
+              <p className="text-center text-xs text-ink-secondary">
+                Réponse sous 24h ouvrées. Vos données ne sont utilisées que pour vous répondre.
+              </p>
+            </form>
+          )}
+        </Card>
+      </section>
+
+      {/* Map placeholder */}
+      <section className="px-6 pb-16 lg:px-20">
+        <div className="flex h-64 items-center justify-center rounded-hero border border-[#E7E0D4] bg-surface-sand text-sm text-ink-secondary">
+          Carte — emplacement des locaux à Dakar
         </div>
       </section>
 
-    </Layout>
+      {/* FAQ */}
+      <section className="px-6 pb-20 lg:px-20">
+        <SectionHeader eyebrow="QUESTIONS FRÉQUENTES" title="Les réponses aux questions les plus courantes" />
+        <div className="mx-auto mt-8 max-w-3xl">
+          <FaqAccordion items={FAQ_ITEMS} />
+        </div>
+      </section>
+    </SiteLayout>
   );
-};
-
-export default Contact;
+}

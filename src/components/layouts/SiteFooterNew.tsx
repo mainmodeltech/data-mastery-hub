@@ -1,19 +1,28 @@
 /**
- * Design-system site footer (Lot 0+, docs/design/README.md §2 — screens/site/Main.dc.html).
+ * Design-system site footer (Lot 0-2, docs/design/README.md §2 — screens/site/Main.dc.html).
  * Net-new, separate from @/components/layout/Footer.tsx (kept unchanged).
  */
-const COLUMNS = [
+import { Link } from "react-router-dom";
+import { COMPANY } from "@/config/constants";
+
+const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Navigation",
-    links: ["Formations", "Coaching", "Entreprises", "Alumni"],
+    links: [
+      { label: "Formations", href: "/formations" },
+      { label: "Coaching", href: "/coaching" },
+      { label: "Entreprises", href: "/entreprises" },
+      { label: "Alumni", href: "/alumni" },
+    ],
   },
   {
     title: "Ressources",
-    links: ["Blog", "Quiz d'orientation", "Téléchargements"],
-  },
-  {
-    title: "Contact",
-    links: ["Dakar, Sénégal", "+221 78 631 04 32", "contact@model-technologie.com"],
+    links: [
+      { label: "Blog", href: "/ressources" },
+      { label: "Quiz d'orientation", href: "/orientation" },
+      { label: "Téléchargements", href: "/ressources#newsletter" },
+      { label: "Devenir partenaire", href: "/partenaires" },
+    ],
   },
 ];
 
@@ -36,11 +45,28 @@ export function SiteFooterNew() {
             <h3 className="font-heading text-sm font-bold text-white">{col.title}</h3>
             <ul className="flex flex-col gap-2 text-sm">
               {col.links.map((link) => (
-                <li key={link}>{link}</li>
+                <li key={link.href}>
+                  <Link to={link.href} className="hover:text-white">
+                    {link.label}
+                  </Link>
+                </li>
               ))}
             </ul>
           </div>
         ))}
+
+        <div className="flex flex-col gap-3">
+          <h3 className="font-heading text-sm font-bold text-white">Contact</h3>
+          <ul className="flex flex-col gap-2 text-sm">
+            <li>{COMPANY.address}</li>
+            <li>
+              <a href={`tel:${COMPANY.phoneRaw}`} className="hover:text-white">{COMPANY.phone}</a>
+            </li>
+            <li>
+              <a href={`mailto:${COMPANY.email}`} className="hover:text-white">{COMPANY.email}</a>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <div className="mt-12 border-t border-white/10 pt-6 text-xs text-[#8FA5BC]">
