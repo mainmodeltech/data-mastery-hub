@@ -25,6 +25,8 @@ import AdminResetPassword from "@/pages/admin/AdminResetPassword.tsx";
 const Index = lazy(() => import('./pages/Index'));
 const About = lazy(() => import('./pages/About'));
 const Bootcamps = lazy(() => import('./pages/Bootcamps'));
+const Formations = lazy(() => import('./pages/Formations'));
+const FormationDetail = lazy(() => import('./pages/FormationDetail'));
 const Alumni = lazy(() => import('./pages/Alumni'));
 const Orientation = lazy(() => import('./pages/Orientation'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -99,6 +101,11 @@ const App = () => (
                   <Route path="/a-propos" element={<About />} />
                   {/*<Route path="/services" element={<Services />} />*/}
                   <Route path="/bootcamps" element={<Bootcamps />} />
+                  {/* Lot 1 — nouveau catalogue par domaines (données de démonstration,
+                      voir src/types/formation.type.ts). Coexiste avec /bootcamps tant
+                      que le backend Domain/Partner n'est pas disponible. */}
+                  <Route path="/formations" element={<Formations />} />
+                  <Route path="/formations/:slug" element={<FormationDetail />} />
                   <Route path="/alumni" element={<Alumni />} />
                   <Route path="/orientation" element={<Orientation />} />
                   <Route path="/contact" element={<Contact />} />
