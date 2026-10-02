@@ -58,7 +58,7 @@ export function SiteHeaderNew() {
         </nav>
 
         <div className="ml-auto hidden items-center gap-5 lg:flex">
-          <Link to="/admin/login" className="font-sans text-sm font-medium text-navy hover:text-cta">
+          <Link to="/connexion" className="font-sans text-sm font-medium text-navy hover:text-cta">
             Connexion
           </Link>
           <Button asChild variant="primary" shape="pill" size="sm">
@@ -101,7 +101,7 @@ export function SiteHeaderNew() {
           )}
           <div className="mt-2 flex flex-col gap-2 border-t border-[#E7E0D4] pt-4">
             <Link
-              to="/admin/login"
+              to="/connexion"
               onClick={() => setOpen(false)}
               className="rounded-card px-3 py-2 text-center font-sans text-sm font-medium text-navy"
             >

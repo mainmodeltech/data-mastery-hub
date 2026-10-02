@@ -12,6 +12,7 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QUERY_CONFIG } from '@/config/constants';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
+import { LEARNER_ROLES } from '@/lib/roles';
 import AdminPromoCodes from "@/pages/admin/AdminPromoCodes.tsx";
 import MasterclassPage from "@/pages/MasterclassPage";
 import AdminForgotPassword from "@/pages/admin/AdminForgotPassword.tsx";
@@ -30,6 +31,8 @@ const FormationDetail = lazy(() => import('./pages/FormationDetail'));
 const Alumni = lazy(() => import('./pages/Alumni'));
 const Orientation = lazy(() => import('./pages/Orientation'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Connexion = lazy(() => import('./pages/Connexion'));
+const Espace = lazy(() => import('./pages/Espace'));
 const Coaching = lazy(() => import('./pages/Coaching'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Ressources = lazy(() => import('./pages/Ressources'));
@@ -119,6 +122,10 @@ const App = () => (
                   <Route path="/ressources" element={<Ressources />} />
                   <Route path="/partenaires" element={<Partenaires />} />
                   <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
+
+                  {/* ── Connexion unique + espace apprenant (Lot 3) ─ */}
+                  <Route path="/connexion" element={<Connexion />} />
+                  <Route path="/espace" element={<ProtectedRoute roles={LEARNER_ROLES}><Espace /></ProtectedRoute>} />
 
                   {/* ── Backoffice admin ─────────────────────────── */}
                   <Route path="/admin/login"          element={<AdminLogin />} />
