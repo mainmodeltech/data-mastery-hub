@@ -4,8 +4,9 @@
  */
 import { Link } from "react-router-dom";
 import { COMPANY } from "@/config/constants";
+import { ComingSoonLink } from "./ComingSoonLink";
 
-const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
+const COLUMNS: { title: string; links: { label: string; href: string; comingSoon?: boolean }[] }[] = [
   {
     title: "Formations",
     links: [
@@ -18,7 +19,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Ressources",
     links: [
-      { label: "Blog", href: "/ressources" },
+      { label: "Blog", href: "/ressources", comingSoon: true },
       { label: "Alumni", href: "/alumni" },
       { label: "FAQ", href: "/contact" },
       { label: "À propos", href: "/a-propos" },
@@ -44,9 +45,15 @@ export function SiteFooterNew() {
             <ul className="flex flex-col gap-2 text-sm">
               {col.links.map((link) => (
                 <li key={link.href}>
-                  <Link to={link.href} className="hover:text-white">
-                    {link.label}
-                  </Link>
+                  {link.comingSoon ? (
+                    <ComingSoonLink title={link.label} className="hover:text-white">
+                      {link.label}
+                    </ComingSoonLink>
+                  ) : (
+                    <Link to={link.href} className="hover:text-white">
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

@@ -9,13 +9,14 @@ import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 import { Button } from "@/components/shared/Button";
+import { ComingSoonLink } from "./ComingSoonLink";
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { label: string; href: string; comingSoon?: boolean }[] = [
   { label: "Formations", href: "/formations" },
   { label: "Coaching", href: "/coaching" },
   { label: "Entreprises", href: "/entreprises" },
   { label: "Alumni", href: "/alumni" },
-  { label: "Ressources", href: "/ressources" },
+  { label: "Ressources", href: "/ressources", comingSoon: true },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -35,15 +36,25 @@ export function SiteHeaderNew() {
         </Link>
 
         <nav className="hidden items-center gap-7 lg:flex">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className="font-sans text-sm font-medium text-ink hover:text-cta"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) =>
+            item.comingSoon ? (
+              <ComingSoonLink
+                key={item.href}
+                title={item.label}
+                className="font-sans text-sm font-medium text-ink-secondary"
+              >
+                {item.label}
+              </ComingSoonLink>
+            ) : (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="font-sans text-sm font-medium text-ink hover:text-cta"
+              >
+                {item.label}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="ml-auto hidden items-center gap-5 lg:flex">
@@ -68,16 +79,26 @@ export function SiteHeaderNew() {
 
       {open && (
         <nav className="absolute inset-x-0 top-full z-20 flex flex-col gap-1 border-b border-[#E7E0D4] bg-white px-5 py-4 shadow-[0_12px_24px_rgba(26,58,91,0.08)] lg:hidden">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              onClick={() => setOpen(false)}
-              className="rounded-card px-3 py-3 font-sans text-base font-medium text-ink hover:bg-app-bg"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) =>
+            item.comingSoon ? (
+              <ComingSoonLink
+                key={item.href}
+                title={item.label}
+                className="rounded-card px-3 py-3 font-sans text-base font-medium text-ink-secondary"
+              >
+                {item.label}
+              </ComingSoonLink>
+            ) : (
+              <Link
+                key={item.href}
+                to={item.href}
+                onClick={() => setOpen(false)}
+                className="rounded-card px-3 py-3 font-sans text-base font-medium text-ink hover:bg-app-bg"
+              >
+                {item.label}
+              </Link>
+            )
+          )}
           <div className="mt-2 flex flex-col gap-2 border-t border-[#E7E0D4] pt-4">
             <Link
               to="/admin/login"
