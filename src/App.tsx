@@ -46,6 +46,7 @@ const AdminBootcamps = lazy(() => import('./pages/admin/AdminBootcamps'));
 const AdminBootcampForm = lazy(() => import('./pages/admin/BootcampForm'));
 const AdminAllSessions = lazy(() => import('./pages/admin/AdminAllSessions'));
 const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
+const AdminCandidatures = lazy(() => import('./pages/admin/AdminCandidatures'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminReferences = lazy(() => import('./pages/admin/AdminReferences'));
 const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
@@ -146,6 +147,7 @@ const App = () => (
 
 
                   {/* Autres sections */}
+                  <Route path="/admin/candidatures" element={<ProtectedRoute><AdminCandidatures /></ProtectedRoute>} />
                   <Route path="/admin/inscriptions" element={<ProtectedRoute><AdminInscriptions /></ProtectedRoute>} />
                   <Route path="/admin/promo-codes" element={<ProtectedRoute><AdminPromoCodes /></ProtectedRoute>} />
                   <Route path="/admin/services" element={<ProtectedRoute><AdminServices /></ProtectedRoute>} />

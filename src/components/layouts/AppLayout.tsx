@@ -27,6 +27,10 @@ export interface AppLayoutProps {
   subtitle?: string;
   helpSlot?: ReactNode;
   avatarInitials?: string;
+  description?: string;
+  hideSearch?: boolean;
+  hideNotifications?: boolean;
+  headerExtra?: ReactNode;
 }
 
 export function AppLayout({
@@ -37,6 +41,10 @@ export function AppLayout({
   subtitle = "Espace apprenant",
   helpSlot,
   avatarInitials = "MT",
+  description,
+  hideSearch = false,
+  hideNotifications = false,
+  headerExtra,
 }: AppLayoutProps) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -118,26 +126,32 @@ export function AppLayout({
               <h1 className="truncate font-heading text-[28px] font-extrabold text-navy">{greeting}</h1>
             )}
             {title && !greeting && (
-              <h1 className="truncate font-heading text-xl font-bold text-navy">{title}</h1>
+              <h1 className="truncate font-heading text-xl font-bold text-navy lg:text-[28px] lg:font-extrabold">{title}</h1>
             )}
+            {description && <p className="truncate text-sm text-ink-secondary">{description}</p>}
           </div>
 
           <div className="ml-auto flex items-center gap-3">
-            <div className="hidden items-center gap-2 rounded-card bg-app-bg px-4 py-2.5 sm:flex">
-              <Search className="h-4 w-4 text-ink-secondary" />
-              <input
-                type="search"
-                placeholder="Rechercher..."
-                className="w-40 bg-transparent text-sm text-ink outline-none placeholder:text-ink-secondary"
-              />
-            </div>
-            <button
-              className="relative flex h-11 w-11 items-center justify-center rounded-card border border-[#E7E0D4] text-navy"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-pill bg-cta" />
-            </button>
+            {headerExtra}
+            {!hideSearch && (
+              <div className="hidden items-center gap-2 rounded-card bg-app-bg px-4 py-2.5 sm:flex">
+                <Search className="h-4 w-4 text-ink-secondary" />
+                <input
+                  type="search"
+                  placeholder="Rechercher..."
+                  className="w-40 bg-transparent text-sm text-ink outline-none placeholder:text-ink-secondary"
+                />
+              </div>
+            )}
+            {!hideNotifications && (
+              <button
+                className="relative flex h-11 w-11 items-center justify-center rounded-card border border-[#E7E0D4] text-navy"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-pill bg-cta" />
+              </button>
+            )}
             <span className="flex h-11 w-11 items-center justify-center rounded-pill bg-success font-sans text-sm font-bold text-white">
               {avatarInitials}
             </span>
