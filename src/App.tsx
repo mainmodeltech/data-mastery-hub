@@ -45,6 +45,8 @@ const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Ressources = lazy(() => import('./pages/Ressources'));
 const Partenaires = lazy(() => import('./pages/Partenaires'));
 const Paiement = lazy(() => import('./pages/Paiement'));
+const NewsletterConfirmation = lazy(() => import('./pages/NewsletterToken').then((m) => ({ default: m.NewsletterConfirmation })));
+const NewsletterUnsubscribe = lazy(() => import('./pages/NewsletterToken').then((m) => ({ default: m.NewsletterUnsubscribe })));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Pages admin
@@ -57,6 +59,7 @@ const AdminCandidatures = lazy(() => import('./pages/admin/AdminCandidatures'));
 const AdminFormationEditor = lazy(() => import('./pages/admin/AdminFormationEditor'));
 const AdminSessionSuivi = lazy(() => import('./pages/admin/AdminSessionSuivi'));
 const AdminApprenants = lazy(() => import('./pages/admin/AdminApprenants'));
+const AdminNewsletter = lazy(() => import('./pages/admin/AdminNewsletter'));
 const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
 const AdminPartenaires = lazy(() => import('./pages/admin/AdminPartenaires'));
@@ -137,6 +140,8 @@ const App = () => (
 
                   {/* Lien de paiement envoyé au candidat accepté (jeton = seul secret) */}
                   <Route path="/paiement/:token" element={<Paiement />} />
+                  <Route path="/newsletter/confirmation" element={<NewsletterConfirmation />} />
+                  <Route path="/newsletter/desinscription" element={<NewsletterUnsubscribe />} />
 
                   {/* ── Connexion unique + espace apprenant (Lot 3) ─ */}
                   <Route path="/connexion" element={<Connexion />} />
@@ -174,6 +179,7 @@ const App = () => (
                   {/* Autres sections */}
                   <Route path="/admin/formations/:id" element={<ProtectedRoute><AdminFormationEditor /></ProtectedRoute>} />
                   <Route path="/admin/apprenants" element={<ProtectedRoute><AdminApprenants /></ProtectedRoute>} />
+                  <Route path="/admin/newsletter" element={<ProtectedRoute><AdminNewsletter /></ProtectedRoute>} />
                   <Route path="/admin/comptes" element={<ProtectedRoute><AdminComptes /></ProtectedRoute>} />
                   <Route path="/admin/domaines" element={<ProtectedRoute><AdminDomaines /></ProtectedRoute>} />
                   <Route path="/admin/partenaires" element={<ProtectedRoute><AdminPartenaires /></ProtectedRoute>} />

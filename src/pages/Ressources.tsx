@@ -8,11 +8,13 @@
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Download, CheckCircle } from "lucide-react";
+import { Search, Download, CheckCircle, Loader2 } from "lucide-react";
 
 import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Pill, Card, SectionHeader } from "@/components/shared";
+import { useSubscribeNewsletter } from "@/hooks/useSiteForms";
+import { submitErrorMessage } from "@/lib/formErrors";
 
 const CATEGORIES = ["Tout", "Excel", "Power BI", "Python", "SQL", "Carrière data", "Études de cas"];
 
@@ -39,11 +41,13 @@ const DOWNLOADS = [
 
 export default function Ressources() {
   const [activeCategory, setActiveCategory] = useState("Tout");
-  const [subscribed, setSubscribed] = useState(false);
+  const [email, setEmail] = useState("");
+  const subscribe = useSubscribeNewsletter();
+  const subscribed = subscribe.isSuccess;
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubscribed(true);
+    subscribe.mutate({ email: email.trim(), source: "ressources" });
   };
 
   const filteredArticles =
@@ -185,7 +189,7 @@ export default function Ressources() {
           <p className="text-sm text-ink-secondary">Pas de spam. Désinscription en un clic.</p>
           {subscribed ? (
             <div className="flex items-center gap-2 text-success">
-              <CheckCircle className="h-5 w-5" /> Inscription confirmée !
+              <CheckCircle className="h-5 w-5" /> Merci ! Confirmez votre adresse via l'e-mail que nous venons de vous envoyer.
             </div>
           ) : (
             <form onSubmit={handleNewsletterSubmit} className="flex w-full max-w-sm gap-2">
@@ -194,10 +198,17 @@ export default function Ressources() {
                 required
                 placeholder="vous@exemple.com"
                 aria-label="Adresse e-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-pill border border-[#D6CEC0] px-4 py-2.5 text-sm outline-none focus:border-navy"
               />
-              <Button type="submit" variant="primary" shape="pill">S'abonner</Button>
+              <Button type="submit" variant="primary" shape="pill" disabled={subscribe.isPending}>
+                {subscribe.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "S'abonner"}
+              </Button>
             </form>
+          )}
+          {subscribe.isError && (
+            <p role="alert" className="text-sm text-error">{submitErrorMessage(subscribe.error)}</p>
           )}
         </Card>
       </section>

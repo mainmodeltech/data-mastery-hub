@@ -22,6 +22,7 @@ import {
   Layers,
   Handshake,
   ShieldCheck,
+  Mail,
 } from "lucide-react";
 
 const navItems: AppNavItem[] = [
@@ -35,6 +36,7 @@ const navItems: AppNavItem[] = [
   { href: "/admin/masterclass", label: "Masterclass", icon: ClipboardList, section: "Admissions" },
   { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag, section: "Admissions" },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare, section: "Relation" },
+  { href: "/admin/newsletter", label: "Newsletter", icon: Mail, section: "Relation" },
   { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare, section: "Contenu du site" },
   { href: "/admin/alumni", label: "Alumni", icon: GraduationCap, section: "Contenu du site" },
   { href: "/admin/projets", label: "Projets", icon: Users, section: "Contenu du site" },

@@ -12,9 +12,10 @@ import { Check, Loader2, CheckCircle } from "lucide-react";
 import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card, SectionHeader } from "@/components/shared";
-import { useSendContactMessage } from "@/hooks/useContacts";
+import { useSendDiagnostic } from "@/hooks/useSiteForms";
+import { PEOPLE_COUNTS, TRAINING_NEEDS, splitName, type DiagnosticRequestPayload } from "@/services/api/siteFormsService";
+import { submitErrorMessage } from "@/lib/formErrors";
 import { COMPANY } from "@/config/constants";
-import type { CreateContactMessageDTO } from "@/types";
 
 const inputClass =
   "w-full rounded-card border border-[#D6CEC0] bg-white px-4 py-2.5 font-sans text-sm text-ink outline-none focus:border-navy";
@@ -59,35 +60,28 @@ const METHOD_STEPS = [
   { title: "Suivi à 30 jours", description: "Un point pour consolider les acquis." },
 ];
 
-const PEOPLE_OPTIONS = ["1 à 5", "6 à 15", "16 à 50", "Plus de 50"];
-const NEEDS_OPTIONS = ["Mise à niveau Excel", "Power BI sur mesure", "Parcours data sur mesure", "Je ne sais pas encore"];
 
 export default function Entreprises() {
   const [submitted, setSubmitted] = useState(false);
-  const sendMessage = useSendContactMessage();
+  const sendMessage = useSendDiagnostic();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
 
-    const message = [
-      `Fonction : ${data.get("role")}`,
-      `Nombre de personnes à former : ${data.get("peopleCount")}`,
-      `Besoin principal : ${data.get("need")}`,
-      `Contexte : ${data.get("context") || "—"}`,
-    ].join("\n");
+    const text = (k: string) => ((data.get(k) as string | null) ?? "").trim();
+    const { firstName, lastName } = splitName(text("name"));
 
-    const fullName = (data.get("name") as string).trim();
-    const [firstName, ...rest] = fullName.split(" ");
-
-    const payload: CreateContactMessageDTO = {
-      firstName: firstName || fullName,
-      lastName: rest.join(" ") || "",
-      email: (data.get("email") as string).trim(),
-      phone: (data.get("phone") as string)?.trim() || null,
-      company: (data.get("company") as string)?.trim() || null,
-      subject: "Diagnostic entreprise",
-      message,
+    const payload: DiagnosticRequestPayload = {
+      firstName,
+      lastName,
+      email: text("email"),
+      phone: text("phone") || undefined,
+      company: text("company"),
+      role: text("role"),
+      peopleCount: text("peopleCount") as DiagnosticRequestPayload["peopleCount"],
+      need: text("need") as DiagnosticRequestPayload["need"],
+      context: text("context") || undefined,
     };
 
     sendMessage.mutate(payload, { onSuccess: () => setSubmitted(true) });
@@ -266,8 +260,8 @@ export default function Entreprises() {
                 <input name="company" required placeholder="Nom de l'organisation" className={inputClass} aria-label="Entreprise" />
                 <select name="peopleCount" required defaultValue="" className={inputClass} aria-label="Nombre de personnes à former">
                   <option value="" disabled>Personnes à former</option>
-                  {PEOPLE_OPTIONS.map((o) => (
-                    <option key={o} value={o}>{o}</option>
+                  {PEOPLE_COUNTS.map((o) => (
+                    <option key={o.code} value={o.code}>{o.label}</option>
                   ))}
                 </select>
                 <input name="email" type="email" required placeholder="vous@entreprise.sn" className={inputClass} aria-label="E-mail professionnel" />
@@ -275,8 +269,8 @@ export default function Entreprises() {
               </div>
               <select name="need" required defaultValue="" className={inputClass} aria-label="Besoin principal">
                 <option value="" disabled>Besoin principal</option>
-                {NEEDS_OPTIONS.map((o) => (
-                  <option key={o} value={o}>{o}</option>
+                {TRAINING_NEEDS.map((o) => (
+                  <option key={o.code} value={o.code}>{o.label}</option>
                 ))}
               </select>
               <textarea
@@ -286,6 +280,9 @@ export default function Entreprises() {
                 className={inputClass}
                 aria-label="Votre contexte"
               />
+              {sendMessage.isError && (
+                <p role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{submitErrorMessage(sendMessage.error)}</p>
+              )}
               <Button type="submit" variant="primary" shape="pill" disabled={sendMessage.isPending}>
                 {sendMessage.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Demander mon diagnostic gratuit"}
               </Button>

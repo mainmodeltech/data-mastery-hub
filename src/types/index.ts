@@ -193,9 +193,16 @@ export interface ContactMessage {
   message: string;
   status: ContactMessageStatus;
   notes: string | null;
+  /** CONTACT | DIAGNOSTIC | PARTNER_APPLICATION */
+  type?: ContactMessageType;
+  requesterType?: 'PARTICULIER' | 'ENTREPRISE' | null;
+  /** Détails structurés (diagnostic entreprise, candidature partenaire) */
+  details?: Record<string, string> | null;
   createdAt: string;
   updatedAt: string;
 }
+
+export type ContactMessageType = 'CONTACT' | 'DIAGNOSTIC' | 'PARTNER_APPLICATION';
 
 
 export interface ContactMessage {
@@ -296,7 +303,17 @@ export interface CreateRegistrationDTO {
   recaptchaToken: string | null;
 }
 
-export type CreateContactMessageDTO = Omit<ContactMessage, 'id' | 'status' | 'notes' | 'createdAt' | 'updatedAt'>;
+export interface CreateContactMessageDTO {
+  firstName: string;
+  /** Facultatif côté backend (un nom d'un seul mot est accepté) */
+  lastName?: string | null;
+  email: string;
+  phone?: string | null;
+  company?: string | null;
+  subject?: string | null;
+  requesterType?: 'PARTICULIER' | 'ENTREPRISE';
+  message: string;
+}
 
 export type CreateBootcampDTO = Omit<Bootcamp, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateBootcampDTO = Partial<CreateBootcampDTO>;

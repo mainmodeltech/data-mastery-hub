@@ -11,9 +11,10 @@ import { Check, Loader2, CheckCircle } from "lucide-react";
 import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Pill, Card, SectionHeader } from "@/components/shared";
-import { useSendContactMessage } from "@/hooks/useContacts";
+import { useSendPartnerApplication } from "@/hooks/useSiteForms";
+import { PARTNER_DOMAINS, splitName, type PartnerApplicationPayload } from "@/services/api/siteFormsService";
+import { submitErrorMessage } from "@/lib/formErrors";
 import { COMPANY } from "@/config/constants";
-import type { CreateContactMessageDTO } from "@/types";
 
 const inputClass =
   "w-full rounded-card border border-[#D6CEC0] bg-white px-4 py-2.5 font-sans text-sm text-ink outline-none focus:border-navy";
@@ -43,35 +44,29 @@ const REQUIREMENTS = [
   "Supports de formation à jour",
 ];
 
-const DOMAINS = ["Gestion de projet & Agile", "IA appliquée", "Finance & contrôle de gestion", "Cybersécurité", "Communication & leadership", "Autre domaine"];
+const DOMAINS = PARTNER_DOMAINS.map((d) => d.label);
 
 export default function Partenaires() {
   const [submitted, setSubmitted] = useState(false);
-  const sendMessage = useSendContactMessage();
+  const sendMessage = useSendPartnerApplication();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
 
-    const message = [
-      `Organisme : ${data.get("org") || "—"}`,
-      `Domaine : ${data.get("domain")}`,
-      `Profil LinkedIn : ${data.get("linkedin") || "—"}`,
-      `Formation proposée : ${data.get("proposal")}`,
-      `Références : ${data.get("references") || "—"}`,
-    ].join("\n");
+    const text = (k: string) => ((data.get(k) as string | null) ?? "").trim();
+    const { firstName, lastName } = splitName(text("name"));
 
-    const fullName = (data.get("name") as string).trim();
-    const [firstName, ...rest] = fullName.split(" ");
-
-    const payload: CreateContactMessageDTO = {
-      firstName: firstName || fullName,
-      lastName: rest.join(" ") || "",
-      email: (data.get("email") as string).trim(),
-      phone: (data.get("phone") as string)?.trim() || null,
-      company: (data.get("org") as string)?.trim() || null,
-      subject: "Candidature partenaire formateur",
-      message,
+    const payload: PartnerApplicationPayload = {
+      firstName,
+      lastName,
+      email: text("email"),
+      phone: text("phone") || undefined,
+      organization: text("org") || undefined,
+      domain: text("domain") as PartnerApplicationPayload["domain"],
+      linkedinUrl: text("linkedin") || undefined,
+      proposal: text("proposal"),
+      references: text("references") || undefined,
     };
 
     sendMessage.mutate(payload, { onSuccess: () => setSubmitted(true) });
@@ -212,8 +207,8 @@ export default function Partenaires() {
                 <input name="phone" type="tel" placeholder="+221 …" className={inputClass} aria-label="Téléphone / WhatsApp" />
                 <select name="domain" required defaultValue="" className={inputClass} aria-label="Domaine">
                   <option value="" disabled>Domaine</option>
-                  {DOMAINS.map((d) => (
-                    <option key={d} value={d}>{d}</option>
+                  {PARTNER_DOMAINS.map((d) => (
+                    <option key={d.code} value={d.code}>{d.label}</option>
                   ))}
                 </select>
                 <input name="linkedin" type="url" placeholder="linkedin.com/in/…" className={inputClass} aria-label="Profil LinkedIn" />
@@ -226,6 +221,9 @@ export default function Partenaires() {
                 className={inputClass}
                 aria-label="Vos références"
               />
+              {sendMessage.isError && (
+                <p role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{submitErrorMessage(sendMessage.error)}</p>
+              )}
               <Button type="submit" variant="primary" shape="pill" disabled={sendMessage.isPending}>
                 {sendMessage.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Proposer ma formation"}
               </Button>

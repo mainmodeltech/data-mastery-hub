@@ -3,6 +3,7 @@
  * Réutilise useSendContactMessage/contactService (inchangés).
  */
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Mail, MapPin, Clock, MessageCircle, CheckCircle, Loader2 } from "lucide-react";
 
 import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
@@ -10,6 +11,8 @@ import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card, SectionHeader, FaqAccordion } from "@/components/shared";
 import { useSendContactMessage } from "@/hooks/useContacts";
 import { COMPANY } from "@/config/constants";
+import { splitName } from "@/services/api/siteFormsService";
+import { submitErrorMessage } from "@/lib/formErrors";
 import type { CreateContactMessageDTO } from "@/types";
 
 const inputClass =
@@ -32,24 +35,34 @@ const FAQ_ITEMS = [
 
 type Role = "particulier" | "entreprise";
 
+/** Liens du site (?sujet=coaching…) → libellé du sujet pré-sélectionné. */
+const SUBJECT_BY_PARAM: Record<string, string> = {
+  coaching: "Réserver un coaching",
+  cohorte: "Candidater à une cohorte",
+  entreprise: "Formation pour mon entreprise",
+  partenariat: "Partenariat",
+};
+
 export default function Contact() {
-  const [role, setRole] = useState<Role>("particulier");
+  const [searchParams] = useSearchParams();
+  const defaultSubject = SUBJECT_BY_PARAM[searchParams.get("sujet") ?? ""] ?? "";
+  const [role, setRole] = useState<Role>(searchParams.get("sujet") === "entreprise" ? "entreprise" : "particulier");
   const [submitted, setSubmitted] = useState(false);
   const sendMessage = useSendContactMessage();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-    const fullName = (data.get("name") as string).trim();
-    const [firstName, ...rest] = fullName.split(" ");
+    const { firstName, lastName } = splitName((data.get("name") as string) ?? "");
 
     const payload: CreateContactMessageDTO = {
-      firstName: firstName || fullName,
-      lastName: rest.join(" ") || "",
+      firstName,
+      lastName,
       email: (data.get("email") as string).trim(),
       phone: (data.get("phone") as string)?.trim() || null,
       company: role === "entreprise" ? ((data.get("company") as string)?.trim() || null) : null,
       subject: (data.get("subject") as string) || null,
+      requesterType: role === "entreprise" ? "ENTREPRISE" : "PARTICULIER",
       message: (data.get("message") as string).trim(),
     };
 
@@ -145,7 +158,7 @@ export default function Contact() {
                 <input name="name" required placeholder="Awa Ndiaye" className={inputClass} aria-label="Nom et prénom" />
                 <input name="phone" type="tel" placeholder="+221 …" className={inputClass} aria-label="Téléphone / WhatsApp" />
                 <input name="email" type="email" required placeholder="vous@exemple.com" className={inputClass} aria-label="E-mail" />
-                <select name="subject" required defaultValue="" className={inputClass} aria-label="Sujet">
+                <select name="subject" required defaultValue={defaultSubject} className={inputClass} aria-label="Sujet">
                   <option value="" disabled>Sujet</option>
                   <option value="Candidater à une cohorte">Candidater à une cohorte</option>
                   <option value="Réserver un coaching">Réserver un coaching</option>
@@ -168,6 +181,9 @@ export default function Contact() {
                 aria-label="Votre message"
               />
 
+              {sendMessage.isError && (
+                <p role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{submitErrorMessage(sendMessage.error)}</p>
+              )}
               <Button type="submit" variant="primary" shape="pill" disabled={sendMessage.isPending}>
                 {sendMessage.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Envoyer le message"}
               </Button>

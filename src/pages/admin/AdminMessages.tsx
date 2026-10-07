@@ -40,7 +40,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import type { ContactMessage, ContactMessageStatus } from "@/types";
+import type { ContactMessage, ContactMessageStatus, ContactMessageType } from "@/types";
+import { PARTNER_DOMAINS, PEOPLE_COUNTS, TRAINING_NEEDS } from "@/services/api/siteFormsService";
 import {
   useContactMessages,
   useUpdateContactStatus,
@@ -66,6 +67,35 @@ const FILTER_TABS: { value: string; label: string }[] = [
   { value: "replied",  label: "Répondus" },
   { value: "archived", label: "Archivés" },
 ];
+
+const TYPE_LABELS: Record<ContactMessageType, string> = {
+  CONTACT: "Contact",
+  DIAGNOSTIC: "Diagnostic entreprise",
+  PARTNER_APPLICATION: "Candidature partenaire",
+};
+
+const TYPE_TABS: { value: string; label: string }[] = [
+  { value: "all", label: "Tous les types" },
+  { value: "CONTACT", label: "Contacts" },
+  { value: "DIAGNOSTIC", label: "Diagnostics" },
+  { value: "PARTNER_APPLICATION", label: "Partenaires" },
+];
+
+/** Libellés lisibles des détails structurés renvoyés par le backend. */
+const DETAIL_LABELS: Record<string, string> = {
+  role: "Fonction", peopleCount: "Personnes à former", need: "Besoin principal", context: "Contexte",
+  organization: "Organisme", domain: "Domaine", linkedinUrl: "Profil LinkedIn", proposal: "Formation proposée", references: "Références",
+};
+
+/** Codes d'énumération du backend → libellés affichés dans le formulaire du site. */
+const CODE_LABELS: Record<string, string> = Object.fromEntries(
+  [...PEOPLE_COUNTS, ...TRAINING_NEEDS, ...PARTNER_DOMAINS].map((o) => [o.code, o.label])
+);
+
+function detailValue(v: unknown): string {
+  if (typeof v !== "string") return JSON.stringify(v);
+  return v ? CODE_LABELS[v] ?? v : "—";
+}
 
 // ─── KPI Card ──────────────────────────────────────────────────────────────────
 
@@ -138,11 +168,32 @@ function MessageDetailDialog({
                     <span className="font-medium">{message.subject}</span>
                   </div>
               )}
+              {(message.type || message.requesterType) && (
+                  <div className="flex items-center gap-2 col-span-2">
+                    <span className="text-muted-foreground">Origine :</span>
+                    <span className="font-medium">
+                      {message.type ? TYPE_LABELS[message.type] : "Contact"}
+                      {message.requesterType ? ` · ${message.requesterType === "ENTREPRISE" ? "entreprise" : "particulier"}` : ""}
+                    </span>
+                  </div>
+              )}
               <div className="flex items-center gap-2 col-span-2">
                 <span className="text-muted-foreground">Reçu le :</span>
                 <span>{format(new Date(message.createdAt), "d MMMM yyyy à HH:mm", { locale: fr })}</span>
               </div>
             </div>
+
+            {/* Détails structurés (diagnostic / candidature partenaire) */}
+            {message.details && Object.keys(message.details).length > 0 && (
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 p-4 border border-border rounded-xl text-sm">
+                {Object.entries(message.details).map(([k, v]) => (
+                  <div key={k} className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">{DETAIL_LABELS[k] ?? k}</dt>
+                    <dd className="font-medium break-words">{detailValue(v)}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
 
             {/* Corps du message */}
             <div className="bg-muted rounded-xl p-4 text-sm whitespace-pre-wrap leading-relaxed border-l-4 border-primary">
@@ -192,6 +243,7 @@ function MessageDetailDialog({
 
 const AdminMessages = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ContactMessage | null>(null);
 
@@ -214,15 +266,16 @@ const AdminMessages = () => {
     const q = search.toLowerCase();
     return messages.filter(m => {
       const matchStatus = filterStatus === "all" || m.status === filterStatus;
+      const matchType = filterType === "all" || (m.type ?? "CONTACT") === filterType;
       const matchSearch =
           !q ||
           `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) ||
           m.email.toLowerCase().includes(q) ||
           (m.subject ?? "").toLowerCase().includes(q) ||
           (m.company ?? "").toLowerCase().includes(q);
-      return matchStatus && matchSearch;
+      return matchStatus && matchType && matchSearch;
     });
-  }, [messages, filterStatus, search]);
+  }, [messages, filterStatus, filterType, search]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleOpen = (item: ContactMessage) => {
@@ -291,6 +344,28 @@ const AdminMessages = () => {
           </div>
         </div>
 
+        <div className="flex gap-2 flex-wrap mb-5" role="group" aria-label="Type de message">
+          {TYPE_TABS.map(tab => (
+              <button
+                  key={tab.value}
+                  onClick={() => setFilterType(tab.value)}
+                  aria-pressed={filterType === tab.value}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                      filterType === tab.value
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-card text-muted-foreground border-border hover:border-primary/40"
+                  }`}
+              >
+                {tab.label}
+                {tab.value !== "all" && (
+                    <span className="ml-1.5 text-xs opacity-60">
+                      {messages.filter(m => (m.type ?? "CONTACT") === tab.value).length}
+                    </span>
+                )}
+              </button>
+          ))}
+        </div>
+
         {/* ── Tableau ─────────────────────────────────────────────────────── */}
         {isLoading ? (
             <div className="flex justify-center py-20">
@@ -350,6 +425,9 @@ const AdminMessages = () => {
                               <p className="truncate text-sm">
                                 {item.subject ?? <span className="text-muted-foreground italic">Sans objet</span>}
                               </p>
+                              {item.type && item.type !== "CONTACT" && (
+                                <p className="text-[11px] text-primary mt-0.5">{TYPE_LABELS[item.type]}</p>
+                              )}
                             </TableCell>
 
                             {/* Entreprise */}
