@@ -1,8 +1,8 @@
 /**
  * RegistrationModal.tsx
- * Modale d'inscription à une session de bootcamp.
+ * Modale d'inscription à une session de bootcamp, sur le design system
+ * (tokens navy/cta, champs arrondis, boutons pilule).
  *
- * Nouveautés :
  * - Champ "Pays de provenance" (select)
  * - Champ "Profil" (STUDENT | PROFESSIONAL | ENTREPRENEUR) avec boutons radio stylisés
  * - Logique conditionnelle : school obligatoire si STUDENT ; company + position obligatoires si PROFESSIONAL
@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/shared/Button";
 import { useToast } from "@/hooks/use-toast";
 import { promoCodeService, registrationService } from "@/services/api";
 import { useSessionAvailability } from "@/hooks/useRegistrations";
@@ -29,7 +29,7 @@ import {
     XCircle,
 } from "lucide-react";
 import type { Bootcamp, BootcampSession } from "@/types/bootcamp.type";
-import { StaticEnrichment } from "@/config/bootcamps.config.ts";
+import type { StaticEnrichment } from "@/config/bootcamps.config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -210,26 +210,27 @@ function validateForm(form: FormValues): string | null {
     return null;
 }
 
+// ─── Styles partagés ──────────────────────────────────────────────────────────
+
+const fieldClass =
+    "w-full rounded-xl border border-[#D6CEC0] bg-white px-3.5 py-3 font-sans text-sm text-ink outline-none transition-colors focus:border-navy";
+const labelClass = "mb-1.5 block font-sans text-xs font-semibold text-ink";
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface RegistrationModalProps {
     bootcamp: Bootcamp;
     session: BootcampSession | null;
-    staticData: StaticEnrichment;
+    /** Conservé pour compatibilité des appelants : le design unifié n'utilise plus la couleur par catégorie. */
+    staticData?: StaticEnrichment;
     onClose: () => void;
 }
 
 // ─── Composant ────────────────────────────────────────────────────────────────
 
-export function RegistrationModal({ bootcamp, session, staticData, onClose }: RegistrationModalProps) {
+export function RegistrationModal({ bootcamp, session, onClose }: RegistrationModalProps) {
     const { toast }           = useToast();
     const { executeRecaptcha } = useGoogleReCaptcha();
-
-    const isAccent   = staticData.colorKey === "accent";
-    const accentClass = isAccent ? "text-accent" : "text-primary";
-    const btnClass    = isAccent
-        ? "bg-accent hover:bg-accent/90 text-white"
-        : "bg-primary hover:bg-primary/90 text-white";
 
     const [form, setForm]           = useState<FormValues>(INITIAL_FORM);
     const [submitting, setSubmitting] = useState(false);
@@ -240,6 +241,12 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
     const sessionId = session?.id ?? "";
     const { data: availabilityRaw } = useSessionAvailability(sessionId);
     void availabilityRaw; // évite le warning "unused variable"
+
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+        document.addEventListener("keydown", onKey);
+        return () => document.removeEventListener("keydown", onKey);
+    }, [onClose]);
 
     // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -316,21 +323,28 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
     // ── Render ────────────────────────────────────────────────────────────────
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-foreground/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full max-w-lg bg-card rounded-3xl border border-border shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+            <div className="absolute inset-0 bg-navy-dark/60 backdrop-blur-sm" onClick={onClose} />
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="registration-title"
+                className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border border-[#E7E0D4] bg-white shadow-[0_20px_40px_rgba(26,58,91,0.18)] sm:rounded-callout"
+            >
 
                 {/* Header */}
-                <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-5 flex items-center justify-between">
+                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#E7E0D4] bg-white px-6 py-5">
                     <div>
-                        <h3 className="font-heading font-bold text-lg text-card-foreground">
+                        <h3 id="registration-title" className="font-heading text-xl font-extrabold text-navy">
                             Réserver ma place
                         </h3>
-                        <p className={cn("text-sm font-medium", accentClass)}>{bootcamp.title}</p>
+                        <p className="text-sm font-medium text-cta">{bootcamp.title}</p>
                     </div>
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-muted transition-colors"
+                        aria-label="Fermer"
+                        className="flex h-10 w-10 items-center justify-center rounded-pill bg-app-bg text-navy transition-colors hover:bg-surface-sand"
                     >
                         <X className="h-4 w-4" />
                     </button>
@@ -339,40 +353,37 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
                 <div className="p-6">
                     {/* ── Confirmation ─────────────────────────────── */}
                     {submitted ? (
-                        <div className="text-center py-8">
-                            <div className="w-16 h-16 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-4">
-                                <CheckCircle className="h-8 w-8 text-green-500" />
+                        <div className="py-8 text-center">
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-pill bg-success-bg">
+                                <CheckCircle className="h-8 w-8 text-success" />
                             </div>
-                            <h4 className="font-heading font-bold text-xl text-foreground mb-2">
-                                Inscription envoyée ! 🎉
+                            <h4 className="mb-2 font-heading text-xl font-extrabold text-navy">
+                                Inscription envoyée !
                             </h4>
-                            <p className="text-muted-foreground mb-2">
-                                Nous vous contacterons dans les <strong>24 heures</strong> pour confirmer votre place.
+                            <p className="mb-2 text-ink-secondary">
+                                Nous vous contacterons dans les <strong className="text-ink">24 heures</strong> pour confirmer votre place.
                             </p>
                             {session && (
-                                <div className="flex flex-col items-center gap-2 mb-6">
-                                    <p className="text-sm text-muted-foreground">
-                                        Session : <strong>{formatSessionLabel(session)}</strong>
+                                <div className="mb-6 flex flex-col items-center gap-2">
+                                    <p className="text-sm text-ink-secondary">
+                                        Session : <strong className="text-ink">{formatSessionLabel(session)}</strong>
                                     </p>
                                     <SessionAvailabilityBadge sessionId={session.id} />
                                 </div>
                             )}
-                            <Button onClick={onClose} variant="outline" className="w-full">Fermer</Button>
+                            <Button onClick={onClose} variant="outline" shape="pill" className="w-full">Fermer</Button>
                         </div>
                     ) : (
                         <>
                             {/* ── Récap session ─────────────────────────── */}
                             {session && (
-                                <div className={cn(
-                                    "flex items-start gap-3 p-4 rounded-xl border mb-6",
-                                    isAccent ? "bg-accent/8 border-accent/20" : "bg-primary/8 border-primary/20"
-                                )}>
-                                    <Calendar className={cn("h-5 w-5 flex-shrink-0 mt-0.5", accentClass)} />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-semibold text-sm text-foreground mb-0.5">
+                                <div className="mb-6 flex items-start gap-3 rounded-card border border-[#E7E0D4] bg-app-bg p-4">
+                                    <Calendar className="mt-0.5 h-5 w-5 flex-shrink-0 text-cta" />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="mb-0.5 text-sm font-bold text-navy">
                                             {formatSessionLabel(session)}
                                         </div>
-                                        <div className="text-xs text-muted-foreground mb-2">
+                                        <div className="mb-2 text-xs text-ink-secondary">
                                             {formatDateShort(session.startDate)} → {formatDateShort(session.endDate)} · {formatSessionFormat(session.format)}
                                         </div>
                                         <SessionAvailabilityBadge sessionId={session.id} />
@@ -388,14 +399,15 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
                                     {([ { name: "firstName", label: "Prénom *", placeholder: "Amadou" },
                                         { name: "lastName",  label: "Nom *",    placeholder: "Diallo"  } ] as const).map((f) => (
                                         <div key={f.name}>
-                                            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">{f.label}</label>
+                                            <label htmlFor={`reg-${f.name}`} className={labelClass}>{f.label}</label>
                                             <input
+                                                id={`reg-${f.name}`}
                                                 name={f.name}
                                                 value={form[f.name]}
                                                 onChange={handleFieldChange}
                                                 placeholder={f.placeholder}
                                                 required
-                                                className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                                className={fieldClass}
                                             />
                                         </div>
                                     ))}
@@ -403,35 +415,38 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
 
                                 {/* Email */}
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Email *</label>
+                                    <label htmlFor="reg-email" className={labelClass}>Email *</label>
                                     <input
+                                        id="reg-email"
                                         name="email" type="email" value={form.email}
                                         onChange={handleFieldChange} placeholder="amadou@example.com" required
-                                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                        className={fieldClass}
                                     />
                                 </div>
 
                                 {/* Téléphone */}
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                                    <label htmlFor="reg-phone" className={labelClass}>
                                         Téléphone (WhatsApp de préférence)
                                     </label>
                                     <input
+                                        id="reg-phone"
                                         name="phone" type="tel" value={form.phone}
                                         onChange={handleFieldChange} placeholder="+221 77 000 00 00"
-                                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                        className={fieldClass}
                                     />
                                 </div>
 
                                 {/* Pays */}
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                                    <label htmlFor="reg-country" className={labelClass}>
                                         Pays de provenance *
                                     </label>
                                     <select
+                                        id="reg-country"
                                         name="country" value={form.country}
                                         onChange={handleFieldChange} required
-                                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all appearance-none"
+                                        className={cn(fieldClass, "appearance-none")}
                                     >
                                         <option value="" disabled>Sélectionnez votre pays…</option>
                                         {COUNTRIES.map((c) => (
@@ -441,10 +456,8 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
                                 </div>
 
                                 {/* Profil */}
-                                <div>
-                                    <label className="text-xs font-semibold text-muted-foreground mb-2 block">
-                                        Votre profil *
-                                    </label>
+                                <div role="radiogroup" aria-label="Votre profil">
+                                    <span className={labelClass}>Votre profil *</span>
                                     <div className="grid grid-cols-3 gap-2">
                                         {PROFILES.map((p) => {
                                             const isSelected = form.profile === p.value;
@@ -452,19 +465,17 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
                                                 <button
                                                     key={p.value}
                                                     type="button"
+                                                    role="radio"
+                                                    aria-checked={isSelected}
                                                     onClick={() => handleProfileSelect(p.value)}
                                                     className={cn(
-                                                        "flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl border text-center transition-all text-xs font-medium",
+                                                        "flex min-h-[64px] flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-center font-sans text-xs font-semibold transition-colors",
                                                         isSelected
-                                                            ? isAccent
-                                                                ? "bg-accent/10 border-accent text-accent"
-                                                                : "bg-primary/10 border-primary text-primary"
-                                                            : "border-border text-muted-foreground hover:border-primary/40 hover:bg-muted/50"
+                                                            ? "border-navy bg-navy text-white"
+                                                            : "border-[#D6CEC0] bg-white text-ink-secondary hover:border-navy"
                                                     )}
                                                 >
-                                                    <span className={isSelected ? accentClass : "text-muted-foreground"}>
-                                                        {p.icon}
-                                                    </span>
+                                                    {p.icon}
                                                     {p.label}
                                                 </button>
                                             );
@@ -475,15 +486,16 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
                                 {/* Champs conditionnels : STUDENT */}
                                 {form.profile === "STUDENT" && (
                                     <div>
-                                        <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                                        <label htmlFor="reg-school" className={labelClass}>
                                             École / Institution *
                                         </label>
                                         <input
+                                            id="reg-school"
                                             name="school" value={form.school}
                                             onChange={handleFieldChange}
                                             placeholder="Ex: Université Cheikh Anta Diop, ISM, SUP'DE COM..."
                                             required
-                                            className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                            className={fieldClass}
                                         />
                                     </div>
                                 )}
@@ -492,27 +504,29 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
                                 {form.profile === "PROFESSIONAL" && (
                                     <>
                                         <div>
-                                            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                                            <label htmlFor="reg-company" className={labelClass}>
                                                 Organisation *
                                             </label>
                                             <input
+                                                id="reg-company"
                                                 name="company" value={form.company}
                                                 onChange={handleFieldChange}
                                                 placeholder="Ex: Orange, Wave, Société Générale..."
                                                 required
-                                                className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                                className={fieldClass}
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                                            <label htmlFor="reg-position" className={labelClass}>
                                                 Poste actuel *
                                             </label>
                                             <input
+                                                id="reg-position"
                                                 name="position" value={form.position}
                                                 onChange={handleFieldChange}
                                                 placeholder="Ex: Comptable, Analyste, Contrôleur de gestion..."
                                                 required
-                                                className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                                className={fieldClass}
                                             />
                                         </div>
                                     </>
@@ -522,25 +536,27 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
                                 {form.profile === "ENTREPRENEUR" && (
                                     <>
                                         <div>
-                                            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
-                                                Entreprise / Projet *
+                                            <label htmlFor="reg-company" className={labelClass}>
+                                                Entreprise / Projet
                                             </label>
                                             <input
+                                                id="reg-company"
                                                 name="company" value={form.company}
                                                 onChange={handleFieldChange}
                                                 placeholder="Nom de votre entreprise ou projet"
-                                                className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                                className={fieldClass}
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
-                                                Secteur d'activité *
+                                            <label htmlFor="reg-position" className={labelClass}>
+                                                Secteur d'activité
                                             </label>
                                             <input
+                                                id="reg-position"
                                                 name="position" value={form.position}
                                                 onChange={handleFieldChange}
                                                 placeholder="Ex: Commerce, Tech, Agri, Finance..."
-                                                className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                                className={fieldClass}
                                             />
                                         </div>
                                     </>
@@ -548,57 +564,57 @@ export function RegistrationModal({ bootcamp, session, staticData, onClose }: Re
 
                                 {/* Code promo */}
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                                    <label htmlFor="reg-promo" className={labelClass}>
                                         Code parrainage / promo (optionnel)
                                     </label>
                                     <div className="relative">
                                         <input
+                                            id="reg-promo"
                                             name="promoCode" value={form.promoCode}
                                             onChange={handlePromoChange}
                                             placeholder="Ex: AMADOU10"
                                             className={cn(
-                                                "w-full px-3 py-2.5 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all uppercase",
-                                                promo.valid  ? "border-green-500 focus:border-green-500"
-                                                    : promo.error ? "border-red-500 focus:border-red-500"
-                                                        : "border-border focus:border-primary"
+                                                fieldClass,
+                                                "pr-10 uppercase",
+                                                promo.valid ? "border-success focus:border-success"
+                                                    : promo.error ? "border-error focus:border-error"
+                                                        : ""
                                             )}
                                         />
-                                        {promo.checking && <Loader2    className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
-                                        {promo.valid && !promo.checking && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />}
-                                        {promo.error && !promo.checking && <XCircle     className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />}
+                                        {promo.checking && <Loader2    className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-ink-secondary" />}
+                                        {promo.valid && !promo.checking && <CheckCircle className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-success" />}
+                                        {promo.error && !promo.checking && <XCircle     className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-error" />}
                                     </div>
                                     {promo.valid && (
-                                        <p className="text-xs text-green-600 font-semibold mt-1">
+                                        <p className="mt-1 text-xs font-semibold text-success">
                                             ✓ {promo.valid.message ?? `Code valide — Réduction de ${promo.valid.discountPercent}%`}
                                         </p>
                                     )}
-                                    {promo.error && <p className="text-xs text-red-600 mt-1">{promo.error}</p>}
+                                    {promo.error && <p className="mt-1 text-xs text-error">{promo.error}</p>}
                                 </div>
 
                                 {/* Message */}
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">
+                                    <label htmlFor="reg-message" className={labelClass}>
                                         Message ou question
                                     </label>
                                     <textarea
+                                        id="reg-message"
                                         name="message" value={form.message}
                                         onChange={handleFieldChange}
                                         placeholder="Vos questions, votre contexte, vos attentes..."
                                         rows={3}
-                                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none"
+                                        className={cn(fieldClass, "resize-none")}
                                     />
                                 </div>
 
-                                <Button
-                                    type="submit" disabled={submitting}
-                                    className={cn("w-full font-bold h-12", btnClass)}
-                                >
+                                <Button type="submit" variant="primary" shape="pill" size="lg" disabled={submitting} className="w-full">
                                     {submitting
                                         ? <Loader2 className="h-5 w-5 animate-spin" />
-                                        : <> Réserver ma place <ArrowRight className="h-4 w-4 ml-2" /> </>
+                                        : <> Réserver ma place <ArrowRight className="h-4 w-4" /> </>
                                     }
                                 </Button>
-                                <p className="text-xs text-center text-muted-foreground">
+                                <p className="text-center text-xs text-ink-secondary">
                                     Inscription sans engagement · Confirmation sous 24h · Paiement à la validation
                                 </p>
                             </form>
