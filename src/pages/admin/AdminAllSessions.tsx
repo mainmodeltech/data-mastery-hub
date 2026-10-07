@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-    Pencil, Trash2, Star, StarOff, Loader2, Calendar, Users, BookOpen, Plus,
+    Pencil, Trash2, Star, StarOff, Loader2, Calendar, Users, BookOpen, Plus, ClipboardList,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type {
@@ -280,6 +280,9 @@ export default function AdminAllSessions() {
                             </div>
 
                             <div className="flex items-center gap-1 flex-shrink-0">
+                                <Button asChild variant="ghost" size="icon" className="h-8 w-8" title="Suivi de la session">
+                                    <Link to={`/admin/sessions/${session.id}`} aria-label="Suivi de la session"><ClipboardList className="h-4 w-4 text-muted-foreground" /></Link>
+                                </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(session)}>
                                     <Pencil className="h-4 w-4 text-muted-foreground" />
                                 </Button>

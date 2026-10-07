@@ -13,8 +13,9 @@ export interface CourseView {
 }
 
 /**
- * Les quiz ne bloquent pas le déblocage séquentiel tant que les évaluations
- * n'existent pas côté apprenant (Lot 6) : sinon un module resterait verrouillé à vie.
+ * Déblocage séquentiel : un module s'ouvre quand toutes les leçons publiées du précédent sont
+ * terminées, quiz compris (Lot 6). Une tentative réussie marque la leçon QUIZ comme terminée
+ * côté serveur (contrat : src/types/evaluation.type.ts).
  */
 export function buildCourseView(content: CourseContent, progress: LessonProgress[]): CourseView {
   const completed = new Set(progress.filter((p) => p.completed).map((p) => p.lessonId));
@@ -29,7 +30,7 @@ export function buildCourseView(content: CourseContent, progress: LessonProgress
     let previousComplete = true;
     for (const m of content.modules) {
       if (!previousComplete) lockedModules.add(m.id);
-      const required = m.lessons.filter((l) => l.type !== "QUIZ" && l.status !== "DRAFT");
+      const required = m.lessons.filter((l) => l.status !== "DRAFT");
       previousComplete = previousComplete && required.every((l) => completed.has(l.id));
     }
   }

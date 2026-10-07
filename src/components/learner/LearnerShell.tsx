@@ -15,7 +15,7 @@ export const LEARNER_NAV: AppNavItem[] = [
   { href: "/espace", label: "Mon espace", icon: Home, exact: true },
   { href: "/espace/formations", label: "Mes formations", icon: BookOpen },
   { href: "/espace/calendrier", label: "Calendrier & lives", icon: CalendarDays, comingSoon: true },
-  { href: "/espace/evaluations", label: "Évaluations", icon: CircleHelp, comingSoon: true },
+  { href: "/espace/evaluations", label: "Évaluations", icon: CircleHelp },
   { href: "/espace/ressources", label: "Ressources", icon: FileText, comingSoon: true },
   { href: "/espace/certificats", label: "Certificats", icon: Award, comingSoon: true },
   { href: "/espace/communaute", label: "Communauté", icon: MessageCircle, comingSoon: true },
@@ -69,8 +69,8 @@ export function MobileTabBar() {
 export function DemoDataBanner() {
   return (
     <div role="status" className="rounded-card bg-warning-bg px-4 py-3 text-sm text-warning">
-      <span className="font-bold">Aperçu :</span> données de démonstration — les endpoints de contenu de cours ne sont pas encore
-      disponibles côté serveur.
+      <span className="font-bold">Aperçu :</span> données de démonstration — les endpoints correspondants ne sont pas encore disponibles
+      côté serveur.
     </div>
   );
 }

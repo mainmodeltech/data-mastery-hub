@@ -37,6 +37,9 @@ const Connexion = lazy(() => import('./pages/Connexion'));
 const Espace = lazy(() => import('./pages/Espace'));
 const MesFormations = lazy(() => import('./pages/MesFormations'));
 const CoursePlayer = lazy(() => import('./pages/CoursePlayer'));
+const Evaluations = lazy(() => import('./pages/Evaluations'));
+const QuizRunner = lazy(() => import('./pages/QuizRunner'));
+const EspaceEvaluations = lazy(() => import('./pages/EspaceEvaluations'));
 const Coaching = lazy(() => import('./pages/Coaching'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Ressources = lazy(() => import('./pages/Ressources'));
@@ -51,6 +54,7 @@ const AdminAllSessions = lazy(() => import('./pages/admin/AdminAllSessions'));
 const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
 const AdminCandidatures = lazy(() => import('./pages/admin/AdminCandidatures'));
 const AdminFormationEditor = lazy(() => import('./pages/admin/AdminFormationEditor'));
+const AdminSessionSuivi = lazy(() => import('./pages/admin/AdminSessionSuivi'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminReferences = lazy(() => import('./pages/admin/AdminReferences'));
 const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
@@ -133,6 +137,10 @@ const App = () => (
                   <Route path="/espace/formations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><MesFormations /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/lecons/:lessonId" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
+                  {/* Lot 6 — évaluations (quiz, projet final, conditions du certificat) */}
+                  <Route path="/espace/evaluations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceEvaluations /></ProtectedRoute>} />
+                  <Route path="/espace/formations/:id/evaluations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><Evaluations /></ProtectedRoute>} />
+                  <Route path="/espace/formations/:id/evaluations/:quizId" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><QuizRunner /></ProtectedRoute>} />
 
                   {/* ── Backoffice admin ─────────────────────────── */}
                   <Route path="/admin/login"          element={<Navigate to="/connexion" replace />} />
@@ -154,6 +162,7 @@ const App = () => (
 
                   {/* Autres sections */}
                   <Route path="/admin/formations/:id" element={<ProtectedRoute><AdminFormationEditor /></ProtectedRoute>} />
+                  <Route path="/admin/sessions/:id" element={<ProtectedRoute><AdminSessionSuivi /></ProtectedRoute>} />
                   <Route path="/admin/candidatures" element={<ProtectedRoute><AdminCandidatures /></ProtectedRoute>} />
                   <Route path="/admin/inscriptions" element={<ProtectedRoute><AdminInscriptions /></ProtectedRoute>} />
                   <Route path="/admin/promo-codes" element={<ProtectedRoute><AdminPromoCodes /></ProtectedRoute>} />

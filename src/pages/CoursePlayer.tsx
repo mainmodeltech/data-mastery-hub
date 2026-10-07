@@ -5,7 +5,7 @@
  * Lecture vidéo : <video> natif si la leçon porte une `videoUrl` (hébergeur HLS + URL signée
  * côté backend, cf. README §3) ; sinon un état « vidéo pas encore hébergée » — aucun
  * faux lecteur. Les notes sont enregistrées sur l'appareil (localStorage) ; les questions
- * au formateur et les quiz arrivent avec les lots suivants.
+ * au formateur arrivent avec les lots suivants ; les quiz se passent depuis /evaluations (Lot 6).
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
@@ -80,8 +80,8 @@ function Notes({ lessonId }: { lessonId: string }) {
   );
 }
 
-function LessonBody({ lesson, onProgress, onEnded, startAt }: {
-  lesson: Lesson; onProgress: (s: number) => void; onEnded: () => void; startAt: number;
+function LessonBody({ lesson, formationId, onProgress, onEnded, startAt }: {
+  lesson: Lesson; formationId: string; onProgress: (s: number) => void; onEnded: () => void; startAt: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastSent = useRef(0);
@@ -124,7 +124,7 @@ function LessonBody({ lesson, onProgress, onEnded, startAt }: {
   }
 
   const info: Record<string, { title: string; text: string }> = {
-    QUIZ: { title: "Quiz", text: "Les évaluations seront disponibles dans votre espace très prochainement." },
+    QUIZ: { title: "Quiz", text: lesson.quiz ? `${lesson.quiz.questionCount} questions · ${lesson.quiz.passThreshold} % requis pour valider.` : "Ce quiz se passe depuis vos évaluations." },
     LIVE: { title: "Session en direct", text: lesson.liveAt ? `Prévue le ${new Date(lesson.liveAt).toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" })}.` : "Date à venir." },
     RESOURCE: { title: "Ressources", text: "Retrouvez les fichiers de cette étape ci-dessous." },
   };
@@ -133,6 +133,11 @@ function LessonBody({ lesson, onProgress, onEnded, startAt }: {
     <Card radius="stat" variant="sand" className="flex flex-col items-start gap-2 p-8">
       <p className="font-heading text-lg font-bold text-navy">{i.title}</p>
       <p className="text-sm text-ink-secondary">{i.text}</p>
+      {lesson.type === "QUIZ" && (
+        <Button asChild variant="navy" shape="rounded" size="sm">
+          <Link to={`/espace/formations/${formationId}/evaluations`}>Voir mes évaluations</Link>
+        </Button>
+      )}
       {lesson.type === "LIVE" && lesson.liveUrl && (
         <Button asChild variant="navy" shape="rounded" size="sm">
           <a href={lesson.liveUrl} target="_blank" rel="noreferrer">Rejoindre le live</a>
@@ -212,6 +217,7 @@ export default function CoursePlayer() {
 
       <LessonBody
         lesson={lesson}
+        formationId={formationId}
         startAt={position}
         onProgress={(s) => save(isDone, s)}
         onEnded={() => save(true, duration)}
@@ -292,14 +298,17 @@ export default function CoursePlayer() {
     <Card radius="stat" className="overflow-hidden p-0">
       <ProgrammePanel formationId={formationId} content={course.content} view={view} currentLessonId={lesson.id} />
       {quizLesson && quizLesson.quiz && (
-        <div className="m-4 flex flex-col gap-1.5 rounded-[14px] bg-warning-bg p-4">
+        <Link
+          to={`/espace/formations/${formationId}/evaluations`}
+          className="m-4 flex flex-col gap-1.5 rounded-[14px] bg-warning-bg p-4"
+        >
           <span className="text-sm font-bold text-warning">{quizLesson.title}</span>
           <span className="text-[13px] text-ink">
             {course.content.settings.sequentialUnlock
               ? `${quizLesson.quiz.passThreshold} % requis pour ouvrir le module suivant.`
               : `${quizLesson.quiz.questionCount} questions · ${quizLesson.quiz.passThreshold} % requis.`}
           </span>
-        </div>
+        </Link>
       )}
     </Card>
   );
