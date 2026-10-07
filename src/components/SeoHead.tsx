@@ -90,6 +90,11 @@ export const PAGE_SEO = {
         description: "Bootcamp Data Analyst (Python, SQL) et Power BI à Dakar. Formation pratique le soir et week-end. Places limitées — prochaine session bientôt.",
         path:        "/bootcamps",
     },
+    masterclass: {
+        title:       "Masterclass gratuite Power BI — Construire son premier tableau de bord",
+        description: "Masterclass live et gratuite : construisez votre premier dashboard Power BI en 2 heures avec un expert de la data bancaire.",
+        path:        "/masterclass/power-bi-dashboard",
+    },
     orientation: {
         title:       "Quiz d'orientation — Trouvez la formation data faite pour vous",
         description: "5 questions pour trouver la formation Model Technologie qui correspond à votre profil : Power BI, Data Analyst, parcours complet ou formation entreprise.",

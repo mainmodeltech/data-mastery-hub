@@ -1,53 +1,29 @@
 /**
- * MasterclassPage.tsx
- * reCAPTCHA v3 — invisible, sans friction pour l'utilisateur.
- *
- * Install : npm install react-google-recaptcha-v3
- * Wrapper  : entourer <App /> de <GoogleReCaptchaProvider> dans main.tsx
+ * MasterclassPage.tsx — landing de la masterclass Power BI.
+ * Migrée sur le design system (SiteLayout + composants shared). Logique d'inscription
+ * inchangée : reCAPTCHA v3 invisible (GoogleReCaptchaProvider dans main.tsx) puis
+ * POST /masterclass/register. Une fois l'événement passé ou les inscriptions closes,
+ * le formulaire est remplacé par un encart « inscriptions closes » (plus de modale bloquante).
  */
-
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
-import { Button } from "@/components/ui/button";
-import logoHorizontal from "@/assets/logo-black-horizontal.png";
-import logoMark from "@/assets/logo-black.png";
-import martinPhoto from "@/assets/martin-chokki.jpeg";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import {
-    Calendar,
-    Clock,
-    Video,
-    Users,
-    CheckCircle2,
-    ArrowRight,
-    Star,
-    BarChart3,
-    Zap,
-    Award,
-    ChevronRight,
-    Loader2,
-    Mail,
-    ShieldCheck,
-    XCircle,
-    Bell,
-    Home,
+    Calendar, Clock, Video, Users, CheckCircle2, ArrowRight, Star,
+    BarChart3, Zap, Award, Loader2, Mail, ShieldCheck, Bell,
 } from "lucide-react";
+
+import martinPhoto from "@/assets/martin-chokki.jpeg";
+import { useToast } from "@/hooks/use-toast";
 import { httpClient } from "@/services/httpClient";
-import {PAGE_SEO, SeoHead} from "@/components/SeoHead.tsx";
+import { PAGE_SEO, SeoHead } from "@/components/SeoHead";
+import { SiteLayout } from "@/components/layouts/SiteLayout";
+import { Button, Card, Pill, SectionHeader } from "@/components/shared";
+import { COMPANY } from "@/config/constants";
 
 // ─── 🔒 Interrupteur inscriptions ─────────────────────────────────────────────
-// Passer à false pour rouvrir les inscriptions
+// Passer à false pour rouvrir les inscriptions (et mettre à jour EVENT_DATE / MASTERCLASS_ID)
 const REGISTRATIONS_CLOSED = true;
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -56,9 +32,15 @@ const REGISTRATIONS_CLOSED = true;
 const MASTERCLASS_ID = "power-bi-dashboard-2026-03-24";
 const EVENT_DATE     = new Date("2026-03-24T18:00:00+00:00");
 
+const dateLong = (d: Date) =>
+    new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(d);
+const dateShort = (d: Date) =>
+    new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(d);
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface RegistrationForm {
+interface RegistrationFormValues {
     firstName: string;
     lastName:  string;
     email:     string;
@@ -67,7 +49,7 @@ interface RegistrationForm {
     company:   string;
 }
 
-const EMPTY_FORM: RegistrationForm = {
+const EMPTY_FORM: RegistrationFormValues = {
     firstName: "",
     lastName:  "",
     email:     "",
@@ -79,7 +61,7 @@ const EMPTY_FORM: RegistrationForm = {
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 const masterclassService = {
-    register: async (form: RegistrationForm & { masterclassId: string; recaptchaToken: string }) => {
+    register: async (form: RegistrationFormValues & { masterclassId: string; recaptchaToken: string }) => {
         const res = await httpClient.post(
             "/masterclass/register",
             form,
@@ -89,133 +71,18 @@ const masterclassService = {
     },
 };
 
-// ─── Modal inscriptions closes ────────────────────────────────────────────────
-
-function ClosedModal() {
-    const navigate  = useNavigate();
-    const [visible, setVisible] = useState(false);
-
-    // Déclenche l'animation d'entrée après le montage
-    useEffect(() => {
-        const t = setTimeout(() => setVisible(true), 80);
-        return () => clearTimeout(t);
-    }, []);
-
-    return (
-        /* Backdrop */
-        <div
-            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity duration-300 ${
-                visible ? "opacity-100" : "opacity-0"
-            }`}
-            style={{ background: "rgba(8, 9, 20, 0.88)", backdropFilter: "blur(12px)" }}
-        >
-            {/* Panel */}
-            <div
-                className={`relative w-full max-w-md transition-all duration-500 ${
-                    visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-                }`}
-            >
-                {/* Halo décoratif */}
-                <div className="absolute -inset-px rounded-3xl bg-gradient-to-br from-amber-400/20 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-400/8 rounded-full blur-[80px] pointer-events-none" />
-
-                <div className="relative bg-[#0d0f1a] border border-white/10 rounded-3xl p-8 text-center overflow-hidden">
-
-                    {/* Texture grille en fond */}
-                    <div
-                        className="absolute inset-0 opacity-[0.025] pointer-events-none"
-                        style={{
-                            backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-                            backgroundSize: "32px 32px",
-                        }}
-                    />
-
-                    {/* Icône */}
-                    <div className="relative mx-auto mb-5 w-20 h-20 flex items-center justify-center">
-                        <div className="absolute inset-0 rounded-full bg-amber-400/10 border border-amber-400/20 animate-ping opacity-30" />
-                        <div className="relative w-20 h-20 rounded-full bg-amber-400/10 border border-amber-400/25 flex items-center justify-center">
-                            <XCircle className="h-9 w-9 text-amber-400" />
-                        </div>
-                    </div>
-
-                    {/* Titre */}
-                    <div className="relative">
-                        <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-full px-3 py-1 mb-4">
-                            <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
-                            <span className="text-red-400 text-xs font-bold uppercase tracking-widest">
-                                Inscriptions closes
-                            </span>
-                        </div>
-
-                        <h2 className="text-2xl font-black text-white leading-tight mb-3">
-                            Les inscriptions sont<br />
-                            <span className="text-amber-400">officiellement terminées</span>
-                        </h2>
-
-                        <p className="text-slate-400 text-sm leading-relaxed mb-2">
-                            Avec <strong className="text-white">150+ inscrits</strong>, nous avons atteint
-                            notre capacité maximale pour cette session du 24 mars.
-                        </p>
-
-                        <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                            La prochaine masterclass sera annoncée sur nos réseaux sociaux.
-                            Suivez-nous pour ne rien manquer !
-                        </p>
-
-                        {/* Séparateur décoratif */}
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="h-px flex-1 bg-white/8" />
-                            <Bell className="h-3.5 w-3.5 text-amber-400/60" />
-                            <div className="h-px flex-1 bg-white/8" />
-                        </div>
-
-                        {/* Réseaux sociaux */}
-                        <p className="text-slate-500 text-xs mb-5 uppercase tracking-widest font-semibold">
-                            Suivez-nous pour la prochaine date
-                        </p>
-                        <div className="flex items-center justify-center gap-3 mb-7">
-                            {[
-                                { label: "LinkedIn",  href: "https://linkedin.com/company/model-technologie" },
-                                { label: "WhatsApp",  href: "https://wa.me/221786310432" },
-                            ].map(({ label, href }) => (
-                                <a
-                                    key={label}
-                                    href={href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-1 py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-sm font-semibold hover:bg-amber-400/10 hover:border-amber-400/30 hover:text-amber-400 transition-all duration-200"
-                                >
-                                    {label}
-                                </a>
-                            ))}
-                        </div>
-
-                        {/* CTA principal */}
-                        <Button
-                            onClick={() => navigate("/")}
-                            className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-sm rounded-xl transition-all duration-200 hover:shadow-[0_0_24px_rgba(251,191,36,0.35)]"
-                        >
-                            <Home className="h-4 w-4 mr-2" />
-                            Retour à l'accueil
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 // ─── Countdown ────────────────────────────────────────────────────────────────
 
 function useCountdown(target: Date) {
     const calc = () => {
         const diff = target.getTime() - Date.now();
-        if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+        if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, over: true };
         return {
             days:    Math.floor(diff / 86400000),
             hours:   Math.floor((diff % 86400000) / 3600000),
             minutes: Math.floor((diff % 3600000)  / 60000),
             seconds: Math.floor((diff % 60000)    / 1000),
+            over:    false,
         };
     };
 
@@ -231,22 +98,16 @@ function useCountdown(target: Date) {
 
 function CountdownBlock({ value, label }: { value: number; label: string }) {
     return (
-        <div className="flex flex-col items-center">
-            <div className="relative">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-amber-400/10 border border-amber-400/30 rounded-xl flex items-center justify-center">
-          <span className="text-2xl md:text-3xl font-black text-amber-400 tabular-nums leading-none">
-            {String(value).padStart(2, "0")}
-          </span>
-                </div>
-            </div>
-            <span className="text-xs text-slate-400 mt-2 uppercase tracking-widest font-medium">
-        {label}
-      </span>
+        <div className="flex flex-col items-center gap-2">
+            <span className="flex h-16 w-16 items-center justify-center rounded-stat bg-navy font-heading text-2xl font-extrabold tabular-nums text-white md:h-20 md:w-20 md:text-3xl">
+                {String(value).padStart(2, "0")}
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-[1px] text-ink-secondary">{label}</span>
         </div>
     );
 }
 
-// ─── Programme ────────────────────────────────────────────────────────────────
+// ─── Programme & formateur ────────────────────────────────────────────────────
 
 const PROGRAMME = [
     { time: "18h00", title: "Accueil & présentation", desc: "Tour de table, objectifs de la session" },
@@ -255,10 +116,8 @@ const PROGRAMME = [
     { time: "19h00", title: "Créer vos premières visualisations", desc: "Graphiques, cartes, indicateurs KPI" },
     { time: "19h30", title: "Construire le dashboard complet", desc: "Mise en page, filtres, interactivité" },
     { time: "19h45", title: "Q&A et ressources", desc: "Questions libres, ressources pour continuer" },
-    { time: "19h55", title: "Next Steps", desc: "Annonces au sujets de Model technologie et ses bootcamps" },
+    { time: "19h55", title: "Next Steps", desc: "Annonces au sujet de Model Technologie et de ses formations" },
 ];
-
-// ─── Formateur ────────────────────────────────────────────────────────────────
 
 const SPEAKER = {
     name:  "Martin Komla CHOKKI",
@@ -268,15 +127,51 @@ const SPEAKER = {
     tags:  ["Power BI", "IA Agent", "Secteur bancaire", "Data Strategy", "Automatisation"],
 };
 
+// ─── Encart « inscriptions closes » ───────────────────────────────────────────
+
+function ClosedCard({ eventOver }: { eventOver: boolean }) {
+    return (
+        <div className="flex flex-col items-center gap-5 py-2 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-pill bg-warning-bg">
+                <Bell className="h-6 w-6 text-warning" />
+            </span>
+            <Pill variant="error">Inscriptions closes</Pill>
+            <h3 className="font-heading text-2xl font-extrabold leading-tight text-navy">
+                {eventOver ? "Cette masterclass a eu lieu" : "Les inscriptions sont terminées"}
+            </h3>
+            <p className="text-sm leading-relaxed text-ink-secondary">
+                Avec <strong className="text-ink">150+ inscrits</strong>, nous avons atteint notre capacité maximale
+                pour la session du {dateShort(EVENT_DATE)}. La prochaine masterclass sera annoncée sur nos réseaux
+                sociaux.
+            </p>
+            <div className="grid w-full grid-cols-2 gap-3">
+                <Button asChild variant="outline" shape="rounded">
+                    <a href={COMPANY.social.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                </Button>
+                <Button asChild variant="outline" shape="rounded">
+                    <a href={COMPANY.whatsappUrl} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                </Button>
+            </div>
+            <Button asChild shape="rounded" className="w-full">
+                <Link to="/formations">Voir nos formations <ArrowRight /></Link>
+            </Button>
+        </div>
+    );
+}
+
 // ─── Formulaire ───────────────────────────────────────────────────────────────
+
+const fieldClass =
+    "w-full rounded-xl border border-[#D6CEC0] bg-white px-4 py-3 font-sans text-base text-ink outline-none focus:border-navy";
+const labelClass = "text-xs font-bold uppercase tracking-[0.8px] text-ink-secondary";
 
 function RegistrationForm() {
     const { toast }             = useToast();
     const { executeRecaptcha }  = useGoogleReCaptcha();
-    const [form, setForm]       = useState<RegistrationForm>(EMPTY_FORM);
+    const [form, setForm]       = useState<RegistrationFormValues>(EMPTY_FORM);
     const [status, setStatus]   = useState<"idle" | "success" | "duplicate">("idle");
 
-    const set = (patch: Partial<RegistrationForm>) => setForm(f => ({ ...f, ...patch }));
+    const set = (patch: Partial<RegistrationFormValues>) => setForm(f => ({ ...f, ...patch }));
 
     const mutation = useMutation({
         mutationFn: async () => {
@@ -300,11 +195,7 @@ function RegistrationForm() {
             }
         },
         onSuccess: (res: any) => {
-            if (res?.success === false) {
-                setStatus("duplicate");
-            } else {
-                setStatus("success");
-            }
+            setStatus(res?.success === false ? "duplicate" : "success");
         },
         onError: (err: any) => {
             const status: number     = err?.status ?? err?.response?.status;
@@ -322,7 +213,8 @@ function RegistrationForm() {
         },
     });
 
-    const handleSubmit = () => {
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
         if (!form.firstName || !form.lastName || !form.phone || !form.email || !form.profile) {
             toast({ title: "Merci de remplir les champs obligatoires.", variant: "destructive" });
             return;
@@ -332,17 +224,17 @@ function RegistrationForm() {
 
     if (status === "success") {
         return (
-            <div className="text-center py-8 px-4">
-                <div className="w-16 h-16 bg-green-500/15 border border-green-500/30 rounded-full flex items-center justify-center mx-auto mb-5">
-                    <CheckCircle2 className="h-8 w-8 text-green-400" />
-                </div>
-                <h3 className="text-xl font-black text-white mb-3">Inscription confirmée ! 🎉</h3>
-                <p className="text-slate-300 mb-2">
-                    Un email de confirmation avec le lien Google Meet vous a été envoyé à{" "}
-                    <span className="text-amber-400 font-semibold">{form.email}</span>.
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <span className="flex h-16 w-16 items-center justify-center rounded-pill bg-success-bg">
+                    <CheckCircle2 className="h-8 w-8 text-success" />
+                </span>
+                <h3 className="font-heading text-xl font-extrabold text-navy">Inscription confirmée !</h3>
+                <p className="text-ink-secondary">
+                    Un e-mail de confirmation avec le lien Google Meet vous a été envoyé à{" "}
+                    <strong className="text-ink">{form.email}</strong>.
                 </p>
-                <p className="text-slate-400 text-sm">
-                    Rendez-vous le <strong className="text-white">mardi 24 mars à 18h</strong> !
+                <p className="text-sm text-ink-secondary">
+                    Rendez-vous le <strong className="text-ink">{dateShort(EVENT_DATE)} à 18h</strong> !
                 </p>
             </div>
         );
@@ -350,88 +242,84 @@ function RegistrationForm() {
 
     if (status === "duplicate") {
         return (
-            <div className="text-center py-8 px-4">
-                <div className="w-16 h-16 bg-amber-400/10 border border-amber-400/30 rounded-full flex items-center justify-center mx-auto mb-5">
-                    <Mail className="h-7 w-7 text-amber-400" />
-                </div>
-                <h3 className="text-xl font-black text-white mb-3">Vous êtes déjà inscrit(e) !</h3>
-                <p className="text-slate-300 mb-2">
-                    L'adresse <span className="text-amber-400 font-semibold">{form.email}</span>{" "}
-                    est déjà enregistrée pour cette masterclass.
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <span className="flex h-16 w-16 items-center justify-center rounded-pill bg-warning-bg">
+                    <Mail className="h-7 w-7 text-warning" />
+                </span>
+                <h3 className="font-heading text-xl font-extrabold text-navy">Vous êtes déjà inscrit(e) !</h3>
+                <p className="text-ink-secondary">
+                    L'adresse <strong className="text-ink">{form.email}</strong> est déjà enregistrée pour cette masterclass.
                 </p>
-                <p className="text-slate-400 text-sm mb-6">
+                <p className="mb-2 text-sm text-ink-secondary">
                     Vérifiez votre boîte mail (et les spams) — le lien Google Meet vous y a été envoyé.
                 </p>
                 <button
+                    type="button"
                     onClick={() => { setStatus("idle"); setForm(EMPTY_FORM); }}
-                    className="text-sm text-amber-400 hover:text-amber-300 underline underline-offset-4 transition-colors"
+                    className="text-sm font-semibold text-navy underline underline-offset-4"
                 >
-                    Utiliser une autre adresse email
+                    Utiliser une autre adresse e-mail
                 </button>
             </div>
         );
     }
 
     return (
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
             <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                    <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Prénom *</Label>
-                    <Input value={form.firstName} onChange={e => set({ firstName: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="Amadou" />
+                <div className="flex flex-col gap-1.5">
+                    <label htmlFor="mc-first" className={labelClass}>Prénom *</label>
+                    <input id="mc-first" value={form.firstName} onChange={e => set({ firstName: e.target.value })} className={fieldClass} placeholder="Amadou" autoComplete="given-name" />
                 </div>
-                <div className="space-y-1.5">
-                    <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Nom *</Label>
-                    <Input value={form.lastName} onChange={e => set({ lastName: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="Diallo" />
+                <div className="flex flex-col gap-1.5">
+                    <label htmlFor="mc-last" className={labelClass}>Nom *</label>
+                    <input id="mc-last" value={form.lastName} onChange={e => set({ lastName: e.target.value })} className={fieldClass} placeholder="Diallo" autoComplete="family-name" />
                 </div>
             </div>
-            <div className="space-y-1.5">
-                <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Email *</Label>
-                <Input type="email" value={form.email} onChange={e => set({ email: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="amadou@exemple.com" />
+            <div className="flex flex-col gap-1.5">
+                <label htmlFor="mc-mail" className={labelClass}>E-mail *</label>
+                <input id="mc-mail" type="email" value={form.email} onChange={e => set({ email: e.target.value })} className={fieldClass} placeholder="amadou@exemple.com" autoComplete="email" />
             </div>
-            <div className="space-y-1.5">
-                <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Téléphone *</Label>
-                <Input value={form.phone} onChange={e => set({ phone: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="+221 77 000 00 00" />
+            <div className="flex flex-col gap-1.5">
+                <label htmlFor="mc-phone" className={labelClass}>Téléphone *</label>
+                <input id="mc-phone" type="tel" value={form.phone} onChange={e => set({ phone: e.target.value })} className={fieldClass} placeholder="+221 77 000 00 00" autoComplete="tel" />
             </div>
-            <div className="space-y-1.5">
-                <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Vous êtes *</Label>
-                <Select value={form.profile} onValueChange={v => set({ profile: v })}>
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-amber-400/60">
-                        <SelectValue placeholder="Sélectionner votre profil" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-700">
-                        <SelectItem value="Étudiant(e)"     className="text-slate-200 focus:bg-amber-400/10">Étudiant(e)</SelectItem>
-                        <SelectItem value="Professionnel"   className="text-slate-200 focus:bg-amber-400/10">Professionnel(le)</SelectItem>
-                        <SelectItem value="Entrepreneur"    className="text-slate-200 focus:bg-amber-400/10">Entrepreneur(se)</SelectItem>
-                        <SelectItem value="En reconversion" className="text-slate-200 focus:bg-amber-400/10">En reconversion</SelectItem>
-                        <SelectItem value="Autre"           className="text-slate-200 focus:bg-amber-400/10">Autre</SelectItem>
-                    </SelectContent>
-                </Select>
+            <div className="flex flex-col gap-1.5">
+                <label htmlFor="mc-profile" className={labelClass}>Vous êtes *</label>
+                <select id="mc-profile" value={form.profile} onChange={e => set({ profile: e.target.value })} className={fieldClass}>
+                    <option value="" disabled>Sélectionner votre profil</option>
+                    <option value="Étudiant(e)">Étudiant(e)</option>
+                    <option value="Professionnel">Professionnel(le)</option>
+                    <option value="Entrepreneur">Entrepreneur(se)</option>
+                    <option value="En reconversion">En reconversion</option>
+                    <option value="Autre">Autre</option>
+                </select>
             </div>
-            <div className="space-y-1.5">
-                <Label className="text-slate-300 text-xs font-semibold uppercase tracking-wide">Entreprise / École</Label>
-                <Input value={form.company} onChange={e => set({ company: e.target.value })} className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-amber-400/60 focus:ring-amber-400/20" placeholder="Orange, UGB, UCAD…" />
+            <div className="flex flex-col gap-1.5">
+                <label htmlFor="mc-company" className={labelClass}>Entreprise / École</label>
+                <input id="mc-company" value={form.company} onChange={e => set({ company: e.target.value })} className={fieldClass} placeholder="Orange, UGB, UCAD…" autoComplete="organization" />
             </div>
-            <Button onClick={handleSubmit} disabled={mutation.isPending} className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-base mt-2 rounded-xl transition-all duration-200 hover:shadow-[0_0_24px_rgba(251,191,36,0.4)]">
+            <Button type="submit" size="lg" shape="rounded" disabled={mutation.isPending} className="mt-2 w-full">
                 {mutation.isPending ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Vérification en cours…</>
+                    <><Loader2 className="animate-spin" /> Vérification en cours…</>
                 ) : (
-                    <>Je m'inscris gratuitement <ArrowRight className="h-4 w-4 ml-2" /></>
+                    <>Je m'inscris gratuitement <ArrowRight /></>
                 )}
             </Button>
-            <div className="space-y-1.5 pt-1">
-                <p className="text-center text-xs text-slate-500 flex items-center justify-center gap-1.5">
+            <div className="flex flex-col gap-1.5 pt-1 text-center text-xs text-ink-secondary">
+                <p className="flex items-center justify-center gap-1.5">
                     <Mail className="h-3 w-3" />
-                    Lien Google Meet envoyé par email après inscription
+                    Lien Google Meet envoyé par e-mail après inscription
                 </p>
-                <p className="text-center text-[10px] text-slate-600 flex items-center justify-center gap-1">
-                    <ShieldCheck className="h-3 w-3 text-slate-700" />
+                <p className="flex items-center justify-center gap-1 text-[11px]">
+                    <ShieldCheck className="h-3 w-3" />
                     Protégé par reCAPTCHA ·{" "}
-                    <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline hover:text-slate-400 transition-colors">Confidentialité</a>
+                    <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">Confidentialité</a>
                     {" "}·{" "}
-                    <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline hover:text-slate-400 transition-colors">CGU</a>
+                    <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline">CGU</a>
                 </p>
             </div>
-        </div>
+        </form>
     );
 }
 
@@ -439,252 +327,192 @@ function RegistrationForm() {
 
 export default function MasterclassPage() {
     const countdown = useCountdown(EVENT_DATE);
+    const eventOver = countdown.over;
+    const closed    = REGISTRATIONS_CLOSED || eventOver;
 
     return (
-        <div className="min-h-screen bg-[#0d0f1a] text-white">
+        <SiteLayout>
+            <SeoHead {...PAGE_SEO.masterclass} />
 
-            {/* 🔒 Modal inscriptions closes — monté en premier, z-[100] */}
-            {REGISTRATIONS_CLOSED && <ClosedModal />}
+            {/* ── HERO ─────────────────────────────────────────────────────── */}
+            <section className="px-6 py-14 lg:px-20 lg:py-20">
+                <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
+                    <div className="flex min-w-0 flex-col gap-7">
+                        <div>
+                            <Pill variant={closed ? "neutral" : "success"}>
+                                {closed ? "Masterclass gratuite · Inscriptions closes" : "Masterclass gratuite · Places limitées"}
+                            </Pill>
+                        </div>
+                        <h1 className="font-heading text-[40px] font-extrabold leading-[1.05] tracking-[-1.5px] text-navy md:text-[56px]">
+                            Construire son premier <span className="text-cta">tableau de bord</span> avec Microsoft Power BI
+                        </h1>
+                        <p className="max-w-xl text-lg leading-relaxed text-ink-secondary">
+                            En 2 heures, apprenez à transformer vos données brutes en dashboards professionnels qui impressionnent.
+                            Une session 100 % pratique, live et gratuite.
+                        </p>
 
-            {/* ── NAVBAR ───────────────────────────────────────────────────────── */}
-            <nav className="border-b border-white/5 bg-[#0d0f1a]/80 backdrop-blur-sm sticky top-0 z-50">
-                <div className="container mx-auto px-4 lg:px-8 h-14 flex items-center justify-between">
-                    <Link to="/"><img src={logoHorizontal} alt="Model Technologie" className="h-7 w-auto invert" /></Link>
-                    <a href="#inscription" className="text-xs font-bold text-amber-400 border border-amber-400/30 bg-amber-400/10 hover:bg-amber-400/20 px-4 py-1.5 rounded-full transition-colors">
-                        S'inscrire gratuitement
-                    </a>
-                </div>
-            </nav>
+                        <div className="flex flex-wrap gap-x-6 gap-y-3">
+                            {[
+                                { icon: Calendar, text: capitalize(dateLong(EVENT_DATE)) },
+                                { icon: Clock,    text: "18h00 – 20h00 (GMT+0)" },
+                                { icon: Video,    text: "En ligne · Google Meet" },
+                                { icon: Users,    text: "Session live interactive" },
+                            ].map(({ icon: Icon, text }) => (
+                                <div key={text} className="flex items-center gap-2 text-sm text-ink">
+                                    <Icon className="h-4 w-4 shrink-0 text-cta" />
+                                    <span>{text}</span>
+                                </div>
+                            ))}
+                        </div>
 
-            {/* ── HERO ─────────────────────────────────────────────────────────── */}
-            <section className="relative overflow-hidden">
-                <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-amber-400/5 rounded-full blur-[120px]" />
-                    <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
-                    <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-                </div>
-
-                <div className="container mx-auto px-4 lg:px-8 pt-16 pb-12 relative z-10">
-                    <div className="max-w-6xl mx-auto">
-                        <div className="grid lg:grid-cols-[1fr_400px] gap-12 items-start">
+                        {!eventOver && (
                             <div>
-                                <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/30 rounded-full px-4 py-1.5 mb-6">
-                                    <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
-                                    <span className="text-amber-400 text-xs font-bold uppercase tracking-widest">Masterclass Gratuite · Places Limitées</span>
-                                </div>
-                                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.05] mb-6 tracking-tight">
-                                    Construire son premier{" "}
-                                    <span className="relative inline-block">
-                                        <span className="relative z-10 text-amber-400">tableau de bord</span>
-                                        <span className="absolute -bottom-1 left-0 right-0 h-[3px] bg-amber-400/40 rounded" />
-                                    </span>{" "}
-                                    <br />avec{" "}
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f2c811] to-amber-400">Microsoft Power BI</span>
-                                </h1>
-                                <p className="text-slate-300 text-lg leading-relaxed mb-8 max-w-xl">
-                                    En 2 heures, apprenez à transformer vos données brutes en dashboards professionnels qui impressionnent. Une session 100% pratique, live et gratuite.
-                                </p>
-                                <div className="flex flex-wrap gap-4 mb-10">
-                                    {[
-                                        { icon: Calendar, text: "Mardi 24 mars 2026" },
-                                        { icon: Clock,    text: "18h00 – 20h00 (GMT+0)" },
-                                        { icon: Video,    text: "En ligne · Google Meet" },
-                                        { icon: Users,    text: "Session live interactive" },
-                                    ].map(({ icon: Icon, text }) => (
-                                        <div key={text} className="flex items-center gap-2 text-sm text-slate-300">
-                                            <Icon className="h-4 w-4 text-amber-400 flex-shrink-0" />
-                                            <span>{text}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="mb-10">
-                                    <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-3">La session commence dans</p>
-                                    <div className="flex items-center gap-3">
-                                        <CountdownBlock value={countdown.days}    label="jours" />
-                                        <span className="text-amber-400/60 text-2xl font-black pb-4">:</span>
-                                        <CountdownBlock value={countdown.hours}   label="heures" />
-                                        <span className="text-amber-400/60 text-2xl font-black pb-4">:</span>
-                                        <CountdownBlock value={countdown.minutes} label="min" />
-                                        <span className="text-amber-400/60 text-2xl font-black pb-4">:</span>
-                                        <CountdownBlock value={countdown.seconds} label="sec" />
-                                    </div>
-                                </div>
-                                <div className="grid sm:grid-cols-2 gap-3">
-                                    {[
-                                        "100% gratuit, aucune carte requise",
-                                        "Session live avec Q&A en direct",
-                                        "Exercice pratique inclus",
-                                        "Replay disponible pour les inscrits",
-                                        "Certificat de participation",
-                                        "Ouvert à tous les niveaux",
-                                    ].map(point => (
-                                        <div key={point} className="flex items-center gap-2 text-sm text-slate-300">
-                                            <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                                            {point}
-                                        </div>
-                                    ))}
+                                <p className="mb-3 text-xs font-bold uppercase tracking-[1px] text-ink-secondary">La session commence dans</p>
+                                <div className="flex items-start gap-3">
+                                    <CountdownBlock value={countdown.days}    label="jours" />
+                                    <CountdownBlock value={countdown.hours}   label="heures" />
+                                    <CountdownBlock value={countdown.minutes} label="min" />
+                                    <CountdownBlock value={countdown.seconds} label="sec" />
                                 </div>
                             </div>
+                        )}
 
-                            {/* Formulaire */}
-                            <div className="lg:sticky lg:top-20" id="inscription">
-                                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-                                    <div className="text-center mb-6">
-                                        <img src={logoMark} alt="Model Technologie" className="h-10 w-auto mx-auto mb-3 invert opacity-80" />
-                                        <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1 mb-3">
-                                            <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-                                            <span className="text-green-400 text-xs font-semibold">Inscription gratuite</span>
-                                        </div>
-                                        <h2 className="text-xl font-black text-white mb-1">Réservez votre place</h2>
-                                        <p className="text-slate-400 text-sm">Recevez le lien Meet directement par email</p>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {[
+                                "100 % gratuit, aucune carte requise",
+                                "Session live avec Q&A en direct",
+                                "Exercice pratique inclus",
+                                "Replay disponible pour les inscrits",
+                                "Certificat de participation",
+                                "Ouvert à tous les niveaux",
+                            ].map(point => (
+                                <div key={point} className="flex items-center gap-2 text-sm text-ink">
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+                                    {point}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Formulaire / encart clos */}
+                    <div id="inscription" className="min-w-0 lg:sticky lg:top-28">
+                        <Card radius="callout" className="border border-[#E7E0D4] p-6 md:p-8">
+                            {closed ? (
+                                <ClosedCard eventOver={eventOver} />
+                            ) : (
+                                <>
+                                    <div className="mb-6 flex flex-col items-center gap-2 text-center">
+                                        <Pill variant="success">Inscription gratuite</Pill>
+                                        <h2 className="font-heading text-xl font-extrabold text-navy">Réservez votre place</h2>
+                                        <p className="text-sm text-ink-secondary">Recevez le lien Meet directement par e-mail</p>
                                     </div>
                                     <RegistrationForm />
-                                </div>
+                                </>
+                            )}
+                        </Card>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── CE QUE VOUS ALLEZ APPRENDRE ──────────────────────────────── */}
+            <section className="bg-surface-sand px-6 py-16 lg:px-20 lg:py-20">
+                <SectionHeader
+                    align="center"
+                    eyebrow="Au programme"
+                    title="Ce que vous allez maîtriser"
+                    description="Une progression logique de zéro au dashboard complet en 2 heures."
+                />
+                <div className="mt-12 grid gap-5 md:grid-cols-3">
+                    {[
+                        { icon: BarChart3, title: "Visualisations pro", desc: "Créez des graphiques, jauges et KPI cards qui racontent vos données avec clarté." },
+                        { icon: Zap,       title: "Zéro code requis",   desc: "Power BI est un outil no-code. Aucune compétence en programmation nécessaire." },
+                        { icon: Award,     title: "Portfolio concret",  desc: "Repartez avec un vrai dashboard à montrer à vos recruteurs ou votre direction." },
+                    ].map(({ icon: Icon, title, desc }) => (
+                        <Card key={title} radius="card" className="flex flex-col gap-3 p-6">
+                            <span className="flex h-12 w-12 items-center justify-center rounded-stat bg-info-bg">
+                                <Icon className="h-6 w-6 text-navy" />
+                            </span>
+                            <h3 className="font-heading text-lg font-bold text-navy">{title}</h3>
+                            <p className="text-sm leading-relaxed text-ink-secondary">{desc}</p>
+                        </Card>
+                    ))}
+                </div>
+            </section>
+
+            {/* ── PROGRAMME ────────────────────────────────────────────────── */}
+            <section className="px-6 py-16 lg:px-20 lg:py-20">
+                <SectionHeader
+                    align="center"
+                    eyebrow="Déroulé"
+                    title="Programme de la session"
+                    description={`${capitalize(dateLong(EVENT_DATE))} · 18h00 – 20h00`}
+                />
+                <ol className="mx-auto mt-12 flex max-w-3xl flex-col">
+                    {PROGRAMME.map((item, i) => (
+                        <li key={item.time} className="flex gap-5">
+                            <div className="flex flex-col items-center">
+                                <span className="mt-4 flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-navy text-xs font-bold text-white">
+                                    {i + 1}
+                                </span>
+                                {i < PROGRAMME.length - 1 && <span className="my-1 w-px flex-1 bg-[#E7E0D4]" />}
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── CE QUE VOUS ALLEZ APPRENDRE ──────────────────────────────────── */}
-            <section className="py-20 border-t border-white/5">
-                <div className="container mx-auto px-4 lg:px-8">
-                    <div className="max-w-5xl mx-auto">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-black mb-3">Ce que vous allez <span className="text-amber-400">maîtriser</span></h2>
-                            <p className="text-slate-400 text-lg">Une progression logique de zéro au dashboard complet en 2 heures.</p>
-                        </div>
-                        <div className="grid md:grid-cols-3 gap-5">
-                            {[
-                                { icon: BarChart3, title: "Visualisations pro", desc: "Créez des graphiques, jauges et KPI cards qui racontent vos données avec clarté." },
-                                { icon: Zap,       title: "Zéro code requis",   desc: "Power BI est un outil no-code. Aucune compétence en programmation nécessaire." },
-                                { icon: Award,     title: "Portfolio concret",  desc: "Repartez avec un vrai dashboard à montrer à vos recruteurs ou votre direction." },
-                            ].map(({ icon: Icon, title, desc }) => (
-                                <div key={title} className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 hover:border-amber-400/20 transition-colors group">
-                                    <div className="w-12 h-12 bg-amber-400/10 border border-amber-400/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-amber-400/15 transition-colors">
-                                        <Icon className="h-6 w-6 text-amber-400" />
-                                    </div>
-                                    <h3 className="font-black text-lg mb-2">{title}</h3>
-                                    <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+                            <div className="min-w-0 flex-1 pb-6 pt-3">
+                                <div className="mb-1 flex flex-wrap items-baseline gap-3">
+                                    <span className="font-mono text-xs font-bold text-cta">{item.time}</span>
+                                    <h3 className="font-heading font-bold text-navy">{item.title}</h3>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── PROGRAMME ─────────────────────────────────────────────────────── */}
-            <section className="py-20 border-t border-white/5 bg-white/[0.01]">
-                <div className="container mx-auto px-4 lg:px-8">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-black mb-3">Programme de la <span className="text-amber-400">session</span></h2>
-                            <p className="text-slate-400">Mardi 24 mars 2026 · 18h00 – 20h00</p>
-                        </div>
-                        <div className="space-y-0">
-                            {PROGRAMME.map((item, i) => (
-                                <div key={i} className="flex gap-5 group">
-                                    <div className="flex flex-col items-center">
-                                        <div className="w-9 h-9 rounded-full bg-amber-400/10 border border-amber-400/30 flex items-center justify-center flex-shrink-0 mt-4 group-hover:bg-amber-400/20 transition-colors">
-                                            <span className="text-amber-400 text-xs font-bold">{i + 1}</span>
-                                        </div>
-                                        {i < PROGRAMME.length - 1 && <div className="w-px flex-1 bg-white/5 my-1" />}
-                                    </div>
-                                    <div className="pb-6 pt-3 flex-1">
-                                        <div className="flex items-baseline gap-3 mb-1 flex-wrap">
-                                            <span className="text-amber-400 text-xs font-black tracking-wide font-mono">{item.time}</span>
-                                            <h3 className="font-bold text-white">{item.title}</h3>
-                                        </div>
-                                        <p className="text-slate-400 text-sm">{item.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── FORMATEUR SPOTLIGHT ───────────────────────────────────────── */}
-            <section className="py-24 border-t border-white/5 relative overflow-hidden">
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-amber-400/4 rounded-full blur-[140px] pointer-events-none" />
-                <div className="container mx-auto px-4 lg:px-8 relative z-10">
-                    <div className="max-w-5xl mx-auto">
-                        <div className="flex items-center gap-3 mb-12">
-                            <div className="h-px flex-1 bg-white/8" />
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Votre formateur</span>
-                            <div className="h-px flex-1 bg-white/8" />
-                        </div>
-                        <div className="grid lg:grid-cols-[320px_1fr] gap-12 lg:gap-16 items-center">
-                            <div className="flex justify-center lg:justify-start">
-                                <div className="relative">
-                                    <div className="absolute -inset-3 rounded-3xl border border-amber-400/15 -rotate-2" />
-                                    <div className="absolute -inset-3 rounded-3xl border border-white/5 rotate-1" />
-                                    <div className="relative w-64 h-72 lg:w-72 lg:h-80 rounded-2xl overflow-hidden">
-                                        <img src={SPEAKER.photo} alt={SPEAKER.name} className="w-full h-full object-cover object-top" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0f1a]/60 via-transparent to-transparent" />
-                                    </div>
-                                    <div className="absolute -bottom-4 -right-4 bg-amber-400 text-slate-900 rounded-xl px-3 py-2 shadow-[0_8px_32px_rgba(251,191,36,0.4)]">
-                                        <p className="text-xs font-black uppercase tracking-wide leading-none">Expert</p>
-                                        <p className="text-xs font-black uppercase tracking-wide leading-none">Power BI</p>
-                                    </div>
-                                </div>
+                                <p className="text-sm text-ink-secondary">{item.desc}</p>
                             </div>
-                            <div>
-                                <h2 className="text-4xl lg:text-5xl font-black tracking-tight leading-[1.05] mb-2">{SPEAKER.name}</h2>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-8 h-[2px] bg-amber-400 rounded-full" />
-                                    <p className="text-amber-400 font-semibold text-sm tracking-wide">{SPEAKER.role}</p>
-                                </div>
-                                <p className="text-slate-300 text-lg leading-relaxed mb-8">{SPEAKER.bio}</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {SPEAKER.tags.map(tag => (
-                                        <span key={tag} className="text-xs font-semibold text-slate-300 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 hover:border-amber-400/30 hover:text-amber-400 transition-colors">
-                                            {tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        </li>
+                    ))}
+                </ol>
             </section>
 
-            {/* ── CTA FINAL ─────────────────────────────────────────────────────── */}
-            <section className="py-20 border-t border-white/5 bg-gradient-to-b from-transparent to-amber-400/5">
-                <div className="container mx-auto px-4 lg:px-8 text-center">
-                    <div className="max-w-2xl mx-auto">
-                        <div className="inline-flex items-center gap-1.5 mb-4">
-                            {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-black mb-4">
-                            Prêt à construire votre <span className="text-amber-400">premier dashboard ?</span>
+            {/* ── FORMATEUR ────────────────────────────────────────────────── */}
+            <section className="bg-surface-sand px-6 py-16 lg:px-20 lg:py-20">
+                <div className="grid items-center gap-10 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-16">
+                    <div className="mx-auto w-full max-w-[280px] lg:mx-0">
+                        <img
+                            src={SPEAKER.photo}
+                            alt={SPEAKER.name}
+                            className="aspect-[4/5] w-full rounded-callout object-cover object-top"
+                        />
+                    </div>
+                    <div className="flex min-w-0 flex-col gap-4">
+                        <span className="text-sm font-bold uppercase tracking-[1.5px] text-cta">Votre formateur</span>
+                        <h2 className="font-heading text-[34px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[44px]">
+                            {SPEAKER.name}
                         </h2>
-                        <p className="text-slate-400 text-lg mb-8">
-                            Rejoignez des dizaines de professionnels et étudiants qui transforment leurs données en insights. C'est gratuit, en direct, le 24 mars.
-                        </p>
-                        <a href="#" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                           className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-base px-8 py-4 rounded-xl transition-all duration-200 hover:shadow-[0_0_32px_rgba(251,191,36,0.35)]">
-                            Je m'inscris gratuitement
-                            <ArrowRight className="h-5 w-5" />
-                        </a>
-                        <p className="text-slate-500 text-sm mt-4">Aucune carte de crédit requise · Lien Meet envoyé par email</p>
+                        <p className="font-semibold text-navy">{SPEAKER.role}</p>
+                        <p className="text-base leading-relaxed text-ink-secondary">{SPEAKER.bio}</p>
+                        <div className="flex flex-wrap gap-2">
+                            {SPEAKER.tags.map(tag => <Pill key={tag} variant="info">{tag}</Pill>)}
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* ── FOOTER ────────────────────────────────────────────────────────── */}
-            <footer className="border-t border-white/5 py-8">
-                <div className="container mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <Link to="/" className="flex items-center gap-3 group">
-                        <img src={logoHorizontal} alt="Model Technologie" className="h-6 w-auto invert opacity-50 group-hover:opacity-80 transition-opacity" />
-                    </Link>
-                    <p className="text-xs text-slate-600">© 2026 Model Technologie · Dakar, Sénégal</p>
-                    <Link to="/" className="text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1">
-                        Retour au site <ChevronRight className="h-3.5 w-3.5" />
-                    </Link>
+            {/* ── CTA FINAL ────────────────────────────────────────────────── */}
+            <section className="px-6 py-16 lg:px-20 lg:py-20">
+                <div className="rounded-hero bg-navy px-6 py-14 text-center lg:px-20">
+                    <div className="mb-4 flex justify-center gap-1" aria-hidden="true">
+                        {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-[#F5B301] text-[#F5B301]" />)}
+                    </div>
+                    <h2 className="mx-auto mb-4 max-w-2xl font-heading text-[30px] font-extrabold leading-tight tracking-[-0.5px] text-white md:text-[40px]">
+                        {closed ? "Continuez avec nos formations" : "Prêt à construire votre premier dashboard ?"}
+                    </h2>
+                    <p className="mx-auto mb-8 max-w-xl text-lg text-[#D5DEE8]">
+                        {closed
+                            ? "Cette session est terminée. Découvrez nos formations Power BI, SQL et Python pour aller plus loin."
+                            : `Rejoignez des dizaines de professionnels et d'étudiants qui transforment leurs données en insights. C'est gratuit, en direct, le ${dateShort(EVENT_DATE)}.`}
+                    </p>
+                    <Button asChild size="lg">
+                        {closed
+                            ? <Link to="/formations">Voir les formations <ArrowRight /></Link>
+                            : <a href="#inscription">Je m'inscris gratuitement <ArrowRight /></a>}
+                    </Button>
                 </div>
-            </footer>
-            <SeoHead {...PAGE_SEO.bootcamps} />
-        </div>
+            </section>
+        </SiteLayout>
     );
 }
