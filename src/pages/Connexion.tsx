@@ -14,6 +14,7 @@ import { Eye, EyeOff, Loader2, MessageCircle, Play } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/shared/Button";
 import { ProgressBar } from "@/components/shared/ProgressBar";
+import { Logo } from "@/components/shared/Logo";
 import { ComingSoonLink } from "@/components/layouts/ComingSoonLink";
 import { hasAnyRole, homePathForRoles, LEARNER_ROLES, STAFF_ROLES } from "@/lib/roles";
 
@@ -56,13 +57,8 @@ export default function Connexion() {
   return (
     <div className="grid min-h-screen bg-site-bg lg:grid-cols-2">
       <div className="flex flex-col gap-10 px-6 py-8 lg:px-24 lg:py-12">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-navy font-heading text-xl font-extrabold text-white lg:h-10 lg:w-10 lg:rounded-[10px]">
-            M
-          </span>
-          <span className="font-heading text-lg font-bold text-navy">
-            Model<span className="text-cta">Technologie</span>
-          </span>
+        <Link to="/" aria-label="Model Technologie — accueil" className="flex w-fit items-center">
+          <Logo className="h-14 lg:h-16" />
         </Link>
 
         <form onSubmit={handleSubmit} className="my-auto flex w-full max-w-[440px] flex-col gap-5">

@@ -7,7 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QUERY_CONFIG } from '@/config/constants';
@@ -28,7 +28,6 @@ const LEARNER_AREA_ROLES = [...LEARNER_ROLES, ...STAFF_ROLES];
 // Pages publiques
 const Index = lazy(() => import('./pages/Index'));
 const About = lazy(() => import('./pages/About'));
-const Bootcamps = lazy(() => import('./pages/Bootcamps'));
 const Formations = lazy(() => import('./pages/Formations'));
 const FormationDetail = lazy(() => import('./pages/FormationDetail'));
 const Alumni = lazy(() => import('./pages/Alumni'));
@@ -45,7 +44,6 @@ const Partenaires = lazy(() => import('./pages/Partenaires'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Pages admin
-const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminBootcamps = lazy(() => import('./pages/admin/AdminBootcamps'));
 const AdminBootcampForm = lazy(() => import('./pages/admin/BootcampForm'));
@@ -114,10 +112,8 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   <Route path="/a-propos" element={<About />} />
                   {/*<Route path="/services" element={<Services />} />*/}
-                  <Route path="/bootcamps" element={<Bootcamps />} />
-                  {/* Lot 1 — nouveau catalogue par domaines (données de démonstration,
-                      voir src/types/formation.type.ts). Coexiste avec /bootcamps tant
-                      que le backend Domain/Partner n'est pas disponible. */}
+                  {/* Lot 1 — catalogue par domaines. L'ancien /bootcamps y redirige. */}
+                  <Route path="/bootcamps" element={<Navigate to="/formations" replace />} />
                   <Route path="/formations" element={<Formations />} />
                   <Route path="/formations/:slug" element={<FormationDetail />} />
                   <Route path="/alumni" element={<Alumni />} />
@@ -139,7 +135,7 @@ const App = () => (
                   <Route path="/espace/formations/:id/lecons/:lessonId" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
 
                   {/* ── Backoffice admin ─────────────────────────── */}
-                  <Route path="/admin/login"          element={<AdminLogin />} />
+                  <Route path="/admin/login"          element={<Navigate to="/connexion" replace />} />
                   <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
                   <Route path="/admin/reset-password"  element={<AdminResetPassword />} />
 

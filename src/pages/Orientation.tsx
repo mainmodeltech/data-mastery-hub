@@ -1,19 +1,26 @@
+/**
+ * Orientation.tsx — quiz d'orientation (5 questions → recommandation).
+ * Migré sur le design system (SiteLayout + composants shared). Logique de scoring et
+ * de résultat inchangée : contenu éditorial statique + données dynamiques du backend
+ * (titre, durée, prix, prochaine session) quand le bootcamp correspondant existe.
+ */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
 import { useQuery } from "@tanstack/react-query";
 import {
     ArrowRight, ArrowLeft, BarChart3, Database, Building,
     Users, Compass, CheckCircle, Star, Clock, Target,
     Sparkles, Trophy, Zap, GraduationCap, MessageCircle,
-    RotateCcw, ChevronRight, TrendingUp, AlertCircle,
+    RotateCcw, TrendingUp, AlertCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import { cn } from "@/lib/utils";
-import { PAGE_SEO, SeoHead } from "@/components/SeoHead.tsx";
+import { PAGE_SEO, SeoHead } from "@/components/SeoHead";
+import { SiteLayout } from "@/components/layouts/SiteLayout";
+import { Button, Card, Pill, ProgressBar } from "@/components/shared";
 import { bootcampService } from "@/services/bootcampService";
 import { RegistrationModal } from "@/pages/RegistrationModal";
-import { getBootcampStatic } from "@/config/bootcamps.config.ts";
+import { getBootcampStatic } from "@/config/bootcamps.config";
 import type { Bootcamp } from "@/types/bootcamp.type";
 import { COMPANY, QUERY_CONFIG } from "@/config/constants";
 
@@ -28,20 +35,13 @@ interface Question {
 
 /**
  * Contenu ÉDITORIAL statique par résultat.
- * Ce qui ne change pas entre sessions : textes marketing, témoignages, couleurs.
+ * Ce qui ne change pas entre sessions : textes marketing, témoignages.
  * Les données DYNAMIQUES (titre, durée, prix, session) viennent du backend.
  */
 interface ResultStatic {
     id:           string;
     icon:         React.ElementType;
-    iconBg:       string;
-    iconColor:    string;
-    accentBg:     string;
-    accentBorder: string;
-    accentText:   string;
-    gradient:     string;
     tag:          string;
-    tagColor:     string;
     /** Sous-titre affiché si le backend ne retourne pas de durée */
     subtitleFallback: string;
     description:  string;
@@ -62,10 +62,7 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
     powerbi: {
         id: "powerbi",
         icon: BarChart3,
-        iconBg: "bg-accent/15", iconColor: "text-accent",
-        accentBg: "bg-accent/8", accentBorder: "border-accent/25", accentText: "text-accent",
-        gradient: "from-accent/20 via-accent/5 to-transparent",
-        tag: "✦ Votre match idéal", tagColor: "bg-accent text-white",
+        tag: "Votre match idéal",
         subtitleFallback: "Business Intelligence",
         description: "Votre profil correspond parfaitement à notre bootcamp Power BI. Vous avez une base en outils bureautiques et voulez passer au niveau supérieur en business intelligence. Ce bootcamp est conçu exactement pour vous.",
         highlights: [
@@ -75,7 +72,7 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
             "Préparer la certification Microsoft PL-300",
         ],
         ctaLabel: "Réserver ma place",
-        secondaryLabel: "En savoir plus", secondaryHref: "/bootcamps?tab=bi",
+        secondaryLabel: "En savoir plus", secondaryHref: "/formations",
         testimonial: {
             name: "Emmanuel BOUADI", role: "Compliance Admin · Wave",
             content: "Mon reporting mensuel prenait 2 jours. Maintenant 2 heures. Mon directeur m'a félicité pour cela!.",
@@ -86,10 +83,7 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
     dataanalyst: {
         id: "dataanalyst",
         icon: Database,
-        iconBg: "bg-primary/15", iconColor: "text-primary",
-        accentBg: "bg-primary/8", accentBorder: "border-primary/25", accentText: "text-primary",
-        gradient: "from-primary/20 via-primary/5 to-transparent",
-        tag: "✦ Votre match idéal", tagColor: "bg-primary text-white",
+        tag: "Votre match idéal",
         subtitleFallback: "SQL & Python",
         description: "Votre profil et vos objectifs pointent clairement vers le bootcamp Data Analyst. Ce programme intensif vous donnera toutes les armes pour devenir un data analyst opérationnel et décrocher le poste que vous visez.",
         highlights: [
@@ -99,7 +93,7 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
             "Bénéficier du réseau alumni Model Technologie",
         ],
         ctaLabel: "Réserver ma place",
-        secondaryLabel: "En savoir plus", secondaryHref: "/bootcamps?tab=data",
+        secondaryLabel: "En savoir plus", secondaryHref: "/formations",
         testimonial: {
             name: "Khoudia DIAO", role: "Investment Analyst · Mazars",
             content: "En 10 semaines j'ai appris Python et SQL, réalisé 3 projets réels et décroché un poste chez Mazars. Meilleur investissement de ma carrière.",
@@ -110,10 +104,7 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
     both: {
         id: "both",
         icon: GraduationCap,
-        iconBg: "bg-gradient-to-br from-accent/20 to-primary/20", iconColor: "text-primary",
-        accentBg: "bg-secondary/50", accentBorder: "border-border", accentText: "text-foreground",
-        gradient: "from-primary/15 via-accent/8 to-transparent",
-        tag: "✦ Parcours complet recommandé", tagColor: "bg-gradient-to-r from-primary to-accent text-white",
+        tag: "Parcours complet recommandé",
         subtitleFallback: "Power BI + SQL & Python",
         description: "Votre ambition et votre profil vous positionnent pour un parcours data complet. En combinant les deux bootcamps, vous deviendrez un data analyst polyvalent, capable de gérer la donnée de A à Z.",
         highlights: [
@@ -122,8 +113,8 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
             "Portfolio solide avec 6+ projets réels",
             "Accompagnement carrière dédié jusqu'au recrutement",
         ],
-        ctaLabel: "Voir les bootcamps", ctaHref: "/bootcamps",
-        secondaryLabel: "Appeler un conseiller", secondaryHref: "/contact",
+        ctaLabel: "Voir les formations", ctaHref: "/formations",
+        secondaryLabel: "Parler à un conseiller", secondaryHref: "/contact",
         testimonial: {
             name: "Cedric Zagba", role: "Data Analyst · INTOUCH",
             content: "J'ai fait les deux bootcamps successivement. Aujourd'hui je maîtrise tout l'écosystème data et j'ai la reconnaissance de ma hiérarchie.",
@@ -134,10 +125,7 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
     b2b: {
         id: "b2b",
         icon: Building,
-        iconBg: "bg-foreground/10", iconColor: "text-foreground",
-        accentBg: "bg-secondary/50", accentBorder: "border-border", accentText: "text-foreground",
-        gradient: "from-foreground/10 via-foreground/3 to-transparent",
-        tag: "✦ Solution entreprise", tagColor: "bg-foreground text-background",
+        tag: "Solution entreprise",
         subtitleFallback: "Sur mesure · Votre timing",
         description: "Vous cherchez à monter en compétence toute une équipe ? Notre formule intra-entreprise est conçue pour vous. Nous adaptons le programme, les horaires et les cas pratiques à votre secteur et à vos outils.",
         highlights: [
@@ -146,8 +134,8 @@ const RESULTS_STATIC: Record<string, ResultStatic> = {
             "Formateurs experts avec expérience entreprise",
             "Support post-formation inclus (3 mois)",
         ],
-        ctaLabel: "Demander un devis", ctaHref: "/contact",
-        secondaryLabel: "Voir nos services B2B", secondaryHref: "/contact",
+        ctaLabel: "Demander un devis", ctaHref: "/entreprises",
+        secondaryLabel: "Nous contacter", secondaryHref: "/contact",
         testimonial: {
             name: "Directeur RH", role: "Institution Financière · Dakar",
             content: "Model Technologie a formé toute notre équipe finance en 3 semaines. Résultat : nos reportings sont automatisés et notre DG est bluffé.",
@@ -247,9 +235,9 @@ function UrgencyBand({ bootcamp, config }: { bootcamp: Bootcamp | null; config: 
             ? "Devis gratuit sous 48h · Disponible toute l'année"
             : "Tarif pack disponible · Économisez 15% sur les 2 bootcamps";
         return (
-            <div className={cn("flex items-center gap-3 p-4 rounded-xl border mb-8", config.accentBorder, config.accentBg)}>
-                <div className="w-2.5 h-2.5 rounded-full bg-foreground/50 flex-shrink-0" />
-                <span className={cn("text-sm font-semibold", config.accentText)}>{msg}</span>
+            <div className="mb-8 flex items-center gap-3 rounded-stat bg-info-bg p-4">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-pill bg-navy/50" />
+                <span className="text-sm font-semibold text-navy">{msg}</span>
             </div>
         );
     }
@@ -259,31 +247,37 @@ function UrgencyBand({ bootcamp, config }: { bootcamp: Bootcamp | null; config: 
     const status     = session?.status?.toUpperCase();
 
     let msg: string;
-    let dotClass: string;
+    let tone: "warning" | "error" | "success";
 
     if (!session) {
-        msg      = "Prochaine session en cours de planification — Soyez notifié en priorité";
-        dotClass = "bg-yellow-400";
+        msg  = "Prochaine session en cours de planification — Soyez notifié en priorité";
+        tone = "warning";
     } else if (status === "FULL") {
-        msg      = "Session complète — Inscrivez-vous sur liste d'attente";
-        dotClass = "bg-red-400";
+        msg  = "Session complète — Inscrivez-vous sur liste d'attente";
+        tone = "error";
     } else if (spotsLeft !== null && spotsLeft <= 3) {
-        msg      = `⚠️ Plus que ${spotsLeft} place${spotsLeft > 1 ? "s" : ""} disponible${spotsLeft > 1 ? "s" : ""} !`;
-        dotClass = "bg-orange-400";
+        msg  = `Plus que ${spotsLeft} place${spotsLeft > 1 ? "s" : ""} disponible${spotsLeft > 1 ? "s" : ""} !`;
+        tone = "warning";
     } else {
-        const date = formatDateFr(session.startDate);
+        const date  = formatDateFr(session.startDate);
         const spots = spotsLeft !== null ? ` · ${spotsLeft} places restantes` : " · Places disponibles";
-        msg      = `Prochaine session : ${date}${spots}`;
-        dotClass = "bg-green-400";
+        msg  = `Prochaine session : ${date}${spots}`;
+        tone = "success";
     }
 
+    const palette = {
+        warning: { box: "bg-warning-bg text-warning", dot: "bg-warning" },
+        error:   { box: "bg-error-bg text-error",     dot: "bg-error" },
+        success: { box: "bg-success-bg text-success", dot: "bg-success" },
+    }[tone];
+
     return (
-        <div className={cn("flex items-center gap-3 p-4 rounded-xl border mb-8", config.accentBorder, config.accentBg)}>
-            <div className="relative flex-shrink-0">
-                <div className={cn("w-2.5 h-2.5 rounded-full animate-ping absolute", dotClass)} />
-                <div className={cn("w-2.5 h-2.5 rounded-full relative", dotClass)} />
-            </div>
-            <span className={cn("text-sm font-semibold", config.accentText)}>{msg}</span>
+        <div className={cn("mb-8 flex items-center gap-3 rounded-stat p-4", palette.box)}>
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className={cn("absolute inline-flex h-full w-full animate-ping rounded-pill opacity-60", palette.dot)} />
+                <span className={cn("relative inline-flex h-2.5 w-2.5 rounded-pill", palette.dot)} />
+            </span>
+            <span className="text-sm font-semibold">{msg}</span>
         </div>
     );
 }
@@ -306,12 +300,12 @@ function MetaPills({ bootcamp, config }: { bootcamp: Bootcamp | null; config: Re
     ];
 
     return (
-        <div className="flex flex-wrap gap-3 mb-8">
+        <div className="mb-8 flex flex-wrap gap-3">
             {pills.map((p) => (
-                <div key={p.text} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary border border-border text-sm font-medium">
-                    <p.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                <span key={p.text} className="inline-flex items-center gap-2 rounded-pill bg-surface-sand px-4 py-2 text-sm font-medium text-ink">
+                    <p.icon className="h-3.5 w-3.5 text-ink-secondary" />
                     {p.text}
-                </div>
+                </span>
             ))}
         </div>
     );
@@ -327,14 +321,14 @@ function Highlights({ bootcamp, config }: { bootcamp: Bootcamp | null; config: R
 
     return (
         <div className="mb-8">
-            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
+            <div className="mb-4 text-xs font-bold uppercase tracking-[1px] text-ink-secondary">
                 Ce que vous allez accomplir
             </div>
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
                 {items.slice(0, 4).map((h) => (
                     <div key={h} className="flex items-start gap-3">
-                        <CheckCircle className={cn("h-5 w-5 flex-shrink-0 mt-0.5", config.accentText)} />
-                        <span className="text-sm text-foreground leading-snug">{h}</span>
+                        <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+                        <span className="text-sm leading-snug text-ink">{h}</span>
                     </div>
                 ))}
             </div>
@@ -347,13 +341,11 @@ function Highlights({ bootcamp, config }: { bootcamp: Bootcamp | null; config: R
 function ResultScreen({
                           resultKey,
                           bootcamps,
-                          isLoadingBootcamps,
                           onRestart,
                           onRegister,
                       }: {
     resultKey:          string;
     bootcamps:          Bootcamp[] | undefined;
-    isLoadingBootcamps: boolean;
     onRestart:          () => void;
     onRegister:         (b: Bootcamp) => void;
 }) {
@@ -367,7 +359,7 @@ function ResultScreen({
 
     // Titre dynamique : priorité au backend, fallback au titre config
     const displayTitle = matchedBootcamp?.title ?? {
-        powerbi:    "Bootcamp Microsoft Power BI ",
+        powerbi:    "Bootcamp Microsoft Power BI",
         dataanalyst:"Bootcamp Data Analyst Python & SQL",
         both:       "Parcours Data Complet",
         b2b:        "Formation Intra-Entreprise",
@@ -382,153 +374,105 @@ function ResultScreen({
     const canOpenModal = !config.ctaHref && matchedBootcamp && matchedBootcamp.nextSession;
 
     return (
-        <div className="w-full max-w-3xl mx-auto opacity-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+        <div className="mx-auto w-full max-w-3xl animate-fade-in">
 
             {/* Header */}
-            <div className="text-center mb-10">
-                <div className="inline-flex items-center gap-2 mb-4">
-                    <Sparkles className="h-4 w-4 text-accent" />
-                    <span className="text-accent font-semibold text-sm">Analyse complète</span>
+            <div className="mb-10 text-center">
+                <div className="mb-4 inline-flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-cta" />
+                    <span className="text-sm font-semibold text-cta">Analyse complète</span>
                 </div>
-                <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-2">
+                <h2 className="mb-2 font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy md:text-[40px]">
                     Votre parcours idéal est trouvé !
                 </h2>
-                <p className="text-muted-foreground">Basé sur vos réponses, voici notre recommandation personnalisée</p>
+                <p className="text-ink-secondary">Basé sur vos réponses, voici notre recommandation personnalisée</p>
             </div>
 
             {/* Carte résultat */}
-            <div className={cn("relative rounded-3xl border-2 overflow-hidden mb-6", config.accentBorder)}>
-                <div className={cn("absolute top-0 left-0 right-0 h-64 bg-gradient-to-b pointer-events-none", config.gradient)} />
+            <Card radius="callout" className="mb-6 border border-[#E7E0D4] p-6 md:p-10">
+                <Pill variant="success" className="mb-6">{config.tag}</Pill>
 
-                <div className="relative z-10 p-8 md:p-10">
-                    {/* Tag */}
-                    <div className="mb-6">
-                        <span className={cn("inline-block text-xs font-bold px-4 py-2 rounded-full", config.tagColor)}>
-                            {config.tag}
-                        </span>
+                <div className="mb-8 flex items-start gap-5">
+                    <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-card bg-info-bg">
+                        <Icon className="h-8 w-8 text-navy" />
+                    </span>
+                    <div className="min-w-0">
+                        <h3 className="font-heading text-2xl font-bold leading-tight text-navy md:text-[30px]">
+                            {displayTitle}
+                        </h3>
+                        <p className="mt-1 font-semibold text-cta">{displaySubtitle}</p>
                     </div>
+                </div>
 
-                    {/* Titre + icône */}
-                    <div className="flex items-start gap-5 mb-8">
-                        <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 border border-border", config.iconBg)}>
-                            <Icon className={cn("h-8 w-8", config.iconColor)} />
-                        </div>
-                        <div>
-                            <h3 className="font-heading text-2xl md:text-3xl font-bold text-foreground leading-tight">
-                                {displayTitle}
-                            </h3>
-                            <p className={cn("font-semibold mt-1", config.accentText)}>{displaySubtitle}</p>
-                        </div>
-                    </div>
+                <p className="mb-8 text-base leading-relaxed text-ink-secondary">{config.description}</p>
 
-                    {/* Description éditoriale */}
-                    <p className="text-muted-foreground text-base leading-relaxed mb-8">{config.description}</p>
+                <MetaPills bootcamp={matchedBootcamp} config={config} />
+                <Highlights bootcamp={matchedBootcamp} config={config} />
+                <UrgencyBand bootcamp={matchedBootcamp} config={config} />
 
-                    {/* Metadata pills DYNAMIQUES */}
-                    <MetaPills bootcamp={matchedBootcamp} config={config} />
-
-                    {/* Highlights DYNAMIQUES */}
-                    <Highlights bootcamp={matchedBootcamp} config={config} />
-
-                    {/* Bande urgence DYNAMIQUE */}
-                    <UrgencyBand bootcamp={matchedBootcamp} config={config} />
-
-                    {/* CTAs */}
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        {canOpenModal ? (
-                            <Button
-                                onClick={() => onRegister(matchedBootcamp!)}
-                                size="lg"
-                                className={cn(
-                                    "flex-1 font-bold text-base group",
-                                    resultKey === "powerbi"
-                                        ? "bg-accent hover:bg-accent/90 text-white"
-                                        : "bg-primary hover:bg-primary/90 text-white"
-                                )}
-                            >
+                <div className="flex flex-col gap-4 sm:flex-row">
+                    {canOpenModal ? (
+                        <Button onClick={() => onRegister(matchedBootcamp!)} size="lg" className="flex-1">
+                            {config.ctaLabel}
+                            <ArrowRight />
+                        </Button>
+                    ) : (
+                        <Button asChild size="lg" className="flex-1">
+                            <Link to={config.ctaHref ?? "/formations"}>
                                 {config.ctaLabel}
-                                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                            </Button>
-                        ) : (
-                            <Button asChild size="lg" className="flex-1 font-bold text-base group bg-foreground hover:bg-foreground/90 text-background">
-                                <Link to={config.ctaHref ?? "/bootcamps"}>
-                                    {config.ctaLabel}
-                                    <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                                </Link>
-                            </Button>
-                        )}
-                        <Button asChild size="lg" variant="outline" className="flex-1 group">
-                            <Link to={config.secondaryHref}>
-                                {config.secondaryLabel}
-                                <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                                <ArrowRight />
                             </Link>
                         </Button>
-                    </div>
+                    )}
+                    <Button asChild size="lg" variant="outline" className="flex-1">
+                        <Link to={config.secondaryHref}>{config.secondaryLabel}</Link>
+                    </Button>
                 </div>
-            </div>
+            </Card>
 
             {/* Témoignage */}
-            <div className="rounded-2xl border border-border bg-card p-6 mb-6 opacity-0 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-                <div className="flex gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />)}
+            <Card radius="card" className="mb-6 border border-[#E7E0D4] p-6">
+                <div className="mb-3 flex gap-1" aria-label="5 étoiles sur 5">
+                    {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-[#F5B301] text-[#F5B301]" />)}
                 </div>
-                <p className="text-muted-foreground italic text-sm leading-relaxed mb-4">"{config.testimonial.content}"</p>
+                <p className="mb-4 text-sm italic leading-relaxed text-ink-secondary">« {config.testimonial.content} »</p>
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">{config.testimonial.initials}</span>
-                    </div>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-pill bg-navy text-xs font-bold text-white">
+                        {config.testimonial.initials}
+                    </span>
                     <div>
-                        <div className="font-semibold text-sm text-card-foreground">{config.testimonial.name}</div>
-                        <div className="text-xs text-muted-foreground">{config.testimonial.role}</div>
+                        <div className="text-sm font-semibold text-ink">{config.testimonial.name}</div>
+                        <div className="text-xs text-ink-secondary">{config.testimonial.role}</div>
                     </div>
                 </div>
-            </div>
+            </Card>
 
             {/* Actions secondaires */}
-            <div className="grid sm:grid-cols-2 gap-4 mb-8 opacity-0 animate-fade-in" style={{ animationDelay: "0.4s" }}>
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-border">
-                    <MessageCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+            <div className="mb-8 grid gap-4 sm:grid-cols-2">
+                <div className="flex items-center gap-3 rounded-stat bg-surface-sand p-4">
+                    <MessageCircle className="h-5 w-5 shrink-0 text-success" />
                     <div>
-                        <div className="text-sm font-semibold text-foreground">Une question ?</div>
-                        <a href={COMPANY.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                        <div className="text-sm font-semibold text-ink">Une question ?</div>
+                        <a href={COMPANY.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-navy hover:underline">
                             Discutez avec nous sur WhatsApp →
                         </a>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-border">
-                    <Trophy className="h-5 w-5 text-accent flex-shrink-0" />
+                <div className="flex items-center gap-3 rounded-stat bg-surface-sand p-4">
+                    <Trophy className="h-5 w-5 shrink-0 text-cta" />
                     <div>
-                        <div className="text-sm font-semibold text-foreground">Voir tous nos alumni</div>
-                        <Link to="/alumni" className="text-xs text-primary hover:underline">+150 réussites documentées →</Link>
+                        <div className="text-sm font-semibold text-ink">Voir tous nos alumni</div>
+                        <Link to="/alumni" className="text-xs font-semibold text-navy hover:underline">+150 réussites documentées →</Link>
                     </div>
                 </div>
             </div>
 
             {/* Recommencer */}
-            <div className="text-center opacity-0 animate-fade-in" style={{ animationDelay: "0.5s" }}>
-                <button onClick={onRestart} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
-                    <RotateCcw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
+            <div className="text-center">
+                <button onClick={onRestart} className="group inline-flex items-center gap-2 text-sm text-ink-secondary transition-colors hover:text-navy">
+                    <RotateCcw className="h-4 w-4 transition-transform duration-500 group-hover:rotate-180" />
                     Recommencer le questionnaire
                 </button>
-            </div>
-        </div>
-    );
-}
-
-// ─── ProgressBar ──────────────────────────────────────────────────────────────
-
-function ProgressBar({ current, total }: { current: number; total: number }) {
-    return (
-        <div className="w-full">
-            <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-semibold text-muted-foreground">Question {current} sur {total}</span>
-                <span className="text-xs text-muted-foreground">{Math.round((current / total) * 100)}%</span>
-            </div>
-            <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
-                <div
-                    className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-500 ease-out"
-                    style={{ width: `${(current / total) * 100}%` }}
-                />
             </div>
         </div>
     );
@@ -540,37 +484,52 @@ function QuestionCard({ question, selected, onSelect }: {
     question: Question; selected: string | undefined; onSelect: (v: string) => void;
 }) {
     return (
-        <div className="w-full max-w-2xl mx-auto">
-            <div className="text-center mb-10">
-                <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-3">{question.title}</h2>
-                <p className="text-muted-foreground">{question.subtitle}</p>
+        <div className="mx-auto w-full max-w-2xl">
+            <div className="mb-10 text-center">
+                <h2 className="mb-3 font-heading text-[26px] font-extrabold leading-tight tracking-[-0.5px] text-navy md:text-[34px]">
+                    {question.title}
+                </h2>
+                <p className="text-ink-secondary">{question.subtitle}</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {question.options.map((option, i) => {
+            <div role="radiogroup" aria-label={question.title} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {question.options.map((option) => {
                     const isSelected = selected === option.value;
                     return (
                         <button
                             key={option.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={isSelected}
                             onClick={() => onSelect(option.value)}
                             className={cn(
-                                "group relative flex items-start gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer opacity-0 animate-fade-in",
-                                "hover:border-primary/40 hover:bg-primary/3 hover:shadow-md hover:-translate-y-0.5",
-                                isSelected ? "border-primary bg-primary/8 shadow-md -translate-y-0.5" : "border-border bg-card"
+                                "relative flex items-start gap-4 rounded-card border-2 p-5 text-left transition-all duration-200",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2",
+                                isSelected
+                                    ? "border-navy bg-info-bg"
+                                    : "border-[#E7E0D4] bg-white hover:border-navy/40 hover:bg-white"
                             )}
-                            style={{ animationDelay: `${i * 0.06}s` }}
                         >
-                            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-200", isSelected ? "bg-primary/15 scale-110" : "bg-secondary group-hover:bg-primary/8")}>
+                            <span className={cn(
+                                "flex h-12 w-12 shrink-0 items-center justify-center rounded-stat text-2xl",
+                                isSelected ? "bg-white" : "bg-surface-sand"
+                            )}>
                                 {option.emoji}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className={cn("font-semibold text-base leading-tight mb-1 transition-colors", isSelected ? "text-primary" : "text-card-foreground group-hover:text-primary")}>
-                                    {option.label}
-                                </div>
-                                {option.sublabel && <div className="text-sm text-muted-foreground leading-snug">{option.sublabel}</div>}
-                            </div>
-                            <div className={cn("absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0", isSelected ? "border-primary bg-primary" : "border-border group-hover:border-primary/50")}>
-                                {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                            </div>
+                            </span>
+                            <span className="min-w-0 flex-1 pr-6">
+                                <span className="mb-1 block text-base font-semibold leading-tight text-navy">{option.label}</span>
+                                {option.sublabel && (
+                                    <span className="block text-sm leading-snug text-ink-secondary">{option.sublabel}</span>
+                                )}
+                            </span>
+                            <span
+                                aria-hidden="true"
+                                className={cn(
+                                    "absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-pill border-2",
+                                    isSelected ? "border-navy bg-navy" : "border-[#D6CEC0]"
+                                )}
+                            >
+                                {isSelected && <span className="h-2 w-2 rounded-pill bg-white" />}
+                            </span>
                         </button>
                     );
                 })}
@@ -597,7 +556,6 @@ const Orientation = () => {
     // Préchargé dès le montage pour que le résultat soit immédiat
     const {
         data: bootcamps,
-        isLoading: isLoadingBootcamps,
         isError: isErrorBootcamps,
     } = useQuery({
         queryKey:  ["bootcamps", "public"],
@@ -646,146 +604,111 @@ const Orientation = () => {
     }, [currentStep, showResult]);
 
     return (
-        <Layout>
-            <SeoHead {...PAGE_SEO.bootcamps} />
-            <div className="min-h-screen bg-background">
+        <SiteLayout>
+            <SeoHead {...PAGE_SEO.orientation} />
 
-                {/* ── INTRO ────────────────────────────────────────────────── */}
-                {currentStep === 0 && !showResult && (
-                    <section className="relative py-20 lg:py-32 overflow-hidden">
-                        <div className="absolute inset-0 pointer-events-none">
-                            <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/30" />
-                            <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full bg-accent/5 blur-3xl" />
-                            <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl" />
+            {/* ── INTRO ────────────────────────────────────────────────── */}
+            {currentStep === 0 && !showResult && (
+                <section className="px-6 py-16 lg:px-20 lg:py-24">
+                    <div className="mx-auto max-w-2xl text-center">
+                        <span className="mb-8 inline-flex h-20 w-20 items-center justify-center rounded-callout bg-navy">
+                            <Compass className="h-10 w-10 text-white" />
+                        </span>
+                        <div className="mb-6">
+                            <Pill variant="info">
+                                <Sparkles className="h-3.5 w-3.5" />
+                                Parcours d'orientation personnalisé
+                            </Pill>
                         </div>
-                        <div className="container mx-auto px-4 lg:px-8 relative z-10">
-                            <div className="max-w-2xl mx-auto text-center">
-                                <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent mb-8 shadow-glow opacity-0 animate-scale-in" style={{ animationDelay: "0.1s" }}>
-                                    <Compass className="h-10 w-10 text-white" />
-                                </div>
-                                <div className="opacity-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
-                                        <Sparkles className="h-3.5 w-3.5" />
-                                        Parcours d'orientation personnalisé
-                                    </div>
-                                    <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-                                        Trouvez le bootcamp<br />
-                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">fait pour vous</span>
-                                    </h1>
-                                    <p className="text-lg text-muted-foreground leading-relaxed mb-10 max-w-xl mx-auto">
-                                        En <strong className="text-foreground">5 questions</strong>, nous analysons votre profil, vos objectifs et votre niveau pour vous recommander la formation exacte qui va transformer votre carrière.
-                                    </p>
-                                </div>
-                                <div className="grid sm:grid-cols-3 gap-4 mb-10 opacity-0 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-                                    {[
-                                        { icon: Zap,        text: "2 minutes",        sub: "Pas plus"            },
-                                        { icon: Target,     text: "100% personnalisé", sub: "Selon votre profil"  },
-                                        { icon: TrendingUp, text: "Résultat immédiat", sub: "Avec recommandation" },
-                                    ].map((f) => (
-                                        <div key={f.text} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-secondary/50 border border-border">
-                                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                                <f.icon className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div className="font-bold text-foreground text-sm">{f.text}</div>
-                                            <div className="text-xs text-muted-foreground">{f.sub}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="flex items-center justify-center gap-3 mb-10 opacity-0 animate-fade-in" style={{ animationDelay: "0.35s" }}>
-                                    <div className="flex -space-x-2">
-                                        {["AM","FD","MS","KT","BN"].map((init, i) => (
-                                            <div key={init} className="w-8 h-8 rounded-full border-2 border-background bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xs font-bold" style={{ zIndex: 5 - i }}>
-                                                {init[0]}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        <strong className="text-foreground">+30 personnes</strong> ont trouvé leur parcours
-                                    </p>
-                                </div>
-                                <div className="opacity-0 animate-fade-in" style={{ animationDelay: "0.4s" }}>
-                                    <Button onClick={handleStart} size="lg" className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-bold px-10 py-4 h-auto text-lg group shadow-glow">
-                                        Commencer maintenant
-                                        <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                                    </Button>
-                                    <p className="text-xs text-muted-foreground mt-4">Aucune inscription requise · Résultat immédiat</p>
-                                </div>
+                        <h1 className="mb-6 font-heading text-[40px] font-extrabold leading-[1.05] tracking-[-1.5px] text-navy md:text-[56px]">
+                            Trouvez la formation <span className="text-cta">faite pour vous</span>
+                        </h1>
+                        <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-ink-secondary">
+                            En <strong className="text-ink">5 questions</strong>, nous analysons votre profil, vos objectifs et votre niveau pour vous recommander la formation exacte qui va transformer votre carrière.
+                        </p>
 
-                                {/* Erreur backend non bloquante */}
-                                {isErrorBootcamps && (
-                                    <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                                        <AlertCircle className="h-3.5 w-3.5" />
-                                        Les données en direct ne sont pas disponibles — les résultats seront affichés avec des informations générales.
-                                    </div>
-                                )}
-                            </div>
+                        <div className="mb-10 grid gap-4 sm:grid-cols-3">
+                            {[
+                                { icon: Zap,        text: "2 minutes",         sub: "Pas plus"            },
+                                { icon: Target,     text: "100% personnalisé", sub: "Selon votre profil"  },
+                                { icon: TrendingUp, text: "Résultat immédiat", sub: "Avec recommandation" },
+                            ].map((f) => (
+                                <Card key={f.text} radius="stat" className="flex flex-col items-center gap-2 border border-[#E7E0D4] p-4">
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-bg">
+                                        <f.icon className="h-5 w-5 text-navy" />
+                                    </span>
+                                    <div className="text-sm font-bold text-navy">{f.text}</div>
+                                    <div className="text-xs text-ink-secondary">{f.sub}</div>
+                                </Card>
+                            ))}
                         </div>
-                    </section>
-                )}
 
-                {/* ── QUIZ ─────────────────────────────────────────────────── */}
-                {currentStep > 0 && !showResult && (
-                    <section className="py-16 lg:py-24">
-                        <div className="container mx-auto px-4 lg:px-8">
-                            <div className="max-w-2xl mx-auto mb-10">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <button onClick={handleBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
-                                        <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                                        Retour
-                                    </button>
-                                    <div className="flex-1"><ProgressBar current={currentStep} total={totalSteps} /></div>
-                                </div>
-                            </div>
-                            <div className={cn("transition-opacity duration-200", isAnimating ? "opacity-0" : "opacity-100")}>
-                                {currentQuestion && <QuestionCard question={currentQuestion} selected={selectedOption} onSelect={handleSelect} />}
-                            </div>
-                            <div className="max-w-2xl mx-auto mt-8 flex justify-end">
-                                <Button
-                                    onClick={handleNext}
-                                    disabled={!selectedOption}
-                                    size="lg"
-                                    className={cn(
-                                        "font-bold group min-w-[180px] transition-all duration-200",
-                                        selectedOption ? "bg-primary hover:bg-primary/90 text-white shadow-soft" : "bg-muted text-muted-foreground cursor-not-allowed"
-                                    )}
-                                >
-                                    {currentStep === totalSteps
-                                        ? <><span>Voir mon résultat</span><Sparkles className="h-4 w-4 ml-2" /></>
-                                        : <><span>Suivant</span><ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" /></>
-                                    }
-                                </Button>
-                            </div>
-                            <div className="flex justify-center gap-2 mt-8">
-                                {questions.map((_, i) => (
-                                    <div key={i} className={cn("rounded-full transition-all duration-300",
-                                        i + 1 < currentStep ? "w-2 h-2 bg-primary" :
-                                            i + 1 === currentStep ? "w-6 h-2 bg-primary" : "w-2 h-2 bg-border"
-                                    )} />
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                )}
+                        <p className="mb-10 text-sm text-ink-secondary">
+                            <strong className="text-ink">+30 personnes</strong> ont déjà trouvé leur parcours
+                        </p>
 
-                {/* ── RÉSULTAT ─────────────────────────────────────────────── */}
-                {showResult && (
-                    <section className="py-16 lg:py-24 relative overflow-hidden">
-                        <div className="absolute inset-0 pointer-events-none">
-                            <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/4 blur-3xl" />
-                            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-accent/4 blur-3xl" />
+                        <Button onClick={handleStart} size="lg" className="px-10 text-[17px]">
+                            Commencer maintenant
+                            <ArrowRight />
+                        </Button>
+                        <p className="mt-4 text-xs text-ink-secondary">Aucune inscription requise · Résultat immédiat</p>
+
+                        {/* Erreur backend non bloquante */}
+                        {isErrorBootcamps && (
+                            <div className="mt-6 flex items-center justify-center gap-2 text-xs text-ink-secondary">
+                                <AlertCircle className="h-3.5 w-3.5" />
+                                Les données en direct ne sont pas disponibles — les résultats seront affichés avec des informations générales.
+                            </div>
+                        )}
+                    </div>
+                </section>
+            )}
+
+            {/* ── QUIZ ─────────────────────────────────────────────────── */}
+            {currentStep > 0 && !showResult && (
+                <section className="px-6 py-12 lg:px-20 lg:py-20">
+                    <div className="mx-auto mb-10 max-w-2xl">
+                        <div className="mb-3 flex items-center justify-between text-xs font-semibold text-ink-secondary">
+                            <button
+                                type="button"
+                                onClick={handleBack}
+                                className="group flex items-center gap-1.5 text-sm transition-colors hover:text-navy"
+                            >
+                                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                                Retour
+                            </button>
+                            <span>Question {currentStep} sur {totalSteps}</span>
                         </div>
-                        <div className="container mx-auto px-4 lg:px-8 relative z-10">
-                            <ResultScreen
-                                resultKey={resultKey}
-                                bootcamps={bootcamps}
-                                isLoadingBootcamps={isLoadingBootcamps}
-                                onRestart={handleRestart}
-                                onRegister={setRegisterFor}
-                            />
-                        </div>
-                    </section>
-                )}
-            </div>
+                        <ProgressBar value={currentStep} max={totalSteps} aria-label={`Question ${currentStep} sur ${totalSteps}`} />
+                    </div>
+
+                    <div className={cn("transition-opacity duration-200", isAnimating ? "opacity-0" : "opacity-100")}>
+                        {currentQuestion && (
+                            <QuestionCard question={currentQuestion} selected={selectedOption} onSelect={handleSelect} />
+                        )}
+                    </div>
+
+                    <div className="mx-auto mt-8 flex max-w-2xl justify-end">
+                        <Button onClick={handleNext} disabled={!selectedOption} size="lg" className="min-w-[180px]">
+                            {currentStep === totalSteps
+                                ? <><span>Voir mon résultat</span><Sparkles /></>
+                                : <><span>Suivant</span><ArrowRight /></>}
+                        </Button>
+                    </div>
+                </section>
+            )}
+
+            {/* ── RÉSULTAT ─────────────────────────────────────────────── */}
+            {showResult && (
+                <section className="px-6 py-12 lg:px-20 lg:py-20">
+                    <ResultScreen
+                        resultKey={resultKey}
+                        bootcamps={bootcamps}
+                        onRestart={handleRestart}
+                        onRegister={setRegisterFor}
+                    />
+                </section>
+            )}
 
             {/* ── Modale d'inscription ─────────────────────────────────────── */}
             {registerFor && (
@@ -796,7 +719,7 @@ const Orientation = () => {
                     onClose={() => setRegisterFor(null)}
                 />
             )}
-        </Layout>
+        </SiteLayout>
     );
 };
 

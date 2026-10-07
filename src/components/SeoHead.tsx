@@ -90,6 +90,11 @@ export const PAGE_SEO = {
         description: "Bootcamp Data Analyst (Python, SQL) et Power BI à Dakar. Formation pratique le soir et week-end. Places limitées — prochaine session bientôt.",
         path:        "/bootcamps",
     },
+    orientation: {
+        title:       "Quiz d'orientation — Trouvez la formation data faite pour vous",
+        description: "5 questions pour trouver la formation Model Technologie qui correspond à votre profil : Power BI, Data Analyst, parcours complet ou formation entreprise.",
+        path:        "/orientation",
+    },
     alumni: {
         title:       "Alumni & Projets — Résultats concrets de nos apprenants",
         description: "Découvrez les alumni de Model Technologie : leurs projets data, leurs entreprises et leur parcours depuis le bootcamp. 90% en poste en 3 mois.",

@@ -1,132 +1,92 @@
 /**
- * Page de demande de réinitialisation de mot de passe.
- * Route : /admin/forgot-password
+ * Demande de réinitialisation de mot de passe — route /admin/forgot-password
+ * (lien depuis /connexion). Appelle POST /auth/forgot-password.
  */
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, CheckCircle, Loader2, Mail } from "lucide-react";
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Mail, Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
-import logo from '@/assets/logo.png';
+import { authService } from "@/services/api/authService";
+import { AuthCardLayout } from "@/components/layouts/AuthCardLayout";
+import { Button } from "@/components/shared";
+
+const fieldClass =
+  "w-full rounded-xl border border-[#D6CEC0] bg-white py-3.5 pl-11 pr-4 font-sans text-base text-ink outline-none focus:border-navy";
 
 const AdminForgotPassword = () => {
-    const { forgotPassword } = useAuth();
-    const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
-    const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await authService.forgotPassword(email.trim());
+      setSubmitted(true); // Toujours confirmer (anti-énumération de comptes)
+    } catch {
+      setError("Une erreur est survenue. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const { error } = await forgotPassword(email);
-
-        if (error) {
-            setError('Une erreur est survenue. Veuillez réessayer.');
-        } else {
-            setSubmitted(true); // Toujours afficher la confirmation (sécurité anti-énumération)
-        }
-        setLoading(false);
-    };
-
-    return (
-        <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
-                <div className="bg-card border border-border rounded-2xl p-8 shadow-card">
-
-                    {/* Logo */}
-                    <div className="flex flex-col items-center mb-8">
-                        <img src={logo} alt="Model Technologie" className="h-14 w-auto mb-4" />
-                        <div className="text-center">
-                            <h1 className="text-xl font-bold text-foreground">Mot de passe oublié</h1>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                Saisissez votre email pour recevoir un lien de réinitialisation
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* État : soumis avec succès */}
-                    {submitted ? (
-                        <div className="text-center space-y-4">
-                            <div className="flex justify-center">
-                                <CheckCircle className="h-12 w-12 text-green-500" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-foreground">Email envoyé !</p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Si un compte est associé à <strong>{email}</strong>, vous recevrez
-                                    un lien de réinitialisation dans quelques minutes.
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                    Pensez à vérifier vos spams.
-                                </p>
-                            </div>
-                            <Link
-                                to="/admin/login"
-                                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Retour à la connexion
-                            </Link>
-                        </div>
-                    ) : (
-                        <>
-                            {error && (
-                                <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm text-destructive">
-                                    {error}
-                                </div>
-                            )}
-
-                            <form onSubmit={handleSubmit} className="space-y-5">
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Adresse email</Label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="admin@modeltechnologie.com"
-                                            className="pl-10"
-                                            required
-                                            autoComplete="email"
-                                        />
-                                    </div>
-                                </div>
-
-                                <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            Envoi en cours...
-                                        </>
-                                    ) : (
-                                        'Envoyer le lien de réinitialisation'
-                                    )}
-                                </Button>
-                            </form>
-
-                            <div className="mt-6 pt-6 border-t border-border text-center">
-                                <Link
-                                    to="/admin/login"
-                                    className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-                                >
-                                    <ArrowLeft className="h-3 w-3" />
-                                    Retour à la connexion
-                                </Link>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
+  return (
+    <AuthCardLayout
+      title="Mot de passe oublié"
+      description="Saisissez votre e-mail pour recevoir un lien de réinitialisation."
+    >
+      {submitted ? (
+        <div className="flex flex-col items-center gap-4 text-center">
+          <CheckCircle className="h-12 w-12 text-success" />
+          <div>
+            <p className="font-semibold text-ink">E-mail envoyé !</p>
+            <p className="mt-1 text-sm text-ink-secondary">
+              Si un compte est associé à <strong className="text-ink">{email}</strong>, vous recevrez un lien de
+              réinitialisation dans quelques minutes. Pensez à vérifier vos spams.
+            </p>
+          </div>
+          <Link to="/connexion" className="inline-flex items-center gap-2 text-sm font-semibold text-navy">
+            <ArrowLeft className="h-4 w-4" />
+            Retour à la connexion
+          </Link>
         </div>
-    );
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {error && (
+            <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">
+              {error}
+            </div>
+          )}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="fp-mail" className="text-sm font-semibold text-ink">Adresse e-mail</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-secondary" />
+              <input
+                id="fp-mail"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="vous@exemple.com"
+                className={fieldClass}
+              />
+            </div>
+          </div>
+          <Button type="submit" size="lg" className="rounded-xl" disabled={loading}>
+            {loading ? <Loader2 className="animate-spin" /> : "Envoyer le lien de réinitialisation"}
+          </Button>
+          <Link to="/connexion" className="inline-flex items-center justify-center gap-1 text-sm text-ink-secondary hover:text-navy">
+            <ArrowLeft className="h-3 w-3" />
+            Retour à la connexion
+          </Link>
+        </form>
+      )}
+    </AuthCardLayout>
+  );
 };
 
 export default AdminForgotPassword;

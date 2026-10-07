@@ -5,6 +5,7 @@
 import { Link } from "react-router-dom";
 import { COMPANY } from "@/config/constants";
 import { ComingSoonLink } from "./ComingSoonLink";
+import { LogoChip } from "@/components/shared/Logo";
 
 const COLUMNS: { title: string; links: { label: string; href: string; comingSoon?: boolean }[] }[] = [
   {
@@ -33,7 +34,7 @@ export function SiteFooterNew() {
     <footer className="bg-navy-dark px-6 py-16 text-[#C9D4E0] lg:px-20">
       <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex flex-col gap-3.5">
-          <span className="font-heading text-xl font-bold text-white">Model Technologie</span>
+          <LogoChip className="h-16" />
           <p className="max-w-xs text-sm leading-relaxed">
             Formations data pour professionnels et entreprises. Dakar, Sénégal.
           </p>

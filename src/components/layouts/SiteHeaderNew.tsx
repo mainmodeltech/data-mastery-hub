@@ -1,14 +1,14 @@
 /**
- * Design-system site header (Lot 0-2, docs/design/README.md §2 — screens/site/Main.dc.html
+ * Design-system site header (docs/design/README.md §2 — screens/site/Main.dc.html
  * + screens/site/Mobile.dc.html pour le menu mobile).
- * Net-new, separate from @/components/layout/Header.tsx (the current, data-driven
- * header kept unchanged for the 8 pre-existing pages).
+ * Sticky : le menu reste visible au défilement.
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 import { Button } from "@/components/shared/Button";
+import { Logo } from "@/components/shared/Logo";
 import { ComingSoonLink } from "./ComingSoonLink";
 
 const NAV_ITEMS: { label: string; href: string; comingSoon?: boolean }[] = [
@@ -24,15 +24,10 @@ export function SiteHeaderNew() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="relative border-b border-[#E7E0D4] bg-site-bg">
-      <div className="flex items-center gap-8 px-5 py-3.5 lg:px-20 lg:py-5">
-        <Link to="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="flex h-[34px] w-[34px] items-center justify-center rounded-[9px] bg-navy font-heading text-lg font-extrabold text-white lg:h-10 lg:w-10 lg:rounded-[10px]">
-            M
-          </span>
-          <span className="font-heading text-base font-bold text-navy">
-            Model<span className="text-cta">Technologie</span>
-          </span>
+    <header className="sticky top-0 z-40 border-b border-[#E7E0D4] bg-site-bg/95 backdrop-blur supports-[backdrop-filter]:bg-site-bg/85">
+      <div className="flex items-center gap-8 px-5 py-2 lg:px-20 lg:py-2.5">
+        <Link to="/" aria-label="Model Technologie — accueil" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
+          <Logo className="h-11 lg:h-[52px]" />
         </Link>
 
         <nav className="hidden items-center gap-7 lg:flex">
@@ -78,7 +73,7 @@ export function SiteHeaderNew() {
       </div>
 
       {open && (
-        <nav className="absolute inset-x-0 top-full z-20 flex flex-col gap-1 border-b border-[#E7E0D4] bg-white px-5 py-4 shadow-[0_12px_24px_rgba(26,58,91,0.08)] lg:hidden">
+        <nav className="absolute inset-x-0 top-full z-20 flex max-h-[calc(100vh-4rem)] flex-col gap-1 overflow-y-auto border-b border-[#E7E0D4] bg-white px-5 py-4 shadow-[0_12px_24px_rgba(26,58,91,0.08)] lg:hidden">
           {NAV_ITEMS.map((item) =>
             item.comingSoon ? (
               <ComingSoonLink

@@ -12,6 +12,7 @@ import { Menu, X, Search, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import { ComingSoonLink } from "./ComingSoonLink";
+import { Logo } from "@/components/shared/Logo";
 
 export interface AppNavItem {
   href: string;
@@ -75,8 +76,8 @@ export function AppLayout({
       >
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-white font-heading text-lg font-extrabold text-navy">
-              M
+            <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-white p-1.5">
+              <Logo variant="mark" className="h-full" />
             </span>
             <span className="flex flex-col leading-tight">
               <span className="font-heading text-sm font-bold text-white">Model Technologie</span>
