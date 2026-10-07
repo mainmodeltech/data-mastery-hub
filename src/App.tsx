@@ -56,6 +56,8 @@ const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
 const AdminCandidatures = lazy(() => import('./pages/admin/AdminCandidatures'));
 const AdminFormationEditor = lazy(() => import('./pages/admin/AdminFormationEditor'));
 const AdminSessionSuivi = lazy(() => import('./pages/admin/AdminSessionSuivi'));
+const AdminApprenants = lazy(() => import('./pages/admin/AdminApprenants'));
+const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
 const AdminPartenaires = lazy(() => import('./pages/admin/AdminPartenaires'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
@@ -151,6 +153,9 @@ const App = () => (
                   {/* ── Backoffice admin ─────────────────────────── */}
                   <Route path="/admin/login"          element={<Navigate to="/connexion" replace />} />
                   <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+                  {/* Chemins neutres : le lien d'invitation / de réinitialisation envoyé aux apprenants */}
+                  <Route path="/mot-de-passe-oublie" element={<AdminForgotPassword />} />
+                  <Route path="/reinitialiser-mot-de-passe" element={<AdminResetPassword />} />
                   <Route path="/admin/reset-password"  element={<AdminResetPassword />} />
 
                   <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
@@ -168,6 +173,8 @@ const App = () => (
 
                   {/* Autres sections */}
                   <Route path="/admin/formations/:id" element={<ProtectedRoute><AdminFormationEditor /></ProtectedRoute>} />
+                  <Route path="/admin/apprenants" element={<ProtectedRoute><AdminApprenants /></ProtectedRoute>} />
+                  <Route path="/admin/comptes" element={<ProtectedRoute><AdminComptes /></ProtectedRoute>} />
                   <Route path="/admin/domaines" element={<ProtectedRoute><AdminDomaines /></ProtectedRoute>} />
                   <Route path="/admin/partenaires" element={<ProtectedRoute><AdminPartenaires /></ProtectedRoute>} />
                   <Route path="/admin/sessions/:id" element={<ProtectedRoute><AdminSessionSuivi /></ProtectedRoute>} />

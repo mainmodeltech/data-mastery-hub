@@ -5,6 +5,7 @@
  */
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { hasAnyRole } from "@/lib/roles";
 import { AppLayout, type AppNavItem } from "@/components/layouts/AppLayout";
 import {
   LayoutDashboard,
@@ -20,6 +21,7 @@ import {
   Eye,
   Layers,
   Handshake,
+  ShieldCheck,
 } from "lucide-react";
 
 const navItems: AppNavItem[] = [
@@ -36,6 +38,8 @@ const navItems: AppNavItem[] = [
   { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare, section: "Contenu du site" },
   { href: "/admin/alumni", label: "Alumni", icon: GraduationCap, section: "Contenu du site" },
   { href: "/admin/projets", label: "Projets", icon: Users, section: "Contenu du site" },
+  { href: "/admin/apprenants", label: "Apprenants", icon: GraduationCap, section: "Équipe & comptes" },
+  { href: "/admin/comptes", label: "Comptes back-office", icon: ShieldCheck, section: "Équipe & comptes" },
   // Le personnel peut ouvrir l'espace apprenant (aperçu) ; les comptes apprenants arrivent avec le backend learner-accounts.
   { href: "/espace", label: "Aperçu espace apprenant", icon: Eye, section: "Apprenants" },
 ];
@@ -57,10 +61,12 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
   };
 
   const initials = (user?.email ?? "AD").slice(0, 2).toUpperCase();
+  // La gestion des comptes back-office est réservée au super administrateur (403 côté serveur sinon)
+  const visibleNav = navItems.filter((i) => i.href !== "/admin/comptes" || hasAnyRole(user?.roles, ["SUPER_ADMIN"]));
 
   return (
     <AppLayout
-      navItems={navItems}
+      navItems={visibleNav}
       title={title}
       description={description}
       subtitle="Backoffice"

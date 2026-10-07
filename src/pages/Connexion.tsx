@@ -108,7 +108,7 @@ export default function Connexion() {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between">
               <label htmlFor="l-pw" className="text-sm font-semibold text-ink">Mot de passe</label>
-              <Link to="/admin/forgot-password" className="text-sm font-semibold">Mot de passe oublié ?</Link>
+              <Link to="/mot-de-passe-oublie" className="text-sm font-semibold">Mot de passe oublié ?</Link>
             </div>
             <div className="relative">
               <input

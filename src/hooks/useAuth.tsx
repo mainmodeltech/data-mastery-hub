@@ -128,6 +128,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const signOut = useCallback(() => {
+    // Révocation côté serveur (liste noire du jeton) : best-effort, la déconnexion locale ne l'attend pas.
+    if (localStorage.getItem(JWT_STORAGE_KEY)) {
+      httpClient.post("/auth/logout").catch(() => undefined);
+    }
     localStorage.removeItem(JWT_STORAGE_KEY);
     setToken(null);
   }, []);
