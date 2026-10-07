@@ -37,9 +37,10 @@ interface AdminLayoutProps {
   children: React.ReactNode;
   title: string;
   description?: string;
+  actions?: React.ReactNode;
 }
 
-export const AdminLayout = ({ children, title, description }: AdminLayoutProps) => {
+export const AdminLayout = ({ children, title, description, actions }: AdminLayoutProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -60,9 +61,12 @@ export const AdminLayout = ({ children, title, description }: AdminLayoutProps) 
       hideSearch
       hideNotifications
       headerExtra={
-        <a href="/" target="_blank" rel="noreferrer" className="hidden text-sm font-medium text-ink-secondary hover:text-cta sm:block">
-          Voir le site →
-        </a>
+        <>
+          {actions}
+          <a href="/" target="_blank" rel="noreferrer" className="hidden text-sm font-medium text-ink-secondary hover:text-cta sm:block">
+            Voir le site →
+          </a>
+        </>
       }
       helpSlot={
         <div className="flex flex-col gap-3">

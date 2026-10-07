@@ -201,6 +201,12 @@ export default function AdminBootcamps() {
                       >
                         <CalendarDays className="h-3.5 w-3.5" />Sessions
                       </Button>
+                      <Button
+                          variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground gap-1"
+                          onClick={() => navigate(`/admin/formations/${bootcamp.id}`)}
+                      >
+                        <BookOpen className="h-3.5 w-3.5" />Programme
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8"
                               title={bootcamp.published ? "Dépublier" : "Publier"}
                               onClick={() => toggleMutation.mutate(bootcamp.id)}

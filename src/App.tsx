@@ -12,11 +12,14 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QUERY_CONFIG } from '@/config/constants';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
-import { LEARNER_ROLES } from '@/lib/roles';
+import { LEARNER_ROLES, STAFF_ROLES } from '@/lib/roles';
 import AdminPromoCodes from "@/pages/admin/AdminPromoCodes.tsx";
 import MasterclassPage from "@/pages/MasterclassPage";
 import AdminForgotPassword from "@/pages/admin/AdminForgotPassword.tsx";
 import AdminResetPassword from "@/pages/admin/AdminResetPassword.tsx";
+
+// L'espace apprenant est aussi ouvert au personnel (aperçu depuis l'éditeur de formation)
+const LEARNER_AREA_ROLES = [...LEARNER_ROLES, ...STAFF_ROLES];
 
 // ============================================================
 // Lazy loading des pages
@@ -33,6 +36,8 @@ const Orientation = lazy(() => import('./pages/Orientation'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Connexion = lazy(() => import('./pages/Connexion'));
 const Espace = lazy(() => import('./pages/Espace'));
+const MesFormations = lazy(() => import('./pages/MesFormations'));
+const CoursePlayer = lazy(() => import('./pages/CoursePlayer'));
 const Coaching = lazy(() => import('./pages/Coaching'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Ressources = lazy(() => import('./pages/Ressources'));
@@ -47,6 +52,7 @@ const AdminBootcampForm = lazy(() => import('./pages/admin/BootcampForm'));
 const AdminAllSessions = lazy(() => import('./pages/admin/AdminAllSessions'));
 const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
 const AdminCandidatures = lazy(() => import('./pages/admin/AdminCandidatures'));
+const AdminFormationEditor = lazy(() => import('./pages/admin/AdminFormationEditor'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminReferences = lazy(() => import('./pages/admin/AdminReferences'));
 const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
@@ -126,7 +132,11 @@ const App = () => (
 
                   {/* ── Connexion unique + espace apprenant (Lot 3) ─ */}
                   <Route path="/connexion" element={<Connexion />} />
-                  <Route path="/espace" element={<ProtectedRoute roles={LEARNER_ROLES}><Espace /></ProtectedRoute>} />
+                  {/* Le personnel y accède aussi : bouton « Aperçu apprenant » de l'éditeur de formation */}
+                  <Route path="/espace" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><Espace /></ProtectedRoute>} />
+                  <Route path="/espace/formations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><MesFormations /></ProtectedRoute>} />
+                  <Route path="/espace/formations/:id" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
+                  <Route path="/espace/formations/:id/lecons/:lessonId" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
 
                   {/* ── Backoffice admin ─────────────────────────── */}
                   <Route path="/admin/login"          element={<AdminLogin />} />
@@ -147,6 +157,7 @@ const App = () => (
 
 
                   {/* Autres sections */}
+                  <Route path="/admin/formations/:id" element={<ProtectedRoute><AdminFormationEditor /></ProtectedRoute>} />
                   <Route path="/admin/candidatures" element={<ProtectedRoute><AdminCandidatures /></ProtectedRoute>} />
                   <Route path="/admin/inscriptions" element={<ProtectedRoute><AdminInscriptions /></ProtectedRoute>} />
                   <Route path="/admin/promo-codes" element={<ProtectedRoute><AdminPromoCodes /></ProtectedRoute>} />

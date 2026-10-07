@@ -11,12 +11,15 @@ import { Menu, X, Search, Bell } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import { ComingSoonLink } from "./ComingSoonLink";
 
 export interface AppNavItem {
   href: string;
   label: string;
   icon: LucideIcon;
   exact?: boolean;
+  /** Page pas encore disponible : badge "en cours" + popup au lieu d'une navigation. */
+  comingSoon?: boolean;
 }
 
 export interface AppLayoutProps {
@@ -31,6 +34,8 @@ export interface AppLayoutProps {
   hideSearch?: boolean;
   hideNotifications?: boolean;
   headerExtra?: ReactNode;
+  /** Barre d'onglets mobile (remplace le menu burger sous lg). */
+  bottomNav?: ReactNode;
 }
 
 export function AppLayout({
@@ -45,6 +50,7 @@ export function AppLayout({
   hideSearch = false,
   hideNotifications = false,
   headerExtra,
+  bottomNav,
 }: AppLayoutProps) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -88,6 +94,18 @@ export function AppLayout({
 
         <nav aria-label="Navigation principale" className="flex-1 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
+            if (item.comingSoon) {
+              return (
+                <ComingSoonLink
+                  key={item.href}
+                  title={item.label}
+                  className="w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-[#C9D4E0] hover:bg-white/10"
+                >
+                  <item.icon className="h-4 w-4 shrink-0 text-[#8FA5BC]" />
+                  <span>{item.label}</span>
+                </ComingSoonLink>
+              );
+            }
             const active = isActive(item.href, item.exact);
             return (
               <Link
@@ -115,7 +133,7 @@ export function AppLayout({
         <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-[#E7E0D4] bg-white px-4 py-6 lg:px-10">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-ink-secondary hover:text-navy lg:hidden"
+            className={cn("text-ink-secondary hover:text-navy lg:hidden", bottomNav && "hidden")}
             aria-label="Ouvrir le menu"
           >
             <Menu className="h-5 w-5" />
@@ -158,8 +176,9 @@ export function AppLayout({
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-10">{children}</main>
+        <main className={cn("flex-1 p-4 lg:p-10", bottomNav && "pb-24 lg:pb-10")}>{children}</main>
       </div>
+      {bottomNav}
     </div>
   );
 }
