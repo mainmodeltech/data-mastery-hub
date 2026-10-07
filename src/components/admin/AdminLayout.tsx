@@ -18,22 +18,26 @@ import {
   Tag,
   Wallet,
   Eye,
+  Layers,
+  Handshake,
 } from "lucide-react";
 
 const navItems: AppNavItem[] = [
   { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
-  { href: "/admin/bootcamps", label: "Bootcamps", icon: BookOpen },
-  { href: "/admin/bootcamp-sessions", label: "Sessions bootcamp", icon: CalendarDays },
-  { href: "/admin/candidatures", label: "Candidatures & paiements", icon: Wallet },
-  { href: "/admin/inscriptions", label: "Inscriptions", icon: ClipboardList },
-  { href: "/admin/masterclass", label: "Masterclass", icon: ClipboardList },
-  { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag },
-  { href: "/admin/messages", label: "Messages", icon: MessageSquare },
-  { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare },
-  { href: "/admin/alumni", label: "Alumni", icon: GraduationCap },
-  { href: "/admin/projets", label: "Projets", icon: Users },
+  { href: "/admin/bootcamps", label: "Formations", icon: BookOpen, section: "Catalogue" },
+  { href: "/admin/domaines", label: "Domaines", icon: Layers, section: "Catalogue" },
+  { href: "/admin/partenaires", label: "Partenaires", icon: Handshake, section: "Catalogue" },
+  { href: "/admin/bootcamp-sessions", label: "Sessions", icon: CalendarDays, section: "Catalogue" },
+  { href: "/admin/candidatures", label: "Candidatures & paiements", icon: Wallet, section: "Admissions" },
+  { href: "/admin/inscriptions", label: "Inscriptions", icon: ClipboardList, section: "Admissions" },
+  { href: "/admin/masterclass", label: "Masterclass", icon: ClipboardList, section: "Admissions" },
+  { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag, section: "Admissions" },
+  { href: "/admin/messages", label: "Messages", icon: MessageSquare, section: "Relation" },
+  { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare, section: "Contenu du site" },
+  { href: "/admin/alumni", label: "Alumni", icon: GraduationCap, section: "Contenu du site" },
+  { href: "/admin/projets", label: "Projets", icon: Users, section: "Contenu du site" },
   // Le personnel peut ouvrir l'espace apprenant (aperçu) ; les comptes apprenants arrivent avec le backend learner-accounts.
-  { href: "/espace", label: "Aperçu espace apprenant", icon: Eye },
+  { href: "/espace", label: "Aperçu espace apprenant", icon: Eye, section: "Apprenants" },
 ];
 
 interface AdminLayoutProps {

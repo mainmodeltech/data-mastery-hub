@@ -21,6 +21,8 @@ export interface AppNavItem {
   exact?: boolean;
   /** Page pas encore disponible : badge "en cours" + popup au lieu d'une navigation. */
   comingSoon?: boolean;
+  /** Titre de groupe affiché au-dessus de cet item (une seule fois par groupe consécutif). */
+  section?: string;
 }
 
 export interface AppLayoutProps {
@@ -94,35 +96,49 @@ export function AppLayout({
         </div>
 
         <nav aria-label="Navigation principale" className="flex-1 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {navItems.map((item, index) => {
+            const heading =
+              item.section && item.section !== navItems[index - 1]?.section ? (
+                <p
+                  key={`section-${item.section}`}
+                  className={cn("px-3 pb-1 text-[11px] font-bold uppercase tracking-[1px] text-[#8FA5BC]", index > 0 && "pt-4")}
+                >
+                  {item.section}
+                </p>
+              ) : null;
             if (item.comingSoon) {
               return (
-                <ComingSoonLink
-                  key={item.href}
-                  title={item.label}
-                  className="w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-[#C9D4E0] hover:bg-white/10"
-                >
-                  <item.icon className="h-4 w-4 shrink-0 text-[#8FA5BC]" />
-                  <span>{item.label}</span>
-                </ComingSoonLink>
+                <div key={item.href}>
+                  {heading}
+                  <ComingSoonLink
+                    title={item.label}
+                    className="w-full rounded-[10px] px-3 py-2.5 text-sm font-medium text-[#C9D4E0] hover:bg-white/10"
+                  >
+                    <item.icon className="h-4 w-4 shrink-0 text-[#8FA5BC]" />
+                    <span>{item.label}</span>
+                  </ComingSoonLink>
+                </div>
               );
             }
             const active = isActive(item.href, item.exact);
             return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors",
-                  active
-                    ? "bg-white font-bold text-navy"
-                    : "text-[#C9D4E0] font-medium hover:bg-white/10"
-                )}
-              >
-                <item.icon className={cn("h-4 w-4 shrink-0", active ? "text-navy" : "text-[#8FA5BC]")} />
-                <span>{item.label}</span>
-              </Link>
+              <div key={item.href}>
+                {heading}
+                <Link
+                  to={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors",
+                    active
+                      ? "bg-white font-bold text-navy"
+                      : "text-[#C9D4E0] font-medium hover:bg-white/10"
+                  )}
+                >
+                  <item.icon className={cn("h-4 w-4 shrink-0", active ? "text-navy" : "text-[#8FA5BC]")} />
+                  <span>{item.label}</span>
+                </Link>
+              </div>
             );
           })}
         </nav>

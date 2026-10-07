@@ -55,6 +55,8 @@ const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
 const AdminCandidatures = lazy(() => import('./pages/admin/AdminCandidatures'));
 const AdminFormationEditor = lazy(() => import('./pages/admin/AdminFormationEditor'));
 const AdminSessionSuivi = lazy(() => import('./pages/admin/AdminSessionSuivi'));
+const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
+const AdminPartenaires = lazy(() => import('./pages/admin/AdminPartenaires'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminReferences = lazy(() => import('./pages/admin/AdminReferences'));
 const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
@@ -162,6 +164,8 @@ const App = () => (
 
                   {/* Autres sections */}
                   <Route path="/admin/formations/:id" element={<ProtectedRoute><AdminFormationEditor /></ProtectedRoute>} />
+                  <Route path="/admin/domaines" element={<ProtectedRoute><AdminDomaines /></ProtectedRoute>} />
+                  <Route path="/admin/partenaires" element={<ProtectedRoute><AdminPartenaires /></ProtectedRoute>} />
                   <Route path="/admin/sessions/:id" element={<ProtectedRoute><AdminSessionSuivi /></ProtectedRoute>} />
                   <Route path="/admin/candidatures" element={<ProtectedRoute><AdminCandidatures /></ProtectedRoute>} />
                   <Route path="/admin/inscriptions" element={<ProtectedRoute><AdminInscriptions /></ProtectedRoute>} />

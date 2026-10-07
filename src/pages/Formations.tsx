@@ -35,7 +35,7 @@ const FAQ_ITEMS = [
 ];
 
 export default function Formations() {
-  const { data: formations = [], isLoading } = useFormations();
+  const { data: formations = [], isLoading, isError } = useFormations();
   const { data: domains = [] } = useDomains();
   const { data: sessions = [] } = useAllFormationSessions();
   const [filters, setFilters] = useState<FormationFilters>(EMPTY_FILTERS);
@@ -112,6 +112,11 @@ export default function Formations() {
         <FilterBar domains={domains} targetRoles={targetRoles} filters={filters} onChange={setFilters} />
 
         {isLoading && <p className="mt-10 text-sm text-ink-secondary">Chargement des formations…</p>}
+        {isError && (
+          <p role="alert" className="mt-10 rounded-card bg-error-bg px-5 py-4 text-sm text-error">
+            Le catalogue est momentanément indisponible. Réessayez dans quelques instants ou contactez-nous.
+          </p>
+        )}
 
         <div className="mt-10 flex flex-col gap-16">
           {Array.from(byDomain.entries()).map(([domainId, items]) => {
@@ -137,7 +142,7 @@ export default function Formations() {
             );
           })}
 
-          {!isLoading && filtered.length === 0 && (
+          {!isLoading && !isError && filtered.length === 0 && (
             <p className="text-sm text-ink-secondary">Aucune formation ne correspond à ces filtres.</p>
           )}
         </div>

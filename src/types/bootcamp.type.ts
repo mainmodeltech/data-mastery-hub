@@ -64,6 +64,8 @@ export interface CreateBootcampPayload {
     audience?: string;
     prerequisites?: string;
     price?: string;
+    /** Montant numérique en FCFA (paiements, échéances) */
+    priceAmount?: number | null;
     benefits?: string[];
     category?: string;
     tag?: string;
@@ -71,6 +73,24 @@ export interface CreateBootcampPayload {
     featured?: boolean;
     published?: boolean;
     displayOrder?: number;
+    // ── Fiche formation riche (facultatif) ──
+    tagline?: string;
+    colorKey?: string;
+    profiles?: { icon: string; label: string }[];
+    tools?: { name: string; level: number }[];
+    curriculum?: { week: string; title: string; hours: string; topics: string[]; project: string }[];
+    outcomes?: { stat: string; label: string }[];
+    certification?: { name: string; logo: string; description: string } | null;
+    // ── Catalogue par domaines (facultatif) ──
+    slug?: string;
+    domainId?: string | null;
+    deliveredBy?: "INTERNAL" | "PARTNER";
+    partnerId?: string | null;
+    level?: "DEBUTANT" | "INTERMEDIAIRE" | "AVANCE" | null;
+    format?: "PRESENTIEL" | "EN_LIGNE" | "HYBRIDE" | null;
+    certificationPrep?: string;
+    targetRoles?: string[];
+    relatedFormationIds?: string[];
 }
 
 export interface UpdateBootcampPayload extends Partial<CreateBootcampPayload> {}

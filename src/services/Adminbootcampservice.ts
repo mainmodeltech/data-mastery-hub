@@ -1,5 +1,6 @@
 // src/services/adminBootcampService.ts
 import { httpClient } from "./httpClient";
+import type { Formation } from "@/types/formation.type";
 import type {
     Bootcamp,
     BootcampSession,
@@ -19,6 +20,12 @@ export const adminBootcampService = {
 
     // Détail avec toutes les sessions
     get: (id: string) => httpClient.get<Bootcamp>(`${BASE}/${id}`),
+
+    // Fiche complète (champs catalogue : domaine, partenaire, niveau, contenu riche)
+    getFormation: (id: string) => httpClient.get<Formation>(`${BASE}/${id}`),
+
+    // Liste complète pour l'admin (publiées ou non)
+    listFormations: () => httpClient.get<Formation[]>(BASE),
 
     // Créer
     create: (payload: CreateBootcampPayload) =>

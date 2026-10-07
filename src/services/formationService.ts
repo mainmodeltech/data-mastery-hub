@@ -1,15 +1,13 @@
 /**
  * formationService.ts
- * Service PUBLIC pour le catalogue de formations (Lot 1).
+ * Service PUBLIC pour le catalogue de formations (formations, domaines, partenaires).
  *
- * Les endpoints `/formations`, `/domains`, `/partners` et les champs
- * domain/partner/deliveredBy/level/format n'existent pas encore côté backend
- * (voir docs/design/README.md §3-§4 — dépend de la branche back
- * `feature/domain-partner-model`). Chaque méthode tente l'API réelle puis
- * retombe sur les données de démonstration (src/config/mockFormationsCatalog.ts)
- * en cas d'échec, pour que le catalogue reste navigable pendant la transition.
+ * Le backend expose ces endpoints : en production, une erreur est propagée (la page affiche
+ * un message) au lieu de montrer des formations fictives. Seuls les builds de développement
+ * (ou VITE_ENABLE_DEMO_DATA=true) retombent sur src/config/mockFormationsCatalog.ts.
  */
 import { httpClient } from "./httpClient";
+import { DEMO_ALLOWED } from "./demoFallback";
 import type { Domain, Partner, Formation, FlatSession } from "@/types/formation.type";
 import {
   MOCK_DOMAINS,
@@ -38,7 +36,8 @@ export const formationService = {
   list: async (): Promise<Formation[]> => {
     try {
       return await httpClient.get<Formation[]>("/formations", { skipAuth: true });
-    } catch {
+    } catch (e) {
+      if (!DEMO_ALLOWED) throw e;
       return MOCK_FORMATIONS;
     }
   },
@@ -46,7 +45,8 @@ export const formationService = {
   getBySlug: async (slug: string): Promise<Formation | undefined> => {
     try {
       return await httpClient.get<Formation>(`/formations/slug/${slug}`, { skipAuth: true });
-    } catch {
+    } catch (e) {
+      if (!DEMO_ALLOWED) throw e;
       return getFormationBySlug(slug);
     }
   },
@@ -54,7 +54,8 @@ export const formationService = {
   listDomains: async (): Promise<Domain[]> => {
     try {
       return await httpClient.get<Domain[]>("/domains", { skipAuth: true });
-    } catch {
+    } catch (e) {
+      if (!DEMO_ALLOWED) throw e;
       return MOCK_DOMAINS;
     }
   },
@@ -62,7 +63,8 @@ export const formationService = {
   listPartners: async (): Promise<Partner[]> => {
     try {
       return await httpClient.get<Partner[]>("/partners", { skipAuth: true });
-    } catch {
+    } catch (e) {
+      if (!DEMO_ALLOWED) throw e;
       return MOCK_PARTNERS;
     }
   },
@@ -71,7 +73,8 @@ export const formationService = {
   listAllSessions: async (): Promise<FlatSession[]> => {
     try {
       return await httpClient.get<FlatSession[]>("/formations/sessions", { skipAuth: true });
-    } catch {
+    } catch (e) {
+      if (!DEMO_ALLOWED) throw e;
       return flattenSessions(MOCK_FORMATIONS);
     }
   },
