@@ -17,6 +17,7 @@ import {
   CalendarDays,
   Tag,
   Wallet,
+  Eye,
 } from "lucide-react";
 
 const navItems: AppNavItem[] = [
@@ -31,6 +32,8 @@ const navItems: AppNavItem[] = [
   { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare },
   { href: "/admin/alumni", label: "Alumni", icon: GraduationCap },
   { href: "/admin/projets", label: "Projets", icon: Users },
+  // Le personnel peut ouvrir l'espace apprenant (aperçu) ; les comptes apprenants arrivent avec le backend learner-accounts.
+  { href: "/espace", label: "Aperçu espace apprenant", icon: Eye },
 ];
 
 interface AdminLayoutProps {
