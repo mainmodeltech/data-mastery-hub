@@ -11,7 +11,14 @@
 // Enums & Types communs
 // ============================================================
 
-export type RegistrationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+export type RegistrationStatus =
+  | 'PENDING'
+  | 'PAYMENT_PENDING'
+  | 'PAYMENT_TO_CONFIRM'
+  | 'CONFIRMED'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'REJECTED';
 
 export type ContactMessageStatus = 'unread' | 'read' | 'replied' | 'archived';
 
@@ -58,8 +65,28 @@ export interface Registration {
   position: string | null;
   message: string | null;
   status: RegistrationStatus;
+  // Acceptation et paiement (backend enrollment-payment)
+  payerType?: 'INDIVIDUAL' | 'COMPANY' | null;
+  totalAmount?: number | null;
+  acceptedAt?: string | null;
+  rejectedReason?: string | null;
+  learnerId?: string | null;
+  paymentSummary?: PaymentSummary | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Résumé des échéances d'une inscription (cartes du Kanban des candidatures). */
+export interface PaymentSummary {
+  installmentCount: number;
+  confirmedCount: number;
+  paidAmount: number;
+  nextDueDate: string | null;
+  linkSentAt: string | null;
+  lastReminderAt: string | null;
+  declaredMethod: string | null;
+  declaredReference: string | null;
+  declaredHasProof: boolean | null;
 }
 
 /** Alumni - Ancien apprenant ayant termine un bootcamp */

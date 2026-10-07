@@ -30,6 +30,9 @@ export interface BootcampSession {
     location: string | null;
     price: string | null;            // priceOverride si défini, sinon prix du bootcamp
     earlyBirdPrice: string | null;
+    /** Montants numériques (FCFA) utilisés pour les paiements */
+    priceOverrideAmount?: number | null;
+    earlyBirdAmount?: number | null;
     earlyBirdDeadline: string | null;
     isFeatured: boolean;
     published: boolean;
@@ -108,6 +111,8 @@ export interface CreateSessionPayload {
     location?: string;
     priceOverride?: string;
     earlyBirdPrice?: string;
+    priceOverrideAmount?: number;
+    earlyBirdAmount?: number;
     earlyBirdDeadline?: string;
     isFeatured?: boolean;
     published?: boolean;

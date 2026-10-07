@@ -47,6 +47,7 @@ type SessionFormState = {
     startDate: string; endDate: string; registrationDeadline: string;
     maxParticipants: string; status: SessionStatus; format: SessionFormat;
     location: string; priceOverride: string; earlyBirdPrice: string;
+    priceOverrideAmount: string; earlyBirdAmount: string;
     earlyBirdDeadline: string; isFeatured: boolean; published: boolean;
 };
 
@@ -55,7 +56,7 @@ const defaultForm = (bootcampId = ""): SessionFormState => ({
     year: new Date().getFullYear().toString(), startDate: "", endDate: "",
     registrationDeadline: "", maxParticipants: "20", status: "UPCOMING",
     format: "PRESENTIEL", location: "Dakar, Sénégal", priceOverride: "",
-    earlyBirdPrice: "", earlyBirdDeadline: "", isFeatured: false, published: true,
+    earlyBirdPrice: "", priceOverrideAmount: "", earlyBirdAmount: "", earlyBirdDeadline: "", isFeatured: false, published: true,
 });
 
 function sessionToForm(s: SessionWithBootcamp): SessionFormState {
@@ -68,6 +69,8 @@ function sessionToForm(s: SessionWithBootcamp): SessionFormState {
         maxParticipants: s.maxParticipants.toString(), status: s.status,
         format: s.format, location: s.location ?? "", priceOverride: s.price ?? "",
         earlyBirdPrice: s.earlyBirdPrice ?? "", earlyBirdDeadline: s.earlyBirdDeadline ?? "",
+        priceOverrideAmount: s.priceOverrideAmount?.toString() ?? "",
+        earlyBirdAmount: s.earlyBirdAmount?.toString() ?? "",
         isFeatured: s.isFeatured, published: s.published,
     };
 }
@@ -161,6 +164,8 @@ export default function AdminAllSessions() {
             location: form.location || undefined,
             priceOverride: form.priceOverride || undefined,
             earlyBirdPrice: form.earlyBirdPrice || undefined,
+            priceOverrideAmount: form.priceOverrideAmount ? parseInt(form.priceOverrideAmount) : undefined,
+            earlyBirdAmount: form.earlyBirdAmount ? parseInt(form.earlyBirdAmount) : undefined,
             earlyBirdDeadline: form.earlyBirdDeadline || undefined,
             isFeatured: form.isFeatured, published: form.published,
         };
@@ -386,6 +391,21 @@ export default function AdminAllSessions() {
                                 <Label>Prix early bird</Label>
                                 <Input placeholder="ex: 350 000 FCFA" value={form.earlyBirdPrice} onChange={(e) => set("earlyBirdPrice", e.target.value)} />
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label>Montant spécifique (FCFA)</Label>
+                                <Input type="number" min={0} step={1000} placeholder="400000" value={form.priceOverrideAmount} onChange={(e) => set("priceOverrideAmount", e.target.value)} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Montant early bird (FCFA)</Label>
+                                <Input type="number" min={0} step={1000} placeholder="350000" value={form.earlyBirdAmount} onChange={(e) => set("earlyBirdAmount", e.target.value)} />
+                            </div>
+                            <p className="col-span-2 text-xs text-muted-foreground">
+                                Les montants servent au calcul des paiements ; les prix en texte ci-dessus ne servent qu'à l'affichage.
+                                Vides : le prix de la formation s'applique.
+                            </p>
                         </div>
 
                         <div className="space-y-3 pt-2 border-t border-border">

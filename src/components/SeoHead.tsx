@@ -38,6 +38,8 @@ interface SeoHeadProps {
     ogImage?: string;
     /** Type de contenu Schema.org */
     type?: "website" | "article";
+    /** Page privée (lien de paiement, espace connecté) : exclue des moteurs de recherche */
+    noIndex?: boolean;
 }
 
 export function SeoHead({
@@ -46,6 +48,7 @@ export function SeoHead({
                             path,
                             ogImage = DEFAULT_IMG,
                             type    = "website",
+                            noIndex = false,
                         }: SeoHeadProps) {
     const fullTitle   = `${title} | ${SITE_NAME}`;
     const canonicalUrl = `${SITE_URL}${path}`;
@@ -55,7 +58,7 @@ export function SeoHead({
             {/* ── Basiques ─────────────────────────────────────────────────────── */}
             <title>{fullTitle}</title>
             <meta name="description"    content={description} />
-            <meta name="robots"         content="index, follow" />
+            <meta name="robots"         content={noIndex ? "noindex, nofollow" : "index, follow"} />
             <link rel="canonical"       href={canonicalUrl} />
 
             {/* ── Open Graph (LinkedIn, Facebook, WhatsApp) ────────────────────── */}

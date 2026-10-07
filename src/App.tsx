@@ -44,6 +44,7 @@ const Coaching = lazy(() => import('./pages/Coaching'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Ressources = lazy(() => import('./pages/Ressources'));
 const Partenaires = lazy(() => import('./pages/Partenaires'));
+const Paiement = lazy(() => import('./pages/Paiement'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Pages admin
@@ -131,6 +132,9 @@ const App = () => (
                   <Route path="/ressources" element={<Ressources />} />
                   <Route path="/partenaires" element={<Partenaires />} />
                   <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
+
+                  {/* Lien de paiement envoyé au candidat accepté (jeton = seul secret) */}
+                  <Route path="/paiement/:token" element={<Paiement />} />
 
                   {/* ── Connexion unique + espace apprenant (Lot 3) ─ */}
                   <Route path="/connexion" element={<Connexion />} />

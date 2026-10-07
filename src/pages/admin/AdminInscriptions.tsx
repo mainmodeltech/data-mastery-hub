@@ -90,6 +90,27 @@ const STATUS_CONFIG: Record<
         "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400",
     icon: <Check className="h-3 w-3" />,
   },
+  PAYMENT_PENDING: {
+    label: "Paiement en attente",
+    variant: "outline",
+    className:
+        "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
+    icon: <Clock className="h-3 w-3" />,
+  },
+  PAYMENT_TO_CONFIRM: {
+    label: "Paiement à confirmer",
+    variant: "outline",
+    className:
+        "border-violet-300 bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400",
+    icon: <AlertCircle className="h-3 w-3" />,
+  },
+  REJECTED: {
+    label: "Refusé",
+    variant: "outline",
+    className:
+        "border-red-300 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400",
+    icon: <X className="h-3 w-3" />,
+  },
   CANCELLED: {
     label: "Annulé",
     variant: "outline",
@@ -108,9 +129,12 @@ const STATUS_CONFIG: Record<
 
 const ALL_STATUSES: RegistrationStatus[] = [
   "PENDING",
+  "PAYMENT_PENDING",
+  "PAYMENT_TO_CONFIRM",
   "CONFIRMED",
-  "CANCELLED",
   "COMPLETED",
+  "REJECTED",
+  "CANCELLED",
 ];
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
