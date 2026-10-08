@@ -4,10 +4,12 @@
  * Contexte d'authentification branché sur le backend Spring Boot JWT.
  *
  * Contrat :
- *   - signIn()  → POST /api/v1/auth/login, stocke le JWT dans localStorage
- *   - signOut() → supprime le JWT du localStorage
- *   - user      → payload décodé du JWT (email, roles, etc.)
- *   - token     → le JWT brut (utilisé par httpClient)
+ *   - signIn()       → POST /api/v1/auth/login (mot de passe)
+ *   - applySession() → stocke la session renvoyée par n'importe quel mode de connexion
+ *                      (mot de passe, lien/code, Google : même réponse AuthResponse)
+ *   - signOut()      → révoque le jeton côté serveur (POST /auth/logout) puis le supprime
+ *   - user           → payload décodé du JWT (email, roles, userType)
+ *   - token          → le JWT brut (utilisé par httpClient)
  */
 
 import {
@@ -18,7 +20,9 @@ import {
   useMemo,
   useState,
 } from "react";
-import { httpClient } from "@/services/httpClient";
+import { authService } from "@/services/api/authService";
+import { ApiError } from "@/services/httpClient";
+import type { AuthResponse } from "@/types/auth.type";
 
 // ─── Clé de stockage ──────────────────────────────────────────────────────────
 // Doit correspondre à TOKEN_KEY dans httpClient.ts
@@ -29,6 +33,8 @@ export const JWT_STORAGE_KEY = "access_token";
 interface JwtPayload {
   sub: string;        // email de l'utilisateur
   roles?: string[];
+  /** Type de compte : ADMIN (back-office) ou LEARNER */
+  uty?: "ADMIN" | "LEARNER";
   exp?: number;       // timestamp d'expiration (secondes)
   iat?: number;
 }
@@ -36,13 +42,22 @@ interface JwtPayload {
 interface AuthUser {
   email: string;
   roles: string[];
+  userType?: "ADMIN" | "LEARNER";
+}
+
+export interface SignInResult {
+  error: string | null;
+  /** Statut HTTP de l'échec (ex. 401 identifiants, 429 trop d'échecs) */
+  status?: number;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<SignInResult>;
+  /** Ouvre la session à partir de la réponse d'un mode de connexion (lien, code, Google…) */
+  applySession: (response: Pick<AuthResponse, "accessToken">) => void;
   signOut: () => void;
 }
 
@@ -70,6 +85,7 @@ function payloadToUser(payload: JwtPayload): AuthUser {
   return {
     email: payload.sub,
     roles: payload.roles ?? [],
+    userType: payload.uty,
   };
 }
 
@@ -100,44 +116,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return payload ? payloadToUser(payload) : null;
   }, [token]);
 
-  const signIn = useCallback(
-      async (email: string, password: string): Promise<{ error: string | null }> => {
-        try {
-          const response = await httpClient.post<{
-            accessToken: string;
-            tokenType: string;
-            expiresIn: number;
-          }>(
-              "/auth/login",
-              { email, password },
-              { skipAuth: true }
-          );
+  const applySession = useCallback((response: Pick<AuthResponse, "accessToken">) => {
+    localStorage.setItem(JWT_STORAGE_KEY, response.accessToken);
+    setToken(response.accessToken);
+  }, []);
 
-          const jwt = response.accessToken;
-          localStorage.setItem(JWT_STORAGE_KEY, jwt);
-          setToken(jwt);
+  const signIn = useCallback(
+      async (email: string, password: string): Promise<SignInResult> => {
+        try {
+          const response = await authService.login({ email, password });
+          applySession(response);
           return { error: null };
         } catch (err: unknown) {
-          const message =
-              (err as { message?: string })?.message ?? "Identifiants incorrects.";
-          return { error: message };
+          const status = err instanceof ApiError ? err.status : undefined;
+          const message = (err as { message?: string })?.message;
+          if (status === 429) {
+            return { error: message ?? "Trop de tentatives. Réessayez dans quelques minutes.", status };
+          }
+          if (status === 401 || status === 400) {
+            // Le serveur distingue identifiants invalides, compte désactivé et mot de passe non défini.
+            return { error: message && !/^Erreur \d+$/.test(message) ? message : "E-mail ou mot de passe incorrect.", status };
+          }
+          return { error: "Connexion impossible pour le moment. Réessayez dans un instant.", status };
         }
       },
-      []
+      [applySession]
   );
 
   const signOut = useCallback(() => {
     // Révocation côté serveur (liste noire du jeton) : best-effort, la déconnexion locale ne l'attend pas.
+    // authService.logout() lit le jeton avant que nous le supprimions ci-dessous.
     if (localStorage.getItem(JWT_STORAGE_KEY)) {
-      httpClient.post("/auth/logout").catch(() => undefined);
+      authService.logout().catch(() => undefined);
     }
     localStorage.removeItem(JWT_STORAGE_KEY);
     setToken(null);
   }, []);
 
   const value = useMemo<AuthContextType>(
-      () => ({ user, token, loading, signIn, signOut }),
-      [user, token, loading, signIn, signOut]
+      () => ({ user, token, loading, signIn, applySession, signOut }),
+      [user, token, loading, signIn, applySession, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

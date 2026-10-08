@@ -1,58 +1,156 @@
 /**
- * Connexion.tsx — Lot 3 (docs/design/README.md §2, screens/app/App-Connexion.dc.html
- * + M-Connexion.dc.html). Point d'entrée unique pour tous les rôles : l'e-mail +
- * mot de passe passent par le login JWT existant (useAuth.signIn), puis redirection
- * selon le rôle (personnel → /admin, apprenant → /espace).
+ * Connexion.tsx — page /connexion unique (docs/design/README.md §2, screens/app/App-Connexion.dc.html
+ * + M-Connexion.dc.html). Point d'entrée pour tous les rôles ; la redirection se fait selon le rôle
+ * du jeton (personnel → /admin, apprenant → /espace).
  *
- * Google OAuth, lien de connexion par e-mail et code WhatsApp dépendent du backend
- * `feature/learner-accounts` (pas encore livré) : affichés mais marqués "en cours".
+ * Les modes proposés viennent de GET /auth/options (jamais supposés) :
+ *   - mot de passe  → POST /auth/login (429 après 5 échecs : on met le lien par e-mail en avant)
+ *   - lien + code   → POST /auth/passwordless/request puis /verify {email, code} (le lien, lui,
+ *                     est géré par la route /connexion/lien)
+ *   - Google        → Google Identity Services puis POST /auth/google
  */
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Loader2, MessageCircle, Play } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Eye, EyeOff, Loader2, MailCheck, Play } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthOptions } from "@/hooks/useAuthOptions";
+import { usePostLoginRedirect } from "@/hooks/usePostLoginRedirect";
 import { Button } from "@/components/shared/Button";
 import { ProgressBar } from "@/components/shared/ProgressBar";
 import { Logo } from "@/components/shared/Logo";
-import { ComingSoonLink } from "@/components/layouts/ComingSoonLink";
-import { hasAnyRole, homePathForRoles, LEARNER_ROLES, STAFF_ROLES } from "@/lib/roles";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { authService } from "@/services/api/authService";
+import { ApiError } from "@/services/httpClient";
 
 const fieldClass =
   "w-full rounded-xl border border-[#D6CEC0] bg-white px-4 py-3.5 font-sans text-base text-ink outline-none focus:border-navy";
 
-export default function Connexion() {
-  const { user, signIn } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+type View = "password" | "link-request" | "link-code";
+const RESEND_DELAY_S = 60;
 
+/** Message d'erreur lisible pour un échec de lien/code/Google (le serveur donne un message générique). */
+function authErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof ApiError) {
+    if (err.status === 429) return err.message || "Trop de tentatives. Réessayez dans quelques minutes.";
+    if (err.status === 400 && err.message && !/^Erreur \d+$/.test(err.message)) return err.message;
+  }
+  return fallback;
+}
+
+export default function Connexion() {
+  const { signIn, applySession } = useAuth();
+  usePostLoginRedirect();
+  const { data: options } = useAuthOptions();
+
+  // Sans réponse de /auth/options (ancien serveur, panne), seul le mot de passe — toujours disponible — est proposé.
+  const passwordEnabled = options?.password ?? true;
+  const linkEnabled = options?.passwordless ?? false;
+  const googleClientId = options?.google ? options.googleClientId ?? null : null;
+
+  const [view, setView] = useState<View>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [rateLimited, setRateLimited] = useState(false);
+  const [googleBroken, setGoogleBroken] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
 
+  // Compte à rebours avant de pouvoir renvoyer un lien/code
   useEffect(() => {
-    if (!user) return;
-    const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
-    const canReturn =
-      from &&
-      ((from.startsWith("/admin") && hasAnyRole(user.roles, STAFF_ROLES)) ||
-        (from.startsWith("/espace") && hasAnyRole(user.roles, LEARNER_ROLES)));
-    navigate(canReturn ? from : homePathForRoles(user.roles), { replace: true });
-  }, [user, location.state, navigate]);
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const goTo = (next: View) => {
+    setError("");
+    setView(next);
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { error: signInError } = await signIn(email.trim(), password);
+    setRateLimited(false);
+    const { error: signInError, status } = await signIn(email.trim(), password);
     if (signInError) {
       setError(signInError);
+      setRateLimited(status === 429);
       setLoading(false);
     }
-    // Succès : l'effet ci-dessus redirige dès que `user` est dérivé du JWT.
+    // Succès : usePostLoginRedirect redirige dès que `user` est dérivé du JWT.
   };
+
+  const sendLink = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await authService.requestLoginLink(email.trim());
+      setCode("");
+      setResendIn(RESEND_DELAY_S);
+      setView("link-code");
+    } catch (err) {
+      setError(authErrorMessage(err, "Envoi impossible pour le moment. Réessayez dans un instant."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\d{6}$/.test(code)) {
+      setError("Entrez le code à 6 chiffres reçu par e-mail.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const session = await authService.verifyLogin({ email: email.trim(), code });
+      applySession(session);
+    } catch (err) {
+      setError(authErrorMessage(err, "Lien ou code invalide, expiré ou déjà utilisé."));
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async (credential: string) => {
+    setLoading(true);
+    setError("");
+    try {
+      const session = await authService.loginWithGoogle(credential);
+      applySession(session);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        setGoogleBroken(true); // Google n'est pas configuré côté serveur
+      } else if (err instanceof ApiError && err.status === 401) {
+        setError("Aucun compte ne correspond à ce compte Google.");
+      } else {
+        setError(authErrorMessage(err, "Connexion avec Google impossible pour le moment."));
+      }
+      setLoading(false);
+    }
+  };
+
+  const showGoogle = !!googleClientId && !googleBroken && view === "password";
+
+  const linkButton = (
+    <button
+      type="button"
+      onClick={() => goTo("link-request")}
+      className={
+        rateLimited
+          ? "w-full rounded-xl border border-navy bg-white px-4 py-3.5 text-[15px] font-semibold text-navy hover:bg-navy/5"
+          : "text-center text-[15px] font-semibold text-navy hover:underline"
+      }
+    >
+      Recevoir un lien de connexion par e-mail
+    </button>
+  );
 
   return (
     <div className="grid min-h-screen bg-site-bg lg:grid-cols-2">
@@ -61,94 +159,183 @@ export default function Connexion() {
           <Logo className="h-14 lg:h-16" />
         </Link>
 
-        <form onSubmit={handleSubmit} className="my-auto flex w-full max-w-[440px] flex-col gap-5">
-          <div className="flex flex-col gap-2">
-            <h1 className="font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[44px]">
-              Bon retour parmi nous
-            </h1>
-            <p className="text-base text-ink-secondary lg:text-[17px]">
-              Connectez-vous pour reprendre votre formation.
-            </p>
-          </div>
+        <div className="my-auto flex w-full max-w-[440px] flex-col gap-5">
+          {view === "password" && (
+            <>
+              <div className="flex flex-col gap-2">
+                <h1 className="font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[44px]">
+                  Bon retour parmi nous
+                </h1>
+                <p className="text-base text-ink-secondary lg:text-[17px]">
+                  Connectez-vous pour reprendre votre formation.
+                </p>
+              </div>
 
-          <ComingSoonLink
-            title="Connexion avec Google"
-            className="w-full justify-center rounded-xl border border-[#D6CEC0] bg-white px-4 py-3.5 font-sans text-base font-semibold text-ink"
-          >
-            <span className="text-lg font-extrabold text-[#4285F4]">G</span>
-            Continuer avec Google
-          </ComingSoonLink>
+              {showGoogle && (
+                <>
+                  <GoogleSignInButton
+                    clientId={googleClientId}
+                    onCredential={(c) => void handleGoogle(c)}
+                    onUnavailable={() => setGoogleBroken(true)}
+                  />
+                  {passwordEnabled && (
+                    <div className="flex items-center gap-3 text-[13px] text-ink-secondary">
+                      <span className="h-px flex-1 bg-[#E7E0D4]" />
+                      ou avec votre e-mail
+                      <span className="h-px flex-1 bg-[#E7E0D4]" />
+                    </div>
+                  )}
+                </>
+              )}
 
-          <div className="flex items-center gap-3 text-[13px] text-ink-secondary">
-            <span className="h-px flex-1 bg-[#E7E0D4]" />
-            ou avec votre e-mail
-            <span className="h-px flex-1 bg-[#E7E0D4]" />
-          </div>
+              {error && (
+                <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">
+                  {error}
+                </div>
+              )}
 
-          {error && (
-            <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">
-              {error}
-            </div>
+              {passwordEnabled ? (
+                <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="l-mail" className="text-sm font-semibold text-ink">E-mail</label>
+                    <input
+                      id="l-mail"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="vous@exemple.com"
+                      className={fieldClass}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between">
+                      <label htmlFor="l-pw" className="text-sm font-semibold text-ink">Mot de passe</label>
+                      <Link to="/mot-de-passe-oublie" className="text-sm font-semibold">Mot de passe oublié ?</Link>
+                    </div>
+                    <div className="relative">
+                      <input
+                        id="l-pw"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className={`${fieldClass} pr-12`}
+                      />
+                      <button
+                        type="button"
+                        aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-secondary hover:text-navy"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[17px]" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Se connecter"}
+                  </Button>
+                </form>
+              ) : (
+                loading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />
+              )}
+
+              {linkEnabled && linkButton}
+
+              <p className="text-center text-sm text-ink-secondary">
+                Pas encore de compte ? Il est créé automatiquement à votre inscription.{" "}
+                <Link to="/formations" className="font-semibold">Voir les formations</Link>
+              </p>
+            </>
           )}
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="l-mail" className="text-sm font-semibold text-ink">E-mail</label>
-            <input
-              id="l-mail"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="vous@exemple.com"
-              className={fieldClass}
-            />
-          </div>
+          {view === "link-request" && (
+            <form onSubmit={sendLink} className="flex flex-col gap-5">
+              <button type="button" onClick={() => goTo("password")} className="flex w-fit items-center gap-1.5 text-sm font-semibold text-navy">
+                <ArrowLeft className="h-4 w-4" /> Retour
+              </button>
+              <div className="flex flex-col gap-2">
+                <h1 className="font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[40px]">
+                  Recevoir un lien de connexion
+                </h1>
+                <p className="text-base text-ink-secondary">
+                  Nous vous envoyons un lien et un code à 6 chiffres, valables 10 minutes. Aucun mot de passe nécessaire.
+                </p>
+              </div>
+              {error && <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{error}</div>}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="ll-mail" className="text-sm font-semibold text-ink">E-mail</label>
+                <input
+                  id="ll-mail"
+                  type="email"
+                  required
+                  autoFocus
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="vous@exemple.com"
+                  className={fieldClass}
+                />
+              </div>
+              <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[17px]" disabled={loading}>
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Envoyer le lien et le code"}
+              </Button>
+            </form>
+          )}
 
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between">
-              <label htmlFor="l-pw" className="text-sm font-semibold text-ink">Mot de passe</label>
-              <Link to="/mot-de-passe-oublie" className="text-sm font-semibold">Mot de passe oublié ?</Link>
-            </div>
-            <div className="relative">
-              <input
-                id="l-pw"
-                type={showPassword ? "text" : "password"}
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className={`${fieldClass} pr-12`}
-              />
+          {view === "link-code" && (
+            <form onSubmit={verifyCode} className="flex flex-col gap-5">
+              <button type="button" onClick={() => goTo("link-request")} className="flex w-fit items-center gap-1.5 text-sm font-semibold text-navy">
+                <ArrowLeft className="h-4 w-4" /> Changer d'adresse
+              </button>
+              <div className="flex flex-col gap-2">
+                <span className="flex h-12 w-12 items-center justify-center rounded-pill bg-success-bg">
+                  <MailCheck className="h-6 w-6 text-success" />
+                </span>
+                <h1 className="font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[40px]">
+                  Vérifiez votre boîte mail
+                </h1>
+                <p className="text-base text-ink-secondary">
+                  Si un compte correspond à <strong className="text-ink">{email}</strong>, vous y avez reçu un message.
+                  Entrez le code reçu ou cliquez sur le lien.
+                </p>
+              </div>
+              {error && <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{error}</div>}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="lc-code" className="text-sm font-semibold text-ink">Code à 6 chiffres</label>
+                <input
+                  id="lc-code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  autoFocus
+                  required
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="123456"
+                  className={`${fieldClass} text-center font-heading text-2xl font-bold tracking-[0.5em]`}
+                />
+              </div>
+              <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[17px]" disabled={loading || code.length !== 6}>
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Se connecter"}
+              </Button>
               <button
                 type="button"
-                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-secondary hover:text-navy"
+                disabled={resendIn > 0 || loading}
+                onClick={() => void sendLink()}
+                className="text-center text-[15px] font-semibold text-navy enabled:hover:underline disabled:text-ink-secondary"
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {resendIn > 0 ? `Renvoyer un lien dans ${resendIn} s` : "Renvoyer un lien et un code"}
               </button>
-            </div>
-          </div>
-
-          <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[17px]" disabled={loading}>
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Se connecter"}
-          </Button>
-
-          <ComingSoonLink title="Lien de connexion par e-mail" className="justify-center text-[15px] font-semibold text-navy">
-            Recevoir un lien de connexion par e-mail
-          </ComingSoonLink>
-          <ComingSoonLink title="Code par WhatsApp" className="justify-center text-[15px] font-semibold text-navy lg:hidden">
-            <MessageCircle className="h-5 w-5 text-success" />
-            Recevoir un code par WhatsApp
-          </ComingSoonLink>
-
-          <p className="text-center text-sm text-ink-secondary">
-            Pas encore de compte ? Il est créé automatiquement à votre inscription.{" "}
-            <Link to="/formations" className="font-semibold">Voir les formations</Link>
-          </p>
-        </form>
+            </form>
+          )}
+        </div>
 
         <span className="hidden text-[13px] text-ink-secondary lg:block">
           © {new Date().getFullYear()} Model Technologie · <Link to="/contact">Aide</Link>

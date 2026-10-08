@@ -325,30 +325,4 @@ export interface ApiError {
   errors?: Record<string, string[]>;
 }
 
-// ============================================================
-// Types d'authentification
-// ============================================================
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  role: string;
-}
-
-export interface AuthState {
-  user: AuthUser | null;
-  tokens: AuthTokens | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-}
+// Types d'authentification : voir src/types/auth.type.ts

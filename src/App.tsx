@@ -34,6 +34,7 @@ const Alumni = lazy(() => import('./pages/Alumni'));
 const Orientation = lazy(() => import('./pages/Orientation'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Connexion = lazy(() => import('./pages/Connexion'));
+const ConnexionLien = lazy(() => import('./pages/ConnexionLien'));
 const Espace = lazy(() => import('./pages/Espace'));
 const MesFormations = lazy(() => import('./pages/MesFormations'));
 const CoursePlayer = lazy(() => import('./pages/CoursePlayer'));
@@ -143,6 +144,7 @@ const App = () => (
 
                   {/* ── Connexion unique + espace apprenant (Lot 3) ─ */}
                   <Route path="/connexion" element={<Connexion />} />
+                  <Route path="/connexion/lien" element={<ConnexionLien />} />
                   {/* Le personnel y accède aussi : bouton « Aperçu apprenant » de l'éditeur de formation */}
                   <Route path="/espace" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><Espace /></ProtectedRoute>} />
                   <Route path="/espace/formations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><MesFormations /></ProtectedRoute>} />
