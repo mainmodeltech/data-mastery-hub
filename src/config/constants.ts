@@ -37,29 +37,6 @@ export const STATS = {
 // Navigation
 // ============================================================
 
-export const PUBLIC_NAVIGATION = [
-  { name: 'Accueil', href: '/' },
-  { name: 'A propos', href: '/a-propos' },
-  // { name: 'Services', href: '/services' },
-  { name: 'Bootcamps', href: '/bootcamps' },
-  { name: 'Alumni', href: '/alumni' },
-  // { name: 'References', href: '/references' },
-  { name: 'Contact', href: '/contact' },
-] as const;
-
-export const ADMIN_NAVIGATION = [
-  { href: '/admin', label: 'Tableau de bord', icon: 'LayoutDashboard', exact: true },
-  { href: '/admin/bootcamps', label: 'Bootcamps', icon: 'BookOpen' },
-  { href: '/admin/inscriptions', label: 'Inscriptions', icon: 'ClipboardList' },
-  { href: '/admin/services', label: 'Services', icon: 'Briefcase' },
-  { href: '/admin/references', label: 'References', icon: 'Star' },
-  { href: '/admin/temoignages', label: 'Temoignages', icon: 'MessageSquare' },
-  { href: '/admin/alumni', label: 'Alumni', icon: 'GraduationCap' },
-  { href: '/admin/projets', label: 'Projets', icon: 'FolderKanban' },
-  { href: '/admin/messages', label: 'Messages', icon: 'Mail' },
-  { href: '/admin/galerie', label: 'Galerie', icon: 'Image' },
-] as const;
-
 export const FOOTER_SERVICES = [
   { name: 'Formation Power BI', href: '/bootcamps' },
   { name: 'Bootcamps Data', href: '/bootcamps' },

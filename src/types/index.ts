@@ -22,7 +22,6 @@ export type RegistrationStatus =
 
 export type ContactMessageStatus = 'unread' | 'read' | 'replied' | 'archived';
 
-export type ReferenceCategory = 'client' | 'school' | 'partner';
 
 // ============================================================
 // Entites Metier
@@ -165,21 +164,6 @@ export interface Service {
   updatedAt: string;
 }
 
-/** Reference client / partenaire */
-export interface Reference {
-  id: string;
-  name: string;
-  fullName: string | null;
-  description: string | null;
-  logoUrl: string | null;
-  logoText: string | null;
-  category: ReferenceCategory;
-  sector: string | null;
-  published: boolean;
-  displayOrder: number | null;
-  createdAt: string;
-  updatedAt: string;
-}
 
 /** Message de contact */
 export interface ContactMessage {
@@ -220,16 +204,6 @@ export interface ContactMessage {
 }
 
 
-/** Photo de galerie */
-export interface GalleryPhoto {
-  id: string;
-  url: string;
-  caption: string | null;
-  bootcampName: string | null;
-  published: boolean;
-  displayOrder: number | null;
-  createdAt: string;
-}
 
 
 export interface MasterclassRegistration {
@@ -327,11 +301,7 @@ export type UpdateAlumniDTO = Partial<CreateAlumniDTO>;
 export type CreateProjectDTO = Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'members' | 'screenshots'>;
 export type UpdateProjectDTO = Partial<CreateProjectDTO>;
 
-export type CreateReferenceDTO = Omit<Reference, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateReferenceDTO = Partial<CreateReferenceDTO>;
 
-export type CreateGalleryPhotoDTO = Omit<GalleryPhoto, 'id' | 'createdAt'>;
-export type UpdateGalleryPhotoDTO = Partial<CreateGalleryPhotoDTO>;
 
 // ============================================================
 // Types de reponse API
