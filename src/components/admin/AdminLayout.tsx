@@ -6,6 +6,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { hasAnyRole } from "@/lib/roles";
+import { useAdminActions, useCanSeeStats } from "@/hooks/useAdminStats";
 import { AppLayout, type AppNavItem } from "@/components/layouts/AppLayout";
 import {
   LayoutDashboard,
@@ -64,7 +65,20 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
 
   const initials = (user?.email ?? "AD").slice(0, 2).toUpperCase();
   // La gestion des comptes back-office est réservée au super administrateur (403 côté serveur sinon)
-  const visibleNav = navItems.filter((i) => i.href !== "/admin/comptes" || hasAnyRole(user?.roles, ["SUPER_ADMIN"]));
+  // Tableau de bord et pastilles : SUPER_ADMIN et ADMIN uniquement (montants sensibles, 403 sinon)
+  const canSeeStats = useCanSeeStats();
+  const { data: todo } = useAdminActions();
+  const badges: Record<string, number> = todo
+    ? {
+        "/admin/candidatures": todo.newApplications + todo.paymentsToConfirm,
+        "/admin/messages": todo.unreadMessages,
+        "/admin/bootcamp-sessions": todo.openQuestions + todo.projectsToReview,
+      }
+    : {};
+  const visibleNav = navItems
+    .filter((i) => i.href !== "/admin/comptes" || hasAnyRole(user?.roles, ["SUPER_ADMIN"]))
+    .filter((i) => i.href !== "/admin" || canSeeStats)
+    .map((i) => (badges[i.href] ? { ...i, badge: badges[i.href] } : i));
 
   return (
     <AppLayout

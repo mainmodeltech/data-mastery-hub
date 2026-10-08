@@ -23,6 +23,8 @@ export interface AppNavItem {
   comingSoon?: boolean;
   /** Titre de groupe affiché au-dessus de cet item (une seule fois par groupe consécutif). */
   section?: string;
+  /** Pastille de compteur (ex. actions à traiter) ; masquée à 0 ou absente */
+  badge?: number;
 }
 
 export interface AppLayoutProps {
@@ -136,7 +138,15 @@ export function AppLayout({
                   )}
                 >
                   <item.icon className={cn("h-4 w-4 shrink-0", active ? "text-navy" : "text-[#8FA5BC]")} />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {item.badge ? (
+                    <span
+                      aria-label={`${item.badge} à traiter`}
+                      className="flex h-5 min-w-5 items-center justify-center rounded-pill bg-cta px-1.5 text-[11px] font-bold text-white"
+                    >
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  ) : null}
                 </Link>
               </div>
             );
