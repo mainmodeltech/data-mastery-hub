@@ -2,7 +2,6 @@
  * useAuth.tsx
  *
  * Contexte d'authentification branché sur le backend Spring Boot JWT.
- * Remplace l'ancien useAuth basé sur Supabase.
  *
  * Contrat :
  *   - signIn()  → POST /api/v1/auth/login, stocke le JWT dans localStorage

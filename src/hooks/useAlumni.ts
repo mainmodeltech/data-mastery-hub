@@ -1,5 +1,4 @@
-// ── Ajouts à faire dans useNetworking.ts ──────────────────────────────────────
-// Ces hooks publics (skipAuth) remplacent les appels Supabase dans AlumniPage
+// Hooks publics (skipAuth) de la page Alumni, alimentés par l'API backend
 
 import { useQuery } from "@tanstack/react-query";
 import { alumniService, projectService } from "@/services/api/networkingService";
@@ -7,7 +6,6 @@ import type { AlumniSummary, ProjectSummary } from "@/services/api/networkingSer
 
 /**
  * Hook public — liste tous les alumni publiés triés par display_order.
- * Remplace l'appel Supabase alumni dans AlumniPage.
  * Cache : 10 minutes (données peu volatiles).
  */
 export function usePublishedAlumni() {
@@ -20,7 +18,6 @@ export function usePublishedAlumni() {
 
 /**
  * Hook public — liste tous les projets publiés (avec membres et screenshots).
- * Remplace les 3 appels Supabase imbriqués dans AlumniPage.
  * Cache : 10 minutes.
  */
 export function usePublishedProjects() {

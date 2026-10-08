@@ -1,5 +1,5 @@
 /**
- * Types TypeScript independants du backend (Supabase/Spring Boot).
+ * Types TypeScript des entites metier (contrat de l'API Spring Boot).
  * Ces types representent le contrat d'interface entre le frontend et l'API REST.
  *
  * Convention :
