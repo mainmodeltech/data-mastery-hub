@@ -10,6 +10,7 @@ import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Pill, Card, SectionHeader, FaqAccordion } from "@/components/shared";
 import { COMPANY } from "@/config/constants";
+import { COACH, COACHING_PRICES, COACHING_TESTIMONIAL } from "@/config/siteContent";
 
 const SLOTS: { day: string; time: string; available: boolean }[] = [
   { day: "Lun", time: "18h", available: true },
@@ -30,21 +31,21 @@ const PRICING_TIERS = [
   {
     name: "Séance déblocage",
     sessions: "1 séance",
-    price: "[prix] FCFA",
+    price: COACHING_PRICES.deblocage,
     features: ["1h30 en visio ou à Dakar", "Sur votre propre fichier", "Support écrit après la séance"],
     highlight: false,
   },
   {
     name: "Pack Progression",
     sessions: "5 séances",
-    price: "[prix] FCFA",
+    price: COACHING_PRICES.progression,
     features: ["1h30 par séance", "Support WhatsApp entre les séances", "Plan personnalisé", "Certificat de suivi"],
     highlight: true,
   },
   {
     name: "Accompagnement projet",
     sessions: "10 séances",
-    price: "[prix] FCFA",
+    price: COACHING_PRICES.projet,
     features: ["Suivi d'un projet complet", "Préparation PL-300 possible", "Support WhatsApp illimité"],
     highlight: false,
   },
@@ -153,7 +154,7 @@ export default function Coaching() {
                 <p className={tier.highlight ? "text-sm text-cta-on-navy" : "text-sm text-ink-secondary"}>{tier.sessions}</p>
               </div>
               <p className={tier.highlight ? "font-heading text-2xl font-extrabold text-white" : "font-heading text-2xl font-extrabold text-navy"}>
-                {tier.price}
+                {tier.price ?? "Sur devis"}
               </p>
               <ul className="flex flex-col gap-2">
                 {tier.features.map((f) => (
@@ -194,13 +195,13 @@ export default function Coaching() {
       </section>
 
       {/* Coach + testimonial */}
-      <section className="grid gap-6 px-6 py-14 lg:grid-cols-2 lg:px-20">
+      <section className={`grid gap-6 px-6 py-14 lg:px-20 ${COACHING_TESTIMONIAL ? "lg:grid-cols-2" : "lg:mx-auto lg:max-w-xl"}`}>
         <Card radius="card" className="flex flex-col items-center gap-3 p-8 text-center">
           <span className="flex h-20 w-20 items-center justify-center rounded-pill bg-surface-sand font-heading text-2xl font-extrabold text-navy">
             MT
           </span>
           <span className="font-sans text-xs font-bold uppercase tracking-[1px] text-cta">VOTRE COACH</span>
-          <p className="font-heading text-lg font-bold text-navy">[Nom du coach]</p>
+          <p className="font-heading text-lg font-bold text-navy">{COACH.name ?? "Un formateur certifié Model Technologie"}</p>
           <p className="text-sm text-ink-secondary">
             Formateur Power BI certifié, accompagne des professionnels sur leurs projets data depuis plusieurs années.
           </p>
@@ -208,10 +209,12 @@ export default function Coaching() {
             <Linkedin className="h-4 w-4" /> Profil LinkedIn
           </a>
         </Card>
-        <Card radius="card" variant="sand" className="flex flex-col justify-center gap-4 p-8">
-          <p className="font-heading text-lg text-navy">« [Témoignage d'un participant au coaching individuel] »</p>
-          <p className="text-sm font-semibold text-ink-secondary">— [Nom], [Poste] chez [Entreprise]</p>
-        </Card>
+        {COACHING_TESTIMONIAL && (
+          <Card radius="card" variant="sand" className="flex flex-col justify-center gap-4 p-8">
+            <p className="font-heading text-lg text-navy">« {COACHING_TESTIMONIAL.quote} »</p>
+            <p className="text-sm font-semibold text-ink-secondary">— {COACHING_TESTIMONIAL.author}</p>
+          </Card>
+        )}
       </section>
 
       {/* FAQ */}

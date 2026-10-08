@@ -14,6 +14,7 @@ import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Pill, Card, SectionHeader } from "@/components/shared";
 import { useSubscribeNewsletter } from "@/hooks/useSiteForms";
+import { NEXT_WORKSHOP } from "@/config/siteContent";
 import { submitErrorMessage } from "@/lib/formErrors";
 
 const CATEGORIES = ["Tout", "Excel", "Power BI", "Python", "SQL", "Carrière data", "Études de cas"];
@@ -166,13 +167,17 @@ export default function Ressources() {
       </section>
 
       {/* Atelier + Quiz */}
-      <section className="grid gap-6 px-6 pb-16 lg:grid-cols-2 lg:px-20">
-        <Card radius="card" className="flex flex-col gap-3 p-8">
-          <Pill variant="error" className="w-fit">En direct</Pill>
-          <p className="font-heading text-lg font-bold text-navy">ATELIER GRATUIT EN LIGNE</p>
-          <p className="text-sm text-ink-secondary">[Titre de l'atelier] · [date] · [heure] (GMT)</p>
-          <Button variant="primary" shape="pill" className="w-fit">Réserver ma place</Button>
-        </Card>
+      <section className={`grid gap-6 px-6 pb-16 lg:px-20 ${NEXT_WORKSHOP ? "lg:grid-cols-2" : ""}`}>
+        {NEXT_WORKSHOP && (
+          <Card radius="card" className="flex flex-col gap-3 p-8">
+            <Pill variant="error" className="w-fit">En direct</Pill>
+            <p className="font-heading text-lg font-bold text-navy">ATELIER GRATUIT EN LIGNE</p>
+            <p className="text-sm text-ink-secondary">{NEXT_WORKSHOP.title} · {NEXT_WORKSHOP.date} · {NEXT_WORKSHOP.time} (GMT)</p>
+            <Button asChild variant="primary" shape="pill" className="w-fit">
+              <Link to="/contact">Réserver ma place</Link>
+            </Button>
+          </Card>
+        )}
         <Card radius="card" variant="sand" className="flex flex-col gap-3 p-8">
           <p className="font-heading text-lg font-bold text-navy">QUIZ D'ORIENTATION</p>
           <p className="text-sm text-ink-secondary">5 questions, 2 minutes — trouvez la formation faite pour vous.</p>

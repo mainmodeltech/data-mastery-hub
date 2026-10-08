@@ -16,6 +16,7 @@ import { useSendDiagnostic } from "@/hooks/useSiteForms";
 import { PEOPLE_COUNTS, TRAINING_NEEDS, splitName, type DiagnosticRequestPayload } from "@/services/api/siteFormsService";
 import { submitErrorMessage } from "@/lib/formErrors";
 import { COMPANY } from "@/config/constants";
+import { CLIENT_CASE } from "@/config/siteContent";
 
 const inputClass =
   "w-full rounded-card border border-[#D6CEC0] bg-white px-4 py-2.5 font-sans text-sm text-ink outline-none focus:border-navy";
@@ -210,24 +211,26 @@ export default function Entreprises() {
         </div>
       </section>
 
-      {/* Référence */}
-      <section className="px-6 py-14 lg:px-20">
-        <SectionHeader eyebrow="RÉFÉRENCE" title="Ils nous ont fait confiance." />
-        <Card radius="card" variant="sand" className="mt-8 grid gap-6 p-8 lg:grid-cols-3">
-          <div>
-            <p className="font-heading text-2xl font-extrabold text-navy">CORAF</p>
-            <p className="text-sm text-ink-secondary">[Secteur] · [Taille]</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase text-ink-secondary">Le besoin</p>
-            <p className="text-sm text-ink">[Description du besoin initial]</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase text-ink-secondary">Le résultat</p>
-            <p className="text-sm text-ink">[Résultat mesuré après la formation]</p>
-          </div>
-        </Card>
-      </section>
+      {/* Référence (masquée tant qu'aucune étude de cas n'est renseignée dans config/siteContent.ts) */}
+      {CLIENT_CASE && (
+        <section className="px-6 py-14 lg:px-20">
+          <SectionHeader eyebrow="RÉFÉRENCE" title="Ils nous ont fait confiance." />
+          <Card radius="card" variant="sand" className="mt-8 grid gap-6 p-8 lg:grid-cols-3">
+            <div>
+              <p className="font-heading text-2xl font-extrabold text-navy">{CLIENT_CASE.name}</p>
+              <p className="text-sm text-ink-secondary">{CLIENT_CASE.sector} · {CLIENT_CASE.size}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-ink-secondary">Le besoin</p>
+              <p className="text-sm text-ink">{CLIENT_CASE.need}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-ink-secondary">Le résultat</p>
+              <p className="text-sm text-ink">{CLIENT_CASE.result}</p>
+            </div>
+          </Card>
+        </section>
+      )}
 
       {/* Diagnostic form */}
       <section id="diagnostic" className="grid gap-10 px-6 py-20 lg:grid-cols-2 lg:px-20">

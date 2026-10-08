@@ -25,7 +25,7 @@ const WE_PROVIDE = ["Plateforme et supports", "Paiement et facturation", "Commun
 const BENEFITS = [
   { title: "Zéro logistique", description: "Nous gérons l'inscription, le paiement et le suivi administratif." },
   { title: "Une audience existante", description: "Accédez à notre communauté d'apprenants et d'entreprises partenaires." },
-  { title: "Un revenu partagé clair", description: "[x]% de reversement, paiement sous [x] jours après la session." },
+  { title: "Un revenu partagé clair", description: "La part de reversement et le délai de paiement sont fixés dans votre convention, avant le lancement." },
   { title: "Des contrats entreprises", description: "Accès aux formations intra-entreprise vendues par Model Technologie." },
 ];
 
@@ -39,7 +39,7 @@ const METHOD_STEPS = [
 const REQUIREMENTS = [
   "Expertise démontrée dans votre domaine",
   "Pédagogie pratique, orientée cas réels",
-  "Note de satisfaction ≥ [x]/5",
+  "Bonne satisfaction des apprenants sur vos sessions précédentes",
   "Respect des marques et agréments (PMI, Scrum.org, Microsoft…)",
   "Supports de formation à jour",
 ];
