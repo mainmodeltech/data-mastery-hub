@@ -46,6 +46,10 @@ export interface Lesson {
   /** Identifiant chez l'hébergeur vidéo (HLS + URL signée) — jamais MinIO brut, cf. README §3 */
   videoProviderId?: string | null;
   videoUrl?: string | null;
+  /** Lecture seule (contrat §3.D decies) : hébergeur détecté par le serveur */
+  videoProvider?: "VIMEO" | "YOUTUBE" | null;
+  /** Lecture seule : adresse d'iframe construite par le serveur — seule source d'un <iframe> */
+  videoEmbedUrl?: string | null;
   description?: string | null;
   liveAt?: string | null;
   liveUrl?: string | null;

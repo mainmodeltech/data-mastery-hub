@@ -2,10 +2,10 @@
  * CoursePlayer.tsx — lecteur de leçon, Lot 5 (docs/design/screens/app/App-Cours.dc.html
  * + M-Cours.dc.html + M-Programme.dc.html).
  *
- * Lecture vidéo : <video> natif si la leçon porte une `videoUrl` (hébergeur HLS + URL signée
- * côté backend, cf. README §3) ; sinon un état « vidéo pas encore hébergée » — aucun
- * faux lecteur. Les notes sont enregistrées sur l'appareil (localStorage) ; les questions
- * au formateur arrivent avec les lots suivants ; les quiz se passent depuis /evaluations (Lot 6).
+ * Lecture vidéo : <iframe> si le serveur fournit `videoEmbedUrl` (Vimeo / YouTube) ; sinon
+ * <video> natif sur `videoUrl` ; sinon un état « vidéo pas encore hébergée » — aucun faux lecteur.
+ * Les notes sont enregistrées sur l'appareil (localStorage) ; les questions à l'équipe passent
+ * par LessonQuestions ; les quiz se passent depuis /evaluations (Lot 6).
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
@@ -17,7 +17,9 @@ import { Button, Card } from "@/components/shared";
 import { DemoDataBanner, LearnerShell } from "@/components/learner/LearnerShell";
 import { ProgrammePanel } from "@/components/learner/ProgrammePanel";
 import { ComingSoonLink } from "@/components/layouts/ComingSoonLink";
+import { LessonQuestions } from "@/components/learner/LessonQuestions";
 import { useLearnerCourse, useSetLessonProgress } from "@/hooks/useCourse";
+import { accessMessage } from "@/lib/accessErrors";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useToast } from "@/hooks/use-toast";
 import { buildCourseView, findResumeLessonId, lessonLabel, lessonTitleWithoutLabel } from "@/lib/course";
@@ -91,6 +93,21 @@ function LessonBody({ lesson, formationId, onProgress, onEnded, startAt }: {
   }, [lesson.id, startAt]);
 
   if (lesson.type === "VIDEO") {
+    // Vimeo / YouTube : l'adresse d'intégration vient du serveur, jamais construite depuis videoUrl.
+    // Le lecteur tiers ne remonte pas la position : la leçon se marque terminée à la main.
+    if (lesson.videoEmbedUrl) {
+      return (
+        <iframe
+          key={lesson.id}
+          src={lesson.videoEmbedUrl}
+          title={lesson.title}
+          allow="fullscreen; picture-in-picture"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          className="aspect-video w-full rounded-[18px] border-0 bg-navy-dark"
+        />
+      );
+    }
     if (lesson.videoUrl) {
       return (
         <video
@@ -152,7 +169,7 @@ export default function CoursePlayer() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const { data: result, isLoading, isError } = useLearnerCourse(formationId);
+  const { data: result, isLoading, isError, error } = useLearnerCourse(formationId);
   const setProgress = useSetLessonProgress(formationId ?? "");
 
   const [tab, setTab] = useState<"resources" | "description" | "notes" | "questions">("resources");
@@ -168,7 +185,7 @@ export default function CoursePlayer() {
     return (
       <LearnerShell title="Formation">
         <div role="alert" className="rounded-card bg-error-bg px-5 py-4 text-sm text-error">
-          Cette formation est introuvable ou n'est pas accessible avec votre compte.{" "}
+          {accessMessage(error) ?? "Cette formation est introuvable ou n'est pas accessible avec votre compte."}{" "}
           <Link to="/espace" className="font-semibold underline">Retour à mon espace</Link>
         </div>
       </LearnerShell>
@@ -222,7 +239,7 @@ export default function CoursePlayer() {
         onProgress={(s) => save(isDone, s)}
         onEnded={() => save(true, duration)}
       />
-      {lesson.type === "VIDEO" && duration > 0 && (
+      {lesson.type === "VIDEO" && !lesson.videoEmbedUrl && duration > 0 && (
         <div className="flex justify-between text-[13px] text-ink-secondary">
           <span>{formatDuration(position)} / {formatDuration(duration)}</span>
           <span>{videoPercent} % vu</span>
@@ -281,9 +298,7 @@ export default function CoursePlayer() {
           <p className="text-sm leading-relaxed text-ink-secondary">{lesson.description ?? "Pas de description pour cette leçon."}</p>
         )}
         {tab === "notes" && <Notes lessonId={lesson.id} />}
-        {tab === "questions" && (
-          <p className="text-sm text-ink-secondary">Les questions au formateur arrivent bientôt.</p>
-        )}
+        {tab === "questions" && <LessonQuestions lessonId={lesson.id} disabled={result?.demo} />}
       </div>
 
       {!isDesktop && next && (
@@ -323,9 +338,13 @@ export default function CoursePlayer() {
         <div className="flex flex-col gap-5">
           {result?.demo && <DemoDataBanner />}
           <div className="flex justify-end">
-            <ComingSoonLink title="Poser une question" className="rounded-card border border-[#D6CEC0] bg-white px-4 py-2.5 text-sm font-semibold text-navy">
+            <button
+              type="button"
+              onClick={() => setTab("questions")}
+              className="flex items-center gap-2 rounded-card border border-[#D6CEC0] bg-white px-4 py-2.5 text-sm font-semibold text-navy"
+            >
               <MessageCircle className="h-4 w-4" /> Poser une question
-            </ComingSoonLink>
+            </button>
           </div>
           <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr),360px]">
             {body}

@@ -126,9 +126,34 @@ async function request<T>(
   return data as T;
 }
 
+/**
+ * Télécharge un fichier binaire (PDF…). Les erreurs JSON du serveur (404, 410…) sont converties
+ * en ApiError avec leur message, comme pour `request`.
+ */
+async function requestBlob(path: string, options: RequestOptions = {}): Promise<Blob> {
+  const { skipAuth = false, params } = options;
+  const headers: Record<string, string> = {};
+  if (!skipAuth) {
+    const token = getToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  }
+  const response = await fetch(buildUrl(path, params), { method: "GET", headers });
+  if (!response.ok) {
+    let message = `Erreur ${response.status}`;
+    try {
+      const data = (await response.json()) as { message?: string };
+      if (data?.message) message = data.message;
+    } catch { /* corps non JSON */ }
+    throw new ApiError(response.status, message);
+  }
+  return response.blob();
+}
+
 // ─── Interface publique ───────────────────────────────────────────────────────
 
 export const httpClient = {
+  getBlob: (path: string, options?: RequestOptions) => requestBlob(path, options),
+
   get: <T>(path: string, options?: RequestOptions) =>
       request<T>("GET", path, undefined, options),
 

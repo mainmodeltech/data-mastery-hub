@@ -157,7 +157,7 @@ export default function Espace() {
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
               <div className="flex min-w-0 flex-col gap-6">
                 {dash.certificateReady && (
-                  <div className="flex items-center gap-3 rounded-stat bg-success-bg p-4 lg:hidden">
+                  <Link to="/espace/certificats" className="flex items-center gap-3 rounded-stat bg-success-bg p-4 lg:hidden">
                     <span className="flex h-10 w-10 items-center justify-center rounded-card bg-success">
                       <Award className="h-5 w-5 text-white" />
                     </span>
@@ -166,7 +166,7 @@ export default function Espace() {
                       <p className="text-xs text-ink-secondary">Ajoutez-le à LinkedIn en 1 clic</p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-success" />
-                  </div>
+                  </Link>
                 )}
 
                 <Card radius="stat" className="flex flex-col gap-2 p-5 lg:p-6">
@@ -201,7 +201,7 @@ export default function Espace() {
 
               <div className="flex min-w-0 flex-col gap-6">
                 {dash.certificateReady && (
-                  <div className="hidden items-center gap-3 rounded-stat bg-success-bg p-5 lg:flex">
+                  <Link to="/espace/certificats" className="hidden items-center gap-3 rounded-stat bg-success-bg p-5 lg:flex">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-success">
                       <Award className="h-5 w-5 text-white" />
                     </span>
@@ -209,8 +209,8 @@ export default function Espace() {
                       <p className="text-sm font-bold text-success">Votre certificat {dash.certificateReady.title} est prêt</p>
                       <p className="text-xs text-ink-secondary">Ajoutez-le à votre profil LinkedIn en un clic.</p>
                     </div>
-                    <Pill variant="success">Bientôt</Pill>
-                  </div>
+                    <ChevronRight className="h-5 w-5 text-success" />
+                  </Link>
                 )}
 
                 <Card radius="stat" className="flex flex-col gap-4 p-5 lg:p-6">

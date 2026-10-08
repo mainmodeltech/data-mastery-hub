@@ -41,11 +41,13 @@ const CoursePlayer = lazy(() => import('./pages/CoursePlayer'));
 const Evaluations = lazy(() => import('./pages/Evaluations'));
 const QuizRunner = lazy(() => import('./pages/QuizRunner'));
 const EspaceEvaluations = lazy(() => import('./pages/EspaceEvaluations'));
+const EspaceCertificats = lazy(() => import('./pages/EspaceCertificats'));
 const Coaching = lazy(() => import('./pages/Coaching'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Ressources = lazy(() => import('./pages/Ressources'));
 const Partenaires = lazy(() => import('./pages/Partenaires'));
 const Paiement = lazy(() => import('./pages/Paiement'));
+const Certificat = lazy(() => import('./pages/Certificat'));
 const NewsletterConfirmation = lazy(() => import('./pages/NewsletterToken').then((m) => ({ default: m.NewsletterConfirmation })));
 const NewsletterUnsubscribe = lazy(() => import('./pages/NewsletterToken').then((m) => ({ default: m.NewsletterUnsubscribe })));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -139,6 +141,8 @@ const App = () => (
 
                   {/* Lien de paiement envoyé au candidat accepté (jeton = seul secret) */}
                   <Route path="/paiement/:token" element={<Paiement />} />
+                  {/* Vérification publique d'un certificat (cible du QR code et de l'e-mail) */}
+                  <Route path="/certificats/:publicId" element={<Certificat />} />
                   <Route path="/newsletter/confirmation" element={<NewsletterConfirmation />} />
                   <Route path="/newsletter/desinscription" element={<NewsletterUnsubscribe />} />
 
@@ -151,6 +155,7 @@ const App = () => (
                   <Route path="/espace/formations/:id" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/lecons/:lessonId" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
                   {/* Lot 6 — évaluations (quiz, projet final, conditions du certificat) */}
+                  <Route path="/espace/certificats" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCertificats /></ProtectedRoute>} />
                   <Route path="/espace/evaluations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceEvaluations /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/evaluations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><Evaluations /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/evaluations/:quizId" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><QuizRunner /></ProtectedRoute>} />

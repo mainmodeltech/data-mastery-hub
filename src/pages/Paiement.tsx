@@ -8,16 +8,17 @@ import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { AlertCircle, CheckCircle2, Clock, Copy, Loader2, Upload } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Copy, FileText, Loader2, Upload } from "lucide-react";
 
 import { SeoHead } from "@/components/SeoHead";
 import { Logo } from "@/components/shared/Logo";
 import { Button, Card, Pill } from "@/components/shared";
-import { useDeclarePayment, usePaymentLink, useUploadPaymentProof } from "@/hooks/usePayments";
+import { useDeclarePayment, useDownloadInvoice, usePaymentLink, useUploadPaymentProof } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
 import { ApiError } from "@/services/httpClient";
 import { COMPANY } from "@/config/constants";
 import { cn } from "@/lib/utils";
+import { saveBlob } from "@/lib/download";
 import {
   formatAmount, PAYMENT_METHOD_LABELS, type DeclarePaymentPayload, type PaymentMethod, type PaymentStatus,
 } from "@/types/payment.type";
@@ -35,6 +36,7 @@ const SCHEDULE_PILL: Record<PaymentStatus, { label: string; variant: "success" |
   PENDING: { label: "À payer", variant: "warning" },
   REJECTED: { label: "Refusée", variant: "error" },
   CANCELLED: { label: "Annulée", variant: "neutral" },
+  REFUNDED: { label: "Remboursée", variant: "neutral" },
 };
 
 function Frame({ children }: { children: React.ReactNode }) {
@@ -71,6 +73,7 @@ export default function Paiement() {
   const { data: p, isLoading, error } = usePaymentLink(token);
   const declare = useDeclarePayment(token ?? "");
   const upload = useUploadPaymentProof(token ?? "");
+  const invoice = useDownloadInvoice(token ?? "");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [method, setMethod] = useState<DeclarePaymentPayload["method"]>("WAVE");
@@ -122,6 +125,14 @@ export default function Paiement() {
     }
   };
 
+  const downloadInvoice = async () => {
+    try {
+      saveBlob(await invoice.mutateAsync(), "facture.pdf");
+    } catch (err) {
+      toast({ title: "Facture indisponible", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
+    }
+  };
+
   const copyPhone = async () => {
     if (!phone) return;
     try { await navigator.clipboard.writeText(phone); toast({ title: "Numéro copié" }); } catch { /* ignoré */ }
@@ -150,6 +161,7 @@ export default function Paiement() {
           </Notice>
         )}
         {p.status === "CANCELLED" && <Notice tone="error" title="Cette échéance a été annulée">Contactez-nous si c'est une erreur.</Notice>}
+        {p.status === "REFUNDED" && <Notice tone="info" title="Cette échéance a été remboursée">Contactez-nous pour toute question sur ce remboursement.</Notice>}
         {awaitingPayment && p.rejectionReason && (
           <Notice tone="error" title="Votre précédent paiement n'a pas pu être validé">{p.rejectionReason}</Notice>
         )}
@@ -164,6 +176,12 @@ export default function Paiement() {
             </div>
             {p.dueDate && awaitingPayment && <Pill variant="warning">À régler avant le {date(p.dueDate)}</Pill>}
           </div>
+
+          {p.invoiceAvailable && (
+            <Button type="button" variant="outline" shape="rounded" size="sm" className="w-fit" disabled={invoice.isPending} onClick={() => void downloadInvoice()}>
+              {invoice.isPending ? <Loader2 className="animate-spin" /> : <><FileText />Télécharger la facture</>}
+            </Button>
+          )}
 
           {p.schedule.length > 1 && (
             <ul className="flex flex-col divide-y divide-[#E7E0D4] rounded-xl border border-[#E7E0D4]">

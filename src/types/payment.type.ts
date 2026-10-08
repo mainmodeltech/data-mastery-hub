@@ -5,7 +5,7 @@
  * Ces endpoints répondent en ApiResponse<T>.
  */
 
-export type PaymentStatus = "PENDING" | "DECLARED" | "CONFIRMED" | "REJECTED" | "CANCELLED";
+export type PaymentStatus = "PENDING" | "DECLARED" | "CONFIRMED" | "REJECTED" | "CANCELLED" | "REFUNDED";
 export type PaymentMethod = "WAVE" | "ORANGE_MONEY" | "VIREMENT" | "ENTREPRISE" | "ESPECES";
 export type PayerType = "INDIVIDUAL" | "COMPANY";
 
@@ -23,6 +23,7 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   CONFIRMED: "Confirmé",
   REJECTED: "Refusé",
   CANCELLED: "Annulé",
+  REFUNDED: "Remboursé",
 };
 
 export interface AdminPayment {
@@ -113,6 +114,8 @@ export interface PublicPayment {
   reference: string | null;
   hasProof: boolean | null;
   rejectionReason: string | null;
+  /** true quand une facture en vigueur existe (GET /payments/{token}/invoice) */
+  invoiceAvailable?: boolean;
   totalAmount: number;
   schedule: { installmentNumber: number; amount: number; dueDate: string | null; status: PaymentStatus }[];
   payTo: { phone: string | null; methods: PaymentMethod[] };

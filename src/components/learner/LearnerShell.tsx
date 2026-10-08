@@ -17,7 +17,7 @@ export const LEARNER_NAV: AppNavItem[] = [
   { href: "/espace/calendrier", label: "Calendrier & lives", icon: CalendarDays, comingSoon: true },
   { href: "/espace/evaluations", label: "Évaluations", icon: CircleHelp },
   { href: "/espace/ressources", label: "Ressources", icon: FileText, comingSoon: true },
-  { href: "/espace/certificats", label: "Certificats", icon: Award, comingSoon: true },
+  { href: "/espace/certificats", label: "Certificats", icon: Award },
   { href: "/espace/communaute", label: "Communauté", icon: MessageCircle, comingSoon: true },
 ];
 
@@ -25,7 +25,7 @@ const TABS: { href: string; label: string; icon: LucideIcon; end?: boolean; comi
   { href: "/espace", label: "Accueil", icon: Home, end: true },
   { href: "/espace/formations", label: "Formations", icon: BookOpen },
   { href: "/espace/calendrier", label: "Lives", icon: CalendarDays, comingSoon: true },
-  { href: "/espace/certificats", label: "Certificats", icon: Award, comingSoon: true },
+  { href: "/espace/certificats", label: "Certificats", icon: Award },
   { href: "/espace/profil", label: "Profil", icon: User, comingSoon: true },
 ];
 

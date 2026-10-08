@@ -15,6 +15,7 @@ import { FileText, Loader2, Trash2, Upload } from "lucide-react";
 import { Button, Card, Pill } from "@/components/shared";
 import { DemoDataBanner, LearnerShell } from "@/components/learner/LearnerShell";
 import { useDeleteProjectFile, useEvaluationsOverview, useUploadProjectFile } from "@/hooks/useEvaluations";
+import { accessMessage } from "@/lib/accessErrors";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -248,7 +249,7 @@ function ConditionRow({ c }: { c: CertificateCondition }) {
 
 export default function Evaluations() {
   const { id } = useParams<{ id: string }>();
-  const { data: result, isLoading, isError } = useEvaluationsOverview(id);
+  const { data: result, isLoading, isError, error } = useEvaluationsOverview(id);
   const overview = result?.data;
 
   return (
@@ -261,7 +262,7 @@ export default function Evaluations() {
         {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
         {isError && (
           <div role="alert" className="rounded-card bg-error-bg px-5 py-4 text-sm text-error">
-            Impossible de charger vos évaluations pour le moment.
+            {accessMessage(error) ?? "Impossible de charger vos évaluations pour le moment."}
           </div>
         )}
         {overview && id && (
@@ -274,7 +275,7 @@ export default function Evaluations() {
               <h2 className="mb-2 font-heading text-xl font-bold text-navy">Conditions pour obtenir le certificat</h2>
               {overview.conditions.map((c) => <ConditionRow key={c.key} c={c} />)}
               <p className="pt-3 text-[13px] text-ink-secondary">
-                Dès que tout est vert, votre certificat est généré et vous recevez le lien par e-mail et WhatsApp.
+                Dès que tout est vert, votre certificat est généré et vous recevez le lien par e-mail.
               </p>
             </Card>
           </div>

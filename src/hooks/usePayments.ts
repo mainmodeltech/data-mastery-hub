@@ -107,3 +107,8 @@ export function useUploadPaymentProof(token: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: PAYMENT_KEYS.link(token) }),
   });
 }
+
+/** Télécharge la facture PDF du lien de paiement (le blob n'est jamais mis en cache). */
+export function useDownloadInvoice(token: string) {
+  return useMutation({ mutationFn: () => paymentLinkService.downloadInvoice(token) });
+}

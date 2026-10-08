@@ -53,6 +53,10 @@ export const paymentLinkService = {
   declare: async (token: string, payload: DeclarePaymentPayload): Promise<PublicPayment> =>
     (await httpClient.post<ApiResponse<PublicPayment>>(`/payments/${encodeURIComponent(token)}/declaration`, payload, { skipAuth: true })).data,
 
+  /** Facture de l'inscription (PDF) ; 404 si aucune facture en vigueur */
+  downloadInvoice: (token: string): Promise<Blob> =>
+    httpClient.getBlob(`/payments/${encodeURIComponent(token)}/invoice`, { skipAuth: true }),
+
   uploadProof: async (token: string, file: File): Promise<PublicPayment> => {
     const body = new FormData();
     body.append("file", file);
