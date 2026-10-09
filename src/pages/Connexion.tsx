@@ -55,6 +55,16 @@ export default function Connexion() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // Déconnecté par le serveur (jeton expiré/révoqué) : message affiché une seule fois
+  const [expired] = useState(() => {
+    try {
+      const flag = sessionStorage.getItem("session_expired") === "1";
+      if (flag) sessionStorage.removeItem("session_expired");
+      return flag;
+    } catch {
+      return false;
+    }
+  });
   const [rateLimited, setRateLimited] = useState(false);
   const [googleBroken, setGoogleBroken] = useState(false);
   const [resendIn, setResendIn] = useState(0);
@@ -188,6 +198,11 @@ export default function Connexion() {
                 </>
               )}
 
+              {expired && !error && (
+                <div role="status" className="rounded-xl bg-warning-bg px-4 py-3 text-sm text-warning">
+                  Votre session a expiré ou a été fermée. Reconnectez-vous pour continuer.
+                </div>
+              )}
               {error && (
                 <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">
                   {error}

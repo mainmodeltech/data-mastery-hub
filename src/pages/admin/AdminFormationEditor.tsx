@@ -21,6 +21,8 @@ import { Button, Card, Pill } from "@/components/shared";
 import { errorMessage } from "@/components/admin/AdminKit";
 import { LessonForm, newClientId } from "@/components/admin/LessonForm";
 import { ProjectBriefCard } from "@/components/admin/ProjectBriefCard";
+import { useAuth } from "@/hooks/useAuth";
+import { hasAnyRole, ROLE_GROUPS } from "@/lib/roles";
 import { useAdminCourseContent, useSaveAdminCourseContent } from "@/hooks/useCourse";
 import { useFormations } from "@/hooks/useFormations";
 import { useToast } from "@/hooks/use-toast";
@@ -83,6 +85,9 @@ function lessonSubtitle(l: Lesson): string {
 
 export default function AdminFormationEditor() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  // Un partenaire n'édite que le programme de ses formations : pas la fiche catalogue ni les sessions
+  const canManageCatalog = hasAnyRole(user?.roles, ROLE_GROUPS.CONTENT);
   const { toast } = useToast();
   const { data: formations = [] } = useFormations();
   const formation = formations.find((f) => f.id === id);
@@ -152,11 +157,11 @@ export default function AdminFormationEditor() {
     >
       <div className="flex flex-col gap-6">
         <div role="tablist" className="flex gap-7 overflow-x-auto border-b border-[#E7E0D4] text-[15px] font-semibold">
-          {id && <Link to={`/admin/bootcamps/${id}/edit`} className="whitespace-nowrap py-3 text-ink-secondary">Informations</Link>}
+          {id && canManageCatalog && <Link to={`/admin/bootcamps/${id}/edit`} className="whitespace-nowrap py-3 text-ink-secondary">Informations</Link>}
           <span role="tab" aria-selected="true" className="-mb-px whitespace-nowrap border-b-2 border-cta py-3 font-bold text-navy">Programme</span>
           <a href="#projet" className="whitespace-nowrap py-3 text-ink-secondary">Projet final</a>
           <a href="#certificat" className="whitespace-nowrap py-3 text-ink-secondary">Certificat</a>
-          <Link to={`/admin/bootcamp-sessions?bootcamp=${id}`} className="whitespace-nowrap py-3 text-ink-secondary">Sessions</Link>
+          {canManageCatalog && <Link to={`/admin/bootcamp-sessions?bootcamp=${id}`} className="whitespace-nowrap py-3 text-ink-secondary">Sessions</Link>}
           {formation && <Link to={`/formations/${formation.slug}`} className="whitespace-nowrap py-3 text-ink-secondary">Page du site</Link>}
         </div>
 
@@ -277,7 +282,7 @@ export default function AdminFormationEditor() {
                   <dt className="text-ink-secondary">Prix</dt><dd className="text-right font-semibold">{formation?.price ?? "—"}</dd>
                   <dt className="text-ink-secondary">Visible sur le site</dt><dd className="text-right font-semibold">{formation?.published ? "Oui" : "Non"}</dd>
                 </dl>
-                {id && <Link to={`/admin/bootcamps/${id}/edit`} className="text-sm font-semibold text-navy hover:text-cta">Modifier dans la fiche formation →</Link>}
+                {id && canManageCatalog && <Link to={`/admin/bootcamps/${id}/edit`} className="text-sm font-semibold text-navy hover:text-cta">Modifier dans la fiche formation →</Link>}
 
                 <div className="flex flex-col gap-3 rounded-card border border-[#E7E0D4] p-3">
                   <label className="flex items-center justify-between gap-3 text-sm">

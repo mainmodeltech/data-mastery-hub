@@ -17,7 +17,7 @@ import { ErrorNotice, errorMessage } from "@/components/admin/AdminKit";
 import { Button, Card, Pill } from "@/components/shared";
 import { useAdminActions, useCanSeeStats, useStatsOverview } from "@/hooks/useAdminStats";
 import { useAuth } from "@/hooks/useAuth";
-import { hasAnyRole } from "@/lib/roles";
+import { backOfficeHome } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/services/httpClient";
 import { formatAmount, PAYMENT_METHOD_LABELS, type PaymentMethod } from "@/types/payment.type";
@@ -180,8 +180,7 @@ export default function AdminDashboard() {
 
   // Le tableau de bord est masqué aux autres rôles : on les envoie vers leur première page utile
   if (!canSeeStats) {
-    const trainerOnly = hasAnyRole(user?.roles, ["TRAINER"]) && !hasAnyRole(user?.roles, ["EDITOR", "PARTNER"]);
-    return <Navigate to={trainerOnly ? "/admin/bootcamp-sessions" : "/admin/bootcamps"} replace />;
+    return <Navigate to={backOfficeHome(user?.roles)} replace />;
   }
 
   const choosePreset = (key: string, days: number) => {

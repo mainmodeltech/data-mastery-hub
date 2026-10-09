@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { useSaveAttendance, useSessionTracking } from "@/hooks/useEvaluations";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { hasAnyRole, ROLE_GROUPS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import {
   CERTIFICATE_STATUS_LABELS,
@@ -228,6 +230,9 @@ function LiveRow({ live, total }: { live: SessionLive; total: number }) {
 
 export default function AdminSessionSuivi() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  // Le programme de la formation n'est ouvert qu'au personnel et aux partenaires (403 pour un formateur)
+  const canOpenProgram = hasAnyRole(user?.roles, ROLE_GROUPS.PROGRAM);
   const { data: result, isLoading, isError } = useSessionTracking(id);
   const tracking = result?.data;
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -259,7 +264,7 @@ export default function AdminSessionSuivi() {
       title={tracking?.sessionName ?? "Suivi de session"}
       description={tracking ? `Sessions / ${tracking.formationTitle}` : undefined}
       actions={
-        tracking?.formationId ? (
+        tracking?.formationId && canOpenProgram ? (
           <Button asChild variant="outline" shape="rounded" size="sm" className="hidden sm:inline-flex">
             <Link to={`/admin/formations/${tracking.formationId}`}>Ouvrir la vue formateur</Link>
           </Button>

@@ -21,6 +21,7 @@ import {
   useState,
 } from "react";
 import { authService } from "@/services/api/authService";
+import { authEvents } from "@/services/api/authEvents";
 import { ApiError } from "@/services/httpClient";
 import type { AuthResponse } from "@/types/auth.type";
 
@@ -108,6 +109,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     setLoading(false);
   }, []);
+
+  // Un 401 reçu par httpClient (jeton expiré/révoqué) déconnecte localement, sans appel serveur
+  useEffect(
+    () =>
+      authEvents.on("unauthorized", () => {
+        localStorage.removeItem(JWT_STORAGE_KEY);
+        setToken(null);
+      }),
+    []
+  );
 
   // Dérive l'objet user depuis le token JWT
   const user = useMemo<AuthUser | null>(() => {

@@ -14,11 +14,15 @@
  *   - Erreurs enrichies avec le status HTTP
  */
 
+import { authEvents } from "@/services/api/authEvents";
+
 const BASE_URL   = import.meta.env.VITE_API_BASE_URL ?? "";
 const API_PREFIX = "/api/v1";
 
 // ─── Clé de stockage ──────────────────────────────────────────────────────────
 export const TOKEN_KEY = "access_token";
+/** Drapeau (sessionStorage) lu par la page de connexion pour expliquer la déconnexion. */
+export const SESSION_EXPIRED_KEY = "session_expired";
 
 
 export const tokenStorage = {
@@ -120,6 +124,13 @@ async function request<T>(
     const message =
         (data as { message?: string })?.message ??
         `Erreur ${response.status}`;
+    // Jeton expiré ou révoqué : on le retire et on prévient AuthProvider (qui déconnecte et renvoie à /connexion).
+    // Les routes publiques (skipAuth) et les échecs de connexion n'ont pas de jeton à retirer.
+    if (response.status === 401 && !skipAuth && getToken()) {
+      localStorage.removeItem(TOKEN_KEY);
+      try { sessionStorage.setItem(SESSION_EXPIRED_KEY, "1"); } catch { /* stockage indisponible */ }
+      authEvents.emit("unauthorized");
+    }
     throw new ApiError(response.status, message, data);
   }
 

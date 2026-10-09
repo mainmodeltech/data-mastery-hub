@@ -5,8 +5,8 @@
  */
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { hasAnyRole } from "@/lib/roles";
-import { useAdminActions, useCanSeeStats } from "@/hooks/useAdminStats";
+import { hasAnyRole, primaryRoleLabel, ROLE_GROUPS } from "@/lib/roles";
+import { useAdminActions } from "@/hooks/useAdminStats";
 import { AppLayout, type AppNavItem } from "@/components/layouts/AppLayout";
 import {
   LayoutDashboard,
@@ -20,33 +20,35 @@ import {
   Tag,
   Wallet,
   Banknote,
-  Eye,
+  Home,
   Layers,
   Handshake,
   ShieldCheck,
   Mail,
 } from "lucide-react";
 
-const navItems: AppNavItem[] = [
-  { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
-  { href: "/admin/bootcamps", label: "Formations", icon: BookOpen, section: "Catalogue" },
-  { href: "/admin/domaines", label: "Domaines", icon: Layers, section: "Catalogue" },
-  { href: "/admin/partenaires", label: "Partenaires", icon: Handshake, section: "Catalogue" },
-  { href: "/admin/bootcamp-sessions", label: "Sessions", icon: CalendarDays, section: "Catalogue" },
-  { href: "/admin/candidatures", label: "Candidatures & paiements", icon: Wallet, section: "Admissions" },
-  { href: "/admin/paiements", label: "Paiements", icon: Banknote, section: "Admissions" },
-  { href: "/admin/inscriptions", label: "Inscriptions", icon: ClipboardList, section: "Admissions" },
-  { href: "/admin/masterclass", label: "Masterclass", icon: ClipboardList, section: "Admissions" },
-  { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag, section: "Admissions" },
-  { href: "/admin/messages", label: "Messages", icon: MessageSquare, section: "Relation" },
-  { href: "/admin/newsletter", label: "Newsletter", icon: Mail, section: "Relation" },
-  { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare, section: "Contenu du site" },
-  { href: "/admin/alumni", label: "Alumni", icon: GraduationCap, section: "Contenu du site" },
-  { href: "/admin/projets", label: "Projets", icon: Users, section: "Contenu du site" },
-  { href: "/admin/apprenants", label: "Apprenants", icon: GraduationCap, section: "Équipe & comptes" },
-  { href: "/admin/comptes", label: "Comptes back-office", icon: ShieldCheck, section: "Équipe & comptes" },
-  // Le personnel peut ouvrir l'espace apprenant (aperçu) ; les comptes apprenants arrivent avec le backend learner-accounts.
-  { href: "/espace", label: "Aperçu espace apprenant", icon: Eye, section: "Apprenants" },
+type RoleNavItem = AppNavItem & { roles: readonly string[] };
+
+/** Entrées du menu et rôles autorisés (mêmes groupes que les routes : voir lib/roles.ts). */
+const navItems: RoleNavItem[] = [
+  { href: "/admin/espace", label: "Mon espace", icon: Home, roles: ["TRAINER", "PARTNER"] },
+  { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard, exact: true, roles: ROLE_GROUPS.ADMINS },
+  { href: "/admin/bootcamps", label: "Formations", icon: BookOpen, section: "Catalogue", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/domaines", label: "Domaines", icon: Layers, section: "Catalogue", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/partenaires", label: "Partenaires", icon: Handshake, section: "Catalogue", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/bootcamp-sessions", label: "Sessions", icon: CalendarDays, section: "Catalogue", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/candidatures", label: "Candidatures", icon: Wallet, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
+  { href: "/admin/paiements", label: "Paiements", icon: Banknote, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
+  { href: "/admin/inscriptions", label: "Inscriptions", icon: ClipboardList, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
+  { href: "/admin/masterclass", label: "Masterclass", icon: ClipboardList, section: "Admissions", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
+  { href: "/admin/messages", label: "Messages", icon: MessageSquare, section: "Relation", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/newsletter", label: "Newsletter", icon: Mail, section: "Relation", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/alumni", label: "Alumni", icon: GraduationCap, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/projets", label: "Projets", icon: Users, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/apprenants", label: "Apprenants", icon: GraduationCap, section: "Équipe & comptes", roles: ROLE_GROUPS.ADMINS },
+  { href: "/admin/comptes", label: "Comptes back-office", icon: ShieldCheck, section: "Équipe & comptes", roles: ROLE_GROUPS.SUPER },
 ];
 
 interface AdminLayoutProps {
@@ -66,9 +68,7 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
   };
 
   const initials = (user?.email ?? "AD").slice(0, 2).toUpperCase();
-  // La gestion des comptes back-office est réservée au super administrateur (403 côté serveur sinon)
-  // Tableau de bord et pastilles : SUPER_ADMIN et ADMIN uniquement (montants sensibles, 403 sinon)
-  const canSeeStats = useCanSeeStats();
+  // Chaque entrée n'apparaît que pour les rôles que l'API autorise (matrice SecurityConfig)
   const { data: todo } = useAdminActions();
   const badges: Record<string, number> = todo
     ? {
@@ -78,10 +78,9 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
         "/admin/bootcamp-sessions": todo.openQuestions + todo.projectsToReview,
       }
     : {};
-  const visibleNav = navItems
-    .filter((i) => i.href !== "/admin/comptes" || hasAnyRole(user?.roles, ["SUPER_ADMIN"]))
-    .filter((i) => (i.href !== "/admin" && i.href !== "/admin/paiements") || canSeeStats)
-    .map((i) => (badges[i.href] ? { ...i, badge: badges[i.href] } : i));
+  const visibleNav: AppNavItem[] = navItems
+    .filter((i) => hasAnyRole(user?.roles, i.roles))
+    .map(({ roles: _roles, ...item }) => (badges[item.href] ? { ...item, badge: badges[item.href] } : item));
 
   return (
     <AppLayout
@@ -104,7 +103,7 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
         <div className="flex flex-col gap-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-white">{user?.email}</p>
-            <p className="text-xs text-[#D5DEE8]">Administrateur</p>
+            <p className="text-xs text-[#D5DEE8]">{primaryRoleLabel(user?.roles)}</p>
           </div>
           <button
             type="button"
