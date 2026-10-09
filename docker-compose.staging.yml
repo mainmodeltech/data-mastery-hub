@@ -1,14 +1,19 @@
 version: '3.8'
 
+# Staging : le site est statique, la configuration est lue AU BUILD (build.args), pas au runtime.
+# Variables a definir dans l'onglet Environnement de Dokploy (ou un fichier .env a cote du compose).
 services:
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # URL publique de l'API, sans /api/v1 (ajoute par le client HTTP). Obligatoire.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?VITE_API_BASE_URL est obligatoire (ex. https://api-staging.model-technologie.com)}
+        # Cle de SITE reCAPTCHA v3 (publique). Le domaine du staging doit etre declare dans la console Google.
+        VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY:?VITE_RECAPTCHA_SITE_KEY est obligatoire}
     container_name: model-tech-staging-frontend
-    environment:
-      VITE_API_BASE_URL: https://api-staging.model-technologie.com
     networks:
       - dokploy-network
     restart: unless-stopped
