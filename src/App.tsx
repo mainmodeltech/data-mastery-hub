@@ -42,6 +42,9 @@ const Evaluations = lazy(() => import('./pages/Evaluations'));
 const QuizRunner = lazy(() => import('./pages/QuizRunner'));
 const EspaceEvaluations = lazy(() => import('./pages/EspaceEvaluations'));
 const EspaceCertificats = lazy(() => import('./pages/EspaceCertificats'));
+const EspaceCalendrier = lazy(() => import('./pages/EspaceCalendrier'));
+const EspaceRessources = lazy(() => import('./pages/EspaceRessources'));
+const EspaceProfil = lazy(() => import('./pages/EspaceProfil'));
 const Coaching = lazy(() => import('./pages/Coaching'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Ressources = lazy(() => import('./pages/Ressources'));
@@ -155,6 +158,9 @@ const App = () => (
                   <Route path="/espace/formations/:id" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/lecons/:lessonId" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
                   {/* Lot 6 — évaluations (quiz, projet final, conditions du certificat) */}
+                  <Route path="/espace/calendrier" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCalendrier /></ProtectedRoute>} />
+                  <Route path="/espace/ressources" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceRessources /></ProtectedRoute>} />
+                  <Route path="/espace/profil" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceProfil /></ProtectedRoute>} />
                   <Route path="/espace/certificats" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCertificats /></ProtectedRoute>} />
                   <Route path="/espace/evaluations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceEvaluations /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/evaluations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><Evaluations /></ProtectedRoute>} />

@@ -16,7 +16,6 @@ import {
 import { Button, Card } from "@/components/shared";
 import { DemoDataBanner, LearnerShell } from "@/components/learner/LearnerShell";
 import { ProgrammePanel } from "@/components/learner/ProgrammePanel";
-import { ComingSoonLink } from "@/components/layouts/ComingSoonLink";
 import { LessonQuestions } from "@/components/learner/LessonQuestions";
 import { useLearnerCourse, useSetLessonProgress } from "@/hooks/useCourse";
 import { accessMessage } from "@/lib/accessErrors";
@@ -374,19 +373,6 @@ export default function CoursePlayer() {
       <div className="flex flex-col gap-4 p-4">
         {result?.demo && <DemoDataBanner />}
         {body}
-        <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-2 gap-2">
-            <ComingSoonLink title="Mode hors ligne" className="justify-center rounded-card border border-[#D6CEC0] px-3 py-3 text-sm font-semibold text-navy">
-              Hors ligne
-            </ComingSoonLink>
-            <ComingSoonLink title="Audio seul" className="justify-center rounded-card border border-[#D6CEC0] px-3 py-3 text-sm font-semibold text-navy">
-              Audio seul
-            </ComingSoonLink>
-          </div>
-          <p className="text-xs text-ink-secondary">
-            Mode économie de données : vidéo en basse qualité ou audio seul, et téléchargement pour regarder sans connexion.
-          </p>
-        </div>
       </div>
 
       {sheetOpen && (

@@ -5,6 +5,7 @@
  *   POST /api/v1/auth/login            → AuthResponse
  *   POST /api/v1/auth/logout           → révocation token
  *   GET  /api/v1/auth/me               → AuthUser
+ *   PUT  /api/v1/auth/change-password  → 204 (compte connecté)
  *   POST /api/v1/auth/forgot-password  → déclenche l'email
  *   POST /api/v1/auth/reset-password   → réinitialise le mot de passe
  *   GET  /api/v1/auth/options          → modes de connexion actifs
@@ -59,6 +60,11 @@ export const authService = {
    */
   getCurrentUser: (): Promise<AuthUser> =>
       httpClient.get<AuthUser>(`${BASE_PATH}/me`),
+
+  /** Changement de mot de passe du compte connecté. 400 : mot de passe actuel incorrect. */
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    await httpClient.put<void>(`${BASE_PATH}/change-password`, { currentPassword, newPassword });
+  },
 
   /**
    * Demande de réinitialisation du mot de passe.

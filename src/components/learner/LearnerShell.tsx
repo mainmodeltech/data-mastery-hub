@@ -4,7 +4,7 @@
  */
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { Award, BookOpen, CalendarDays, CircleHelp, FileText, Home, MessageCircle, User } from "lucide-react";
+import { Award, BookOpen, CalendarDays, CircleHelp, FileText, Home, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { AppLayout, type AppNavItem } from "@/components/layouts/AppLayout";
@@ -14,19 +14,19 @@ import { useAuth } from "@/hooks/useAuth";
 export const LEARNER_NAV: AppNavItem[] = [
   { href: "/espace", label: "Mon espace", icon: Home, exact: true },
   { href: "/espace/formations", label: "Mes formations", icon: BookOpen },
-  { href: "/espace/calendrier", label: "Calendrier & lives", icon: CalendarDays, comingSoon: true },
+  { href: "/espace/calendrier", label: "Calendrier & lives", icon: CalendarDays },
   { href: "/espace/evaluations", label: "Évaluations", icon: CircleHelp },
-  { href: "/espace/ressources", label: "Ressources", icon: FileText, comingSoon: true },
+  { href: "/espace/ressources", label: "Ressources", icon: FileText },
   { href: "/espace/certificats", label: "Certificats", icon: Award },
-  { href: "/espace/communaute", label: "Communauté", icon: MessageCircle, comingSoon: true },
+  { href: "/espace/profil", label: "Mon profil", icon: User },
 ];
 
 const TABS: { href: string; label: string; icon: LucideIcon; end?: boolean; comingSoon?: boolean }[] = [
   { href: "/espace", label: "Accueil", icon: Home, end: true },
   { href: "/espace/formations", label: "Formations", icon: BookOpen },
-  { href: "/espace/calendrier", label: "Lives", icon: CalendarDays, comingSoon: true },
+  { href: "/espace/calendrier", label: "Lives", icon: CalendarDays },
   { href: "/espace/certificats", label: "Certificats", icon: Award },
-  { href: "/espace/profil", label: "Profil", icon: User, comingSoon: true },
+  { href: "/espace/profil", label: "Profil", icon: User },
 ];
 
 export function MobileTabBar() {
@@ -95,6 +95,7 @@ export function LearnerShell({ children, title, greeting, description, withTabBa
       description={description}
       avatarInitials={initials}
       hideSearch
+      hideNotifications
       bottomNav={withTabBar ? <MobileTabBar /> : undefined}
       helpSlot={
         <div className="flex flex-col gap-2">

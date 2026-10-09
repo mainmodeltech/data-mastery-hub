@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { courseService } from "@/services/courseService";
 import type { CourseContent, LearnerCourse, LessonProgress, WithDemo } from "@/types/course.type";
@@ -73,4 +73,29 @@ export function useSaveAdminCourseContent(formationId: string) {
       qc.setQueryData<WithDemo<CourseContent>>(COURSE_KEYS.adminContent(formationId), { data: saved, demo: false });
     },
   });
+}
+
+/**
+ * Formations dont l'accès est ouvert, avec leur programme (cache partagé avec le lecteur de cours).
+ * Les formations « à venir » n'ont pas encore d'accès : le serveur répond 403 jusqu'à la date
+ * d'ouverture, on ne les interroge donc pas.
+ */
+export function useOpenCourses() {
+  const dashboard = useLearnerDashboard();
+  const all = dashboard.data?.data.courses ?? [];
+  const open = all.filter((c) => c.status !== "UPCOMING");
+  const upcoming = all.filter((c) => c.status === "UPCOMING");
+  const queries = useQueries({
+    queries: open.map((c) => ({
+      queryKey: COURSE_KEYS.course(c.formationId),
+      queryFn: () => courseService.getLearnerCourse(c.formationId),
+      staleTime: QUERY_CONFIG.staleTime,
+    })),
+  });
+  return {
+    isLoading: dashboard.isLoading || queries.some((q) => q.isLoading),
+    isError: dashboard.isError,
+    upcoming,
+    courses: open.map((summary, i) => ({ summary, course: queries[i]?.data?.data, error: queries[i]?.error })),
+  };
 }
