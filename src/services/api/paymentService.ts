@@ -18,7 +18,11 @@ interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
+  pagination?: { page: number; size: number; totalElements: number; totalPages: number };
 }
+
+const PAYMENTS_PAGE_SIZE = 200;
+const PAYMENTS_MAX_PAGES = 25;
 
 export const paymentAdminService = {
   accept: async (registrationId: string, payload: AcceptRegistrationPayload): Promise<Registration> =>
@@ -33,11 +37,27 @@ export const paymentAdminService = {
   listPayments: async (params: { status?: PaymentStatus; registrationId?: string; page?: number; size?: number } = {}): Promise<AdminPayment[]> =>
     (await httpClient.get<ApiResponse<AdminPayment[]>>("/admin/payments", { params: { size: 200, ...params } })).data ?? [],
 
+  /** Tous les paiements (toutes pages, 5 000 au plus), du plus récent au plus ancien. */
+  listAllPayments: async (): Promise<AdminPayment[]> => {
+    const all: AdminPayment[] = [];
+    for (let page = 0; page < PAYMENTS_MAX_PAGES; page++) {
+      const res = await httpClient.get<ApiResponse<AdminPayment[]>>("/admin/payments", {
+        params: { page, size: PAYMENTS_PAGE_SIZE, sort: "createdAt,desc" },
+      });
+      all.push(...(res.data ?? []));
+      if (!res.pagination || page >= res.pagination.totalPages - 1) break;
+    }
+    return all;
+  },
+
   confirm: async (paymentId: string): Promise<AdminPayment> =>
     (await httpClient.post<ApiResponse<AdminPayment>>(`/admin/payments/${paymentId}/confirm`)).data,
 
   rejectPayment: async (paymentId: string, reason: string): Promise<AdminPayment> =>
     (await httpClient.post<ApiResponse<AdminPayment>>(`/admin/payments/${paymentId}/reject`, { reason })).data,
+
+  refund: async (paymentId: string, reason: string): Promise<AdminPayment> =>
+    (await httpClient.post<ApiResponse<AdminPayment>>(`/admin/payments/${paymentId}/refund`, { reason })).data,
 
   remind: async (paymentId: string): Promise<AdminPayment> =>
     (await httpClient.post<ApiResponse<AdminPayment>>(`/admin/payments/${paymentId}/remind`)).data,

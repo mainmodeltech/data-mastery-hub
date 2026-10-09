@@ -105,6 +105,41 @@ export function ConfirmDialog({
   );
 }
 
+/** Boîte de dialogue demandant un motif obligatoire (refus, annulation, remboursement…). */
+export function ReasonDialog({ title, description, confirmLabel, onClose, onSubmit }: {
+  title: string; description: string; confirmLabel: string; onClose: () => void; onSubmit: (reason: string) => Promise<void>;
+}) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
+      <DialogContent className="max-w-md rounded-callout">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-xl font-bold text-navy">{title}</DialogTitle>
+          <DialogDescription className="text-ink-secondary">{description}</DialogDescription>
+        </DialogHeader>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!reason.trim()) return;
+            setBusy(true);
+            try { await onSubmit(reason.trim()); } finally { setBusy(false); }
+          }}
+        >
+          <Field label="Motif *" htmlFor="reason">
+            <textarea id="reason" rows={3} autoFocus required className={inputClass} value={reason} onChange={(e) => setReason(e.target.value)} />
+          </Field>
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" shape="rounded" disabled={busy} onClick={onClose}>Annuler</Button>
+            <Button type="submit" shape="rounded" disabled={busy || !reason.trim()}>{busy ? <Loader2 className="animate-spin" /> : confirmLabel}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /** Message d'erreur lisible pour une mutation (utilise le message renvoyé par l'API). */
 export function errorMessage(e: unknown, fallback = "Une erreur est survenue."): string {
   return e instanceof Error && e.message && !/^Erreur \d+$/.test(e.message) ? e.message : fallback;

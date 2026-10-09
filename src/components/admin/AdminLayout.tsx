@@ -19,6 +19,7 @@ import {
   CalendarDays,
   Tag,
   Wallet,
+  Banknote,
   Eye,
   Layers,
   Handshake,
@@ -33,6 +34,7 @@ const navItems: AppNavItem[] = [
   { href: "/admin/partenaires", label: "Partenaires", icon: Handshake, section: "Catalogue" },
   { href: "/admin/bootcamp-sessions", label: "Sessions", icon: CalendarDays, section: "Catalogue" },
   { href: "/admin/candidatures", label: "Candidatures & paiements", icon: Wallet, section: "Admissions" },
+  { href: "/admin/paiements", label: "Paiements", icon: Banknote, section: "Admissions" },
   { href: "/admin/inscriptions", label: "Inscriptions", icon: ClipboardList, section: "Admissions" },
   { href: "/admin/masterclass", label: "Masterclass", icon: ClipboardList, section: "Admissions" },
   { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag, section: "Admissions" },
@@ -70,14 +72,15 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
   const { data: todo } = useAdminActions();
   const badges: Record<string, number> = todo
     ? {
-        "/admin/candidatures": todo.newApplications + todo.paymentsToConfirm,
+        "/admin/candidatures": todo.newApplications,
+        "/admin/paiements": todo.paymentsToConfirm + todo.overdueInstallments,
         "/admin/messages": todo.unreadMessages,
         "/admin/bootcamp-sessions": todo.openQuestions + todo.projectsToReview,
       }
     : {};
   const visibleNav = navItems
     .filter((i) => i.href !== "/admin/comptes" || hasAnyRole(user?.roles, ["SUPER_ADMIN"]))
-    .filter((i) => i.href !== "/admin" || canSeeStats)
+    .filter((i) => (i.href !== "/admin" && i.href !== "/admin/paiements") || canSeeStats)
     .map((i) => (badges[i.href] ? { ...i, badge: badges[i.href] } : i));
 
   return (

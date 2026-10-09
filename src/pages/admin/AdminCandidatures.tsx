@@ -17,7 +17,7 @@ import { fr } from "date-fns/locale";
 import { Copy, ExternalLink, Loader2, Plus, Search, X } from "lucide-react";
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { ErrorNotice, errorMessage, Field, inputClass } from "@/components/admin/AdminKit";
+import { ErrorNotice, errorMessage, Field, inputClass, ReasonDialog } from "@/components/admin/AdminKit";
 import { Button, Pill } from "@/components/shared";
 import { ComingSoonLink } from "@/components/layouts/ComingSoonLink";
 import {
@@ -48,40 +48,6 @@ function avatarColor(name: string): string {
 const day = (iso: string | null | undefined) => (iso ? format(new Date(iso), "d MMM", { locale: fr }) : "—");
 
 // ─── Boîtes de dialogue ───────────────────────────────────────────────────────
-
-function ReasonDialog({ title, description, confirmLabel, onClose, onSubmit }: {
-  title: string; description: string; confirmLabel: string; onClose: () => void; onSubmit: (reason: string) => Promise<void>;
-}) {
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  return (
-    <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
-      <DialogContent className="max-w-md rounded-callout">
-        <DialogHeader>
-          <DialogTitle className="font-heading text-xl font-bold text-navy">{title}</DialogTitle>
-          <DialogDescription className="text-ink-secondary">{description}</DialogDescription>
-        </DialogHeader>
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (!reason.trim()) return;
-            setBusy(true);
-            try { await onSubmit(reason.trim()); } finally { setBusy(false); }
-          }}
-        >
-          <Field label="Motif *" htmlFor="reason">
-            <textarea id="reason" rows={3} autoFocus required className={inputClass} value={reason} onChange={(e) => setReason(e.target.value)} />
-          </Field>
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" shape="rounded" disabled={busy} onClick={onClose}>Annuler</Button>
-            <Button type="submit" shape="rounded" disabled={busy || !reason.trim()}>{busy ? <Loader2 className="animate-spin" /> : confirmLabel}</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 interface InstallmentRow { amount: string; dueDate: string }
 

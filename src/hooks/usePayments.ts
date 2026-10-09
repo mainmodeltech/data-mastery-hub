@@ -7,6 +7,7 @@ import type { AcceptRegistrationPayload, DeclarePaymentPayload, ManualPaymentPay
 
 export const PAYMENT_KEYS = {
   open: ["admin", "payments", "open"] as const,
+  all: ["admin", "payments", "all"] as const,
   enrollments: ["admin", "enrollments"] as const,
   link: (token: string) => ["payment-link", token] as const,
 };
@@ -24,6 +25,11 @@ export function useOpenPayments() {
     },
     staleTime: 30 * 1000,
   });
+}
+
+/** Tous les paiements (page « Paiements » : suivi, avancement par formation). */
+export function useAllPayments() {
+  return useQuery({ queryKey: PAYMENT_KEYS.all, queryFn: paymentAdminService.listAllPayments, staleTime: 30 * 1000 });
 }
 
 export function useEnrollments() {
@@ -72,6 +78,14 @@ export function useRejectPayment() {
   const refresh = useRefreshPipeline();
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => paymentAdminService.rejectPayment(id, reason),
+    onSuccess: refresh,
+  });
+}
+
+export function useRefundPayment() {
+  const refresh = useRefreshPipeline();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => paymentAdminService.refund(id, reason),
     onSuccess: refresh,
   });
 }

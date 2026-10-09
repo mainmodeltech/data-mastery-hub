@@ -62,6 +62,7 @@ const AdminBootcampForm = lazy(() => import('./pages/admin/BootcampForm'));
 const AdminAllSessions = lazy(() => import('./pages/admin/AdminAllSessions'));
 const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
 const AdminCandidatures = lazy(() => import('./pages/admin/AdminCandidatures'));
+const AdminPaiements = lazy(() => import('./pages/admin/AdminPaiements'));
 const AdminFormationEditor = lazy(() => import('./pages/admin/AdminFormationEditor'));
 const AdminSessionSuivi = lazy(() => import('./pages/admin/AdminSessionSuivi'));
 const AdminApprenants = lazy(() => import('./pages/admin/AdminApprenants'));
@@ -195,6 +196,7 @@ const App = () => (
                   <Route path="/admin/domaines" element={<ProtectedRoute><AdminDomaines /></ProtectedRoute>} />
                   <Route path="/admin/partenaires" element={<ProtectedRoute><AdminPartenaires /></ProtectedRoute>} />
                   <Route path="/admin/sessions/:id" element={<ProtectedRoute><AdminSessionSuivi /></ProtectedRoute>} />
+                  <Route path="/admin/paiements" element={<ProtectedRoute roles={["SUPER_ADMIN", "ADMIN"]}><AdminPaiements /></ProtectedRoute>} />
                   <Route path="/admin/candidatures" element={<ProtectedRoute><AdminCandidatures /></ProtectedRoute>} />
                   <Route path="/admin/inscriptions" element={<ProtectedRoute><AdminInscriptions /></ProtectedRoute>} />
                   <Route path="/admin/promo-codes" element={<ProtectedRoute><AdminPromoCodes /></ProtectedRoute>} />
