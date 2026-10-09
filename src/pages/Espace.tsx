@@ -86,6 +86,17 @@ export default function Espace() {
               ))}
             </div>
 
+            {/* Toutes les formations sont « à venir » : on explique pourquoi l'espace est encore vide */}
+            {dash.courses.length > 0 && dash.courses.every((c) => c.status === "UPCOMING") && (
+              <div role="status" className="flex flex-col gap-1 rounded-card bg-info-bg px-5 py-4 text-sm text-navy">
+                <span className="font-bold">Vos formations ne sont pas encore ouvertes</span>
+                <span>
+                  {dash.courses.map((c) => `${c.title} : ${c.statusNote.toLowerCase()}`).join(" · ")}. Les cours, ressources et lives
+                  apparaîtront ici dès l'ouverture de l'accès. <Link to="/espace/calendrier" className="font-semibold underline">Voir le calendrier</Link>
+                </span>
+              </div>
+            )}
+
             {/* Reprendre */}
             {dash.resume && (
               <Card radius="callout" variant="navy" className="grid grid-cols-[minmax(0,1fr)] gap-5 p-4 lg:grid-cols-[280px,minmax(0,1fr)] lg:items-center lg:p-6">
