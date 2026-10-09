@@ -22,7 +22,7 @@
 **Les 5 constats majeurs**
 1. **Formateurs et partenaires ne peuvent pas utiliser la plateforme** : leur connexion aboutit sur l'accueil public et toutes les routes `/admin/*` les y renvoient. Le backend, lui, est prêt (droits par ressource corrects).
 2. **Le backend est en avance sur le front** : l'API expose déjà inscription manuelle, annulation, factures, certificats (liste, révocation, renvoi), affectation de formateur, messages de session, questions, journal d'e-mails, contenus du site, reçus, attestation… sans écran correspondant.
-3. **Fuites et risques de sécurité côté backend** : l'endpoint public de validation d'un code promo renvoie nom, e-mail et téléphone du parrain ; les journaux en mode debug contiennent les mots de passe de connexion ; les jetons de réinitialisation sont stockés en clair.
+3. **Fuites et risques de sécurité côté backend** : l'endpoint public de validation d'un code promo renvoie nom, e-mail et téléphone du parrain ; les journaux du profil `dev` contiennent les mots de passe de connexion ; les jetons de réinitialisation sont stockés en clair.
 4. **Aucun contenu éditorial piloté depuis le back-office** : `site-settings` est vide, l'accueil, les FAQ, le coaching et la masterclass sont codés en dur.
 5. **Aucun test automatisé côté front** et pas de PWA (pourtant prévue au cahier : « PWA installable »).
 
@@ -151,7 +151,7 @@
 | # | Sujet | Gravité | Constat |
 |---|---|---|---|
 | T1 | `GET /promo-codes/validate?code=` (public) | **Élevée** | Renvoie nom, e-mail et téléphone du parrain, compteur d'utilisations. À réduire à : valide ou non + remise. |
-| T2 | Journaux en DEBUG | **Élevée** | Les corps de requêtes sont journalisés, y compris `LoginRequest(email, password)`. À restreindre ou masquer ; vérifier le niveau de log en production. |
+| T2 | Journaux en profil `dev` | Moyenne | En développement, les corps de requêtes sont journalisés, y compris `LoginRequest(email, password)`. Les profils `staging` et `prod` journalisent `org.springframework.web` en INFO : le défaut n'y apparaît pas. À masquer quand même dans le profil `dev` (journaux partagés, captures d'écran). Noter que le profil `staging` laisse le code applicatif en DEBUG (volumineux). |
 | T3 | Jetons de réinitialisation | Moyenne | Stockés en clair en base (les jetons de connexion par lien, eux, sont hachés). |
 | T4 | Verrouillage de compte | Moyenne | 5 échecs verrouillent 15 min : un tiers peut verrouiller le compte d'un administrateur. Atténué par la connexion par lien e-mail. |
 | T5 | Erreurs serveur | Moyenne | Une contrainte de base (catégorie de formation) renvoie **500** au lieu de 400 ; une route inconnue renvoie 500 « Une erreur est survenue ». |
@@ -191,7 +191,7 @@
 | M3 | **Candidatures : inscription manuelle + annulation** (F4a) | M | Front (API prête) | Seul moyen d'inscrire hors formulaire public |
 | M4 | **Certificats côté admin** : liste, révocation, renvoi, dérogation motivée | M | Front (API prête) | Conformité et support apprenant |
 | M5 | **Affecter un formateur à une session** | S | Front (API prête) | Prérequis de M1/M2 (droits par session) |
-| M6 | **Corriger les risques sécurité** : T1 (fuite parrain), T2 (mots de passe dans les logs), T3 (jetons en clair) | S–M | Back | Données personnelles et identifiants |
+| M6 | **Corriger les risques sécurité** : T1 (fuite parrain), T3 (jetons en clair), T2 (mots de passe dans les logs du profil `dev`) | S–M | Back | Données personnelles et identifiants |
 | M7 | **Droits visibles dans l'interface** : menu filtré par rôle, message explicite sur 403 (fin des pages « vides ») | S | Front | Évite des diagnostics erronés (éditeur) |
 | M8 | **Factures** : émission, envoi par e-mail, annulation, PDF | M | Front (API prête) | Indispensable pour les paiements d'entreprise |
 | M9 | **Fiabiliser l'exploitation locale/déploiement** : création automatique du bucket, seed à jour, `NOTIFICATION_EMAIL_TO`, erreurs 500 → 400 | S | Back/Ops | Évite les échecs silencieux (uploads) et les e-mails vers de vrais comptes |
