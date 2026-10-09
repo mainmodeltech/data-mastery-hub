@@ -64,6 +64,7 @@ const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
 const AdminCandidatures = lazy(() => import('./pages/admin/AdminCandidatures'));
 const AdminPaiements = lazy(() => import('./pages/admin/AdminPaiements'));
 const AdminFormationEditor = lazy(() => import('./pages/admin/AdminFormationEditor'));
+const AdminQuizBank = lazy(() => import('./pages/admin/AdminQuizBank'));
 const AdminSessionSuivi = lazy(() => import('./pages/admin/AdminSessionSuivi'));
 const AdminApprenants = lazy(() => import('./pages/admin/AdminApprenants'));
 const AdminNewsletter = lazy(() => import('./pages/admin/AdminNewsletter'));
@@ -189,6 +190,7 @@ const App = () => (
 
 
                   {/* Autres sections */}
+                  <Route path="/admin/lessons/:lessonId/quiz" element={<ProtectedRoute><AdminQuizBank /></ProtectedRoute>} />
                   <Route path="/admin/formations/:id" element={<ProtectedRoute><AdminFormationEditor /></ProtectedRoute>} />
                   <Route path="/admin/apprenants" element={<ProtectedRoute><AdminApprenants /></ProtectedRoute>} />
                   <Route path="/admin/newsletter" element={<ProtectedRoute><AdminNewsletter /></ProtectedRoute>} />

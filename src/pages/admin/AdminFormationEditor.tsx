@@ -18,7 +18,9 @@ import {
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button, Card, Pill } from "@/components/shared";
-import { ComingSoonLink } from "@/components/layouts/ComingSoonLink";
+import { errorMessage } from "@/components/admin/AdminKit";
+import { LessonForm, newClientId } from "@/components/admin/LessonForm";
+import { ProjectBriefCard } from "@/components/admin/ProjectBriefCard";
 import { useAdminCourseContent, useSaveAdminCourseContent } from "@/hooks/useCourse";
 import { useFormations } from "@/hooks/useFormations";
 import { useToast } from "@/hooks/use-toast";
@@ -26,13 +28,12 @@ import { moduleDurationLabel } from "@/lib/course";
 import { ApiError } from "@/services/httpClient";
 import {
   LESSON_STATUS_LABELS, LESSON_TYPE_LABELS, formatDuration,
-  type CourseContent, type CourseModule, type CourseSettings, type Lesson, type LessonStatus, type LessonType,
+  type CertificateRules, type CourseContent, type CourseModule, type CourseSettings, type Lesson, type LessonStatus, type LessonType,
 } from "@/types/course.type";
 
-const fieldClass = "w-full rounded-[10px] border border-[#D6CEC0] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-navy";
 const STATUS_VARIANT: Record<LessonStatus, "success" | "info" | "warning"> = { PUBLISHED: "success", SCHEDULED: "info", DRAFT: "warning" };
 
-const newId = () => `new-${crypto.randomUUID()}`;
+const newId = newClientId;
 const reorder = <T extends { order: number }>(items: T[]): T[] => items.map((it, i) => ({ ...it, order: i + 1 }));
 
 function move<T>(arr: T[], index: number, delta: -1 | 1): T[] {
@@ -41,6 +42,28 @@ function move<T>(arr: T[], index: number, delta: -1 | 1): T[] {
   const copy = arr.slice();
   [copy[index], copy[target]] = [copy[target], copy[index]];
   return copy;
+}
+
+const isHttp = (url: string | null | undefined) => !!url && /^https?:\/\//i.test(url.trim());
+
+/** Contrôles avant envoi (le serveur revalide) : titres, quiz, liens http(s). Renvoie le 1er problème. */
+function validateContent(modules: CourseModule[]): string | null {
+  for (const m of modules) {
+    if (!m.title.trim()) return "Un module n'a pas de titre.";
+    for (const l of m.lessons) {
+      const where = `« ${l.title.trim() || "Leçon sans titre"} » (${m.title})`;
+      if (!l.title.trim()) return `Une leçon du module « ${m.title} » n'a pas de titre.`;
+      if (l.type === "QUIZ" && (!l.quiz || l.quiz.questionCount < 1 || l.quiz.passThreshold < 1 || l.quiz.passThreshold > 100))
+        return `${where} : renseignez le nombre de questions (≥ 1) et un seuil entre 1 et 100 %.`;
+      if (l.videoUrl && !isHttp(l.videoUrl)) return `${where} : le lien de la vidéo doit commencer par http:// ou https://.`;
+      if (l.liveUrl && !isHttp(l.liveUrl)) return `${where} : le lien du live doit commencer par http:// ou https://.`;
+      for (const r of l.resources) {
+        if (!r.name.trim()) return `${where} : une ressource n'a pas de nom.`;
+        if (r.url && !isHttp(r.url)) return `${where} : le lien de la ressource « ${r.name} » doit commencer par http:// ou https://.`;
+      }
+    }
+  }
+  return null;
 }
 
 function TypeIcon({ type }: { type: LessonType }) {
@@ -52,78 +75,10 @@ function TypeIcon({ type }: { type: LessonType }) {
 }
 
 function lessonSubtitle(l: Lesson): string {
-  if (l.type === "QUIZ" && l.quiz) return `${l.quiz.questionCount} questions · ${l.quiz.passThreshold} % requis · ${l.quiz.maxAttempts} tentatives`;
+  if (l.type === "QUIZ" && l.quiz) return `${l.quiz.questionCount} questions · ${l.quiz.passThreshold} % requis · ${l.quiz.maxAttempts ?? "∞"} tentatives`;
   if (l.type === "LIVE") return l.liveAt ? format(new Date(l.liveAt), "EEE d MMM · HH'h'mm", { locale: fr }) : "Date à définir";
   if (l.type === "RESOURCE") return `${l.resources.length} fichier(s)`;
   return [l.durationSeconds ? formatDuration(l.durationSeconds) : null, l.subtitle].filter(Boolean).join(" · ") || "—";
-}
-
-function LessonForm({ lesson, onChange }: { lesson: Lesson; onChange: (l: Lesson) => void }) {
-  const set = <K extends keyof Lesson>(k: K, v: Lesson[K]) => onChange({ ...lesson, [k]: v });
-  return (
-    <div className="grid gap-3 border-t border-[#E7E0D4] bg-white p-4 sm:grid-cols-2">
-      <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary sm:col-span-2">
-        Titre
-        <input className={fieldClass} value={lesson.title} onChange={(e) => set("title", e.target.value)} />
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary">
-        Type
-        <select className={fieldClass} value={lesson.type} onChange={(e) => set("type", e.target.value as LessonType)}>
-          {(Object.keys(LESSON_TYPE_LABELS) as LessonType[]).map((t) => <option key={t} value={t}>{LESSON_TYPE_LABELS[t]}</option>)}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary">
-        Statut
-        <select className={fieldClass} value={lesson.status} onChange={(e) => set("status", e.target.value as LessonStatus)}>
-          {(Object.keys(LESSON_STATUS_LABELS) as LessonStatus[]).map((s) => <option key={s} value={s}>{LESSON_STATUS_LABELS[s]}</option>)}
-        </select>
-      </label>
-      {lesson.type === "VIDEO" && (
-        <>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary">
-            Durée (minutes)
-            <input type="number" min={0} className={fieldClass} value={lesson.durationSeconds ? Math.round(lesson.durationSeconds / 60) : ""}
-              onChange={(e) => set("durationSeconds", e.target.value ? Number(e.target.value) * 60 : null)} />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary">
-            Identifiant hébergeur vidéo
-            <input className={fieldClass} placeholder="ID chez la plateforme vidéo" value={lesson.videoProviderId ?? ""}
-              onChange={(e) => set("videoProviderId", e.target.value || null)} />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary sm:col-span-2">
-            Description
-            <textarea rows={3} className={fieldClass} value={lesson.description ?? ""} onChange={(e) => set("description", e.target.value || null)} />
-          </label>
-        </>
-      )}
-      {lesson.type === "LIVE" && (
-        <>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary">
-            Date et heure
-            <input type="datetime-local" className={fieldClass} value={lesson.liveAt ? lesson.liveAt.slice(0, 16) : ""} onChange={(e) => set("liveAt", e.target.value || null)} />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary">
-            Lien (Google Meet…)
-            <input type="url" className={fieldClass} value={lesson.liveUrl ?? ""} onChange={(e) => set("liveUrl", e.target.value || null)} />
-          </label>
-        </>
-      )}
-      {lesson.type === "QUIZ" && (
-        <>
-          {([["questionCount", "Questions"], ["passThreshold", "Seuil de réussite (%)"], ["maxAttempts", "Tentatives max"]] as const).map(([k, label]) => (
-            <label key={k} className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary">
-              {label}
-              <input type="number" min={1} className={fieldClass}
-                value={lesson.quiz?.[k] ?? ""}
-                onChange={(e) =>
-                  set("quiz", { questionCount: 10, passThreshold: 70, maxAttempts: 3, ...lesson.quiz, [k]: Number(e.target.value) })
-                } />
-            </label>
-          ))}
-        </>
-      )}
-    </div>
-  );
 }
 
 export default function AdminFormationEditor() {
@@ -137,6 +92,7 @@ export default function AdminFormationEditor() {
 
   const [modules, setModules] = useState<CourseModule[]>([]);
   const [settings, setSettings] = useState<CourseSettings | null>(null);
+  const [rules, setRules] = useState<CertificateRules | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -145,12 +101,13 @@ export default function AdminFormationEditor() {
     if (!result) return;
     setModules(result.data.modules);
     setSettings(result.data.settings);
+    setRules(result.data.certificateRules);
     setDirty(false);
   }, [result]);
 
   const content: CourseContent | null = useMemo(
-    () => (result && settings ? { ...result.data, title: formation?.title ?? result.data.title, settings, modules: reorder(modules) } : null),
-    [result, settings, modules, formation]
+    () => (result && settings && rules ? { ...result.data, title: formation?.title ?? result.data.title, settings, certificateRules: rules, modules: reorder(modules) } : null),
+    [result, settings, rules, modules, formation]
   );
 
   const edit = (fn: (m: CourseModule[]) => CourseModule[]) => { setModules(fn); setDirty(true); };
@@ -159,14 +116,19 @@ export default function AdminFormationEditor() {
 
   const handleSave = () => {
     if (!content) return;
+    const problem = validateContent(content.modules);
+    if (problem) {
+      toast({ title: "Programme incomplet", description: problem, variant: "destructive" });
+      return;
+    }
     save.mutate(content, {
       onSuccess: () => { setDirty(false); toast({ title: "Programme enregistré" }); },
       onError: (e) =>
         toast({
           title: "Enregistrement impossible",
           description: e instanceof ApiError && (e.status === 404 || e.status === 501)
-            ? "L'enregistrement du contenu de cours n'est pas encore disponible côté serveur."
-            : "Réessayez dans un instant.",
+            ? "L'enregistrement du contenu de cours n'est pas disponible côté serveur."
+            : errorMessage(e, "Réessayez dans un instant."),
           variant: "destructive",
         }),
     });
@@ -192,9 +154,9 @@ export default function AdminFormationEditor() {
         <div role="tablist" className="flex gap-7 overflow-x-auto border-b border-[#E7E0D4] text-[15px] font-semibold">
           {id && <Link to={`/admin/bootcamps/${id}/edit`} className="whitespace-nowrap py-3 text-ink-secondary">Informations</Link>}
           <span role="tab" aria-selected="true" className="-mb-px whitespace-nowrap border-b-2 border-cta py-3 font-bold text-navy">Programme</span>
-          <ComingSoonLink title="Évaluations" className="whitespace-nowrap py-3 text-ink-secondary">Évaluations</ComingSoonLink>
-          <ComingSoonLink title="Certificat" className="whitespace-nowrap py-3 text-ink-secondary">Certificat</ComingSoonLink>
-          <Link to="/admin/bootcamp-sessions" className="whitespace-nowrap py-3 text-ink-secondary">Sessions</Link>
+          <a href="#projet" className="whitespace-nowrap py-3 text-ink-secondary">Projet final</a>
+          <a href="#certificat" className="whitespace-nowrap py-3 text-ink-secondary">Certificat</a>
+          <Link to={`/admin/bootcamp-sessions?bootcamp=${id}`} className="whitespace-nowrap py-3 text-ink-secondary">Sessions</Link>
           {formation && <Link to={`/formations/${formation.slug}`} className="whitespace-nowrap py-3 text-ink-secondary">Page du site</Link>}
         </div>
 
@@ -334,22 +296,45 @@ export default function AdminFormationEditor() {
                 </div>
               </Card>
 
-              <Card radius="stat" className="flex flex-col gap-3 p-5">
-                <div className="flex items-center justify-between">
+              {rules && (
+                <Card id="certificat" radius="stat" className="flex flex-col gap-3 p-5">
                   <h2 className="font-heading text-lg font-bold text-navy">Règles du certificat</h2>
-                  <Pill variant="warning">à venir</Pill>
-                </div>
-                <dl className="grid grid-cols-2 gap-y-2 text-sm">
-                  <dt className="text-ink-secondary">Leçons terminées</dt><dd className="text-right font-semibold">≥ {content.certificateRules.lessonsCompletedPercent} %</dd>
-                  <dt className="text-ink-secondary">Quiz réussis</dt><dd className="text-right font-semibold">tous · ≥ {content.certificateRules.quizPassPercent} %</dd>
-                  <dt className="text-ink-secondary">Présence aux lives</dt><dd className="text-right font-semibold">≥ {content.certificateRules.livePresencePercent} %</dd>
-                  <dt className="text-ink-secondary">Projet final</dt><dd className="text-right font-semibold">{content.certificateRules.finalProjectValidated ? "validé par le formateur" : "non requis"}</dd>
-                  <dt className="text-ink-secondary">Modèle</dt><dd className="text-right font-semibold">{content.certificateRules.template}</dd>
-                </dl>
-                <p className="text-xs text-ink-secondary">
-                  Dès que les conditions seront remplies : certificat généré, e-mail + WhatsApp envoyés (module certificats à venir).
-                </p>
-              </Card>
+                  {([
+                    ["lessonsCompletedPercent", "Leçons terminées (%)"],
+                    ["quizPassPercent", "Réussite aux quiz (%)"],
+                    ["livePresencePercent", "Présence aux lives (%)"],
+                  ] as const).map(([k, label]) => (
+                    <label key={k} className="flex items-center justify-between gap-3 text-sm">
+                      {label}
+                      <input
+                        type="number" min={0} max={100}
+                        className="w-20 rounded-[10px] border border-[#D6CEC0] bg-white px-2 py-1.5 text-right text-sm"
+                        value={rules[k]}
+                        onChange={(e) => { setRules({ ...rules, [k]: Math.min(100, Math.max(0, Number(e.target.value) || 0)) }); setDirty(true); }}
+                      />
+                    </label>
+                  ))}
+                  <label className="flex items-center justify-between gap-3 text-sm">
+                    Projet final validé par le formateur
+                    <input type="checkbox" className="h-[18px] w-[18px] accent-[#1A3A5B]" checked={rules.finalProjectValidated}
+                      onChange={(e) => { setRules({ ...rules, finalProjectValidated: e.target.checked }); setDirty(true); }} />
+                  </label>
+                  <label className="flex items-center justify-between gap-3 text-sm">
+                    Modèle
+                    <input
+                      className="w-40 rounded-[10px] border border-[#D6CEC0] bg-white px-2 py-1.5 text-sm"
+                      value={rules.template}
+                      onChange={(e) => { setRules({ ...rules, template: e.target.value }); setDirty(true); }}
+                    />
+                  </label>
+                  <p className="text-xs text-ink-secondary">
+                    Dès que toutes les conditions sont remplies, le certificat est généré et envoyé par e-mail à l'apprenant.
+                    Pensez à enregistrer le programme.
+                  </p>
+                </Card>
+              )}
+
+              {id && <ProjectBriefCard formationId={id} />}
             </div>
           </div>
         )}

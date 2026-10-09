@@ -9,7 +9,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, ExternalLink, Loader2, Plus, Save, X } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, CalendarDays, ExternalLink, Loader2, Plus, Save, X } from "lucide-react";
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ErrorNotice, errorMessage, Field, inputClass, SwitchRow } from "@/components/admin/AdminKit";
@@ -270,6 +270,9 @@ export default function BootcampForm() {
                 <a href={`/formations/${existing.slug}`} target="_blank" rel="noreferrer"><ExternalLink />Voir sur le site</a>
               </Button>
             )}
+            <Button asChild variant="navy" size="sm" shape="rounded">
+              <Link to={`/admin/formations/${id}`}><BookOpenCheck />Programme</Link>
+            </Button>
             <Button asChild variant="outline" size="sm" shape="rounded">
               <Link to={`/admin/bootcamp-sessions?bootcamp=${id}`}><CalendarDays />Sessions</Link>
             </Button>

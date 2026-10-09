@@ -5,7 +5,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, Eye, EyeOff, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { BookOpenCheck, CalendarDays, Eye, EyeOff, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -115,6 +115,7 @@ export default function AdminBootcamps() {
               <Button type="button" variant="outline" shape="rounded" size="sm" disabled={toggle.isPending} onClick={() => toggle.mutate(f.id)}>
                 {f.published ? <><EyeOff />Dépublier</> : <><Eye />Publier</>}
               </Button>
+              <Button asChild variant="navy" shape="rounded" size="sm"><Link to={`/admin/formations/${f.id}`}><BookOpenCheck />Programme</Link></Button>
               <Button asChild variant="outline" shape="rounded" size="sm"><Link to={`/admin/bootcamp-sessions?bootcamp=${f.id}`}><CalendarDays />Sessions</Link></Button>
               <Button asChild variant="outline" shape="rounded" size="sm"><Link to={`/admin/bootcamps/${f.id}/edit`}><Pencil />Modifier</Link></Button>
               <Button type="button" variant="outline" shape="rounded" size="sm" aria-label={`Supprimer ${f.title}`} onClick={() => setDeleting(f)}><Trash2 /></Button>

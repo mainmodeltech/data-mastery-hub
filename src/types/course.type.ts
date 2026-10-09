@@ -32,7 +32,8 @@ export interface LessonResource {
 export interface QuizSettings {
   questionCount: number;
   passThreshold: number;
-  maxAttempts: number;
+  /** null = tentatives illimitées */
+  maxAttempts: number | null;
 }
 
 export interface Lesson {
