@@ -46,11 +46,11 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useMasterclassRegistrations } from "@/hooks/useMasterclassRegistrations";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import {MasterclassRegistration} from "@/types";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const MASTERCLASS_ID = "power-bi-dashboard-2026-03-24";
 const PAGE_SIZE      = 10;
 
 // ─── Profil config ────────────────────────────────────────────────────────────
@@ -231,8 +231,10 @@ const AdminMasterclass = () => {
     const [filterEmail, setFilterEmail]     = useState<string>("all");
     const [selected, setSelected]     = useState<MasterclassRegistration | null>(null);
 
+    // L'événement courant est défini dans « Contenus du site » (page.masterclass → event.id)
+    const masterclassId = useSiteContent("page.masterclass").content?.event.id ?? "";
     const { data, isLoading, isFetching } = useMasterclassRegistrations(
-        MASTERCLASS_ID,
+        masterclassId,
         page,
         PAGE_SIZE,
     );

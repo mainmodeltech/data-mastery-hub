@@ -88,6 +88,11 @@ export const PAGE_SEO = {
         description: "Formation intensive Data Analyst et Power BI à Dakar. Sessions soir & week-end. Python, SQL, Power BI. 90% d'alumni en poste en 3 mois.",
         path:        "/",
     },
+    formations: {
+        title:       "Catalogue des formations — Data, Power BI, gestion de projet",
+        description: "Formations courtes pour professionnels à Dakar : data, Power BI, Excel, gestion de projet. Soir et week-end, inscription et suivi par Model Technologie.",
+        path:        "/formations",
+    },
     bootcamps: {
         title:       "Nos Bootcamps Data — Python, SQL, Power BI à Dakar",
         description: "Bootcamp Data Analyst (Python, SQL) et Power BI à Dakar. Formation pratique le soir et week-end. Places limitées — prochaine session bientôt.",

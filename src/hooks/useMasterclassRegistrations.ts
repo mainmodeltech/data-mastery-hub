@@ -18,6 +18,7 @@ export function useMasterclassRegistrations(
         queryKey: MASTERCLASS_KEYS.registrations(masterclassId, page, size),
         queryFn: () =>
             masterclassAdminService.getRegistrations(masterclassId, page, size),
+        enabled: masterclassId.length > 0,
         staleTime: QUERY_CONFIG.staleTime,
         placeholderData: (prev) => prev, // garde les données précédentes pendant le chargement de la nouvelle page
     });

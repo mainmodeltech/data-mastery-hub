@@ -25,6 +25,7 @@ import {
   Handshake,
   ShieldCheck,
   Mail,
+  FileText,
 } from "lucide-react";
 
 type RoleNavItem = AppNavItem & { roles: readonly string[] };
@@ -44,6 +45,7 @@ const navItems: RoleNavItem[] = [
   { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare, section: "Relation", roles: ROLE_GROUPS.CONTENT },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail, section: "Relation", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/contenus", label: "Pages du site", icon: FileText, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },
   { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },
   { href: "/admin/alumni", label: "Alumni", icon: GraduationCap, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },
   { href: "/admin/projets", label: "Projets", icon: Users, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },

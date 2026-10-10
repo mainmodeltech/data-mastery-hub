@@ -16,7 +16,7 @@ import { Button, Card, Pill } from "@/components/shared";
 import { useDeclarePayment, useDownloadInvoice, usePaymentLink, useUploadPaymentProof } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
 import { ApiError } from "@/services/httpClient";
-import { COMPANY } from "@/config/constants";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import { cn } from "@/lib/utils";
 import { saveBlob } from "@/lib/download";
 import {
@@ -40,15 +40,18 @@ const SCHEDULE_PILL: Record<PaymentStatus, { label: string; variant: "success" |
 };
 
 function Frame({ children }: { children: React.ReactNode }) {
+  const { content: company } = useSiteContent("site.company");
   return (
     <div className="flex min-h-screen flex-col items-center gap-8 bg-site-bg px-4 py-10">
       <SeoHead title="Règlement de votre inscription" description="Lien de paiement personnel." path="/paiement" noIndex />
-      <Link to="/" aria-label="Model Technologie — accueil"><Logo className="h-14" /></Link>
+      <Link to="/" aria-label="Accueil"><Logo className="h-14" /></Link>
       <div className="w-full max-w-xl">{children}</div>
-      <p className="max-w-xl text-center text-xs text-ink-secondary">
-        Une question ? <a href={COMPANY.whatsappUrl} target="_blank" rel="noreferrer" className="font-semibold text-navy">WhatsApp</a> ou{" "}
-        <a href={`mailto:${COMPANY.email}`} className="font-semibold text-navy">{COMPANY.email}</a>
-      </p>
+      {company && (
+        <p className="max-w-xl text-center text-xs text-ink-secondary">
+          Une question ? <a href={company.whatsappUrl} target="_blank" rel="noreferrer" className="font-semibold text-navy">WhatsApp</a> ou{" "}
+          <a href={`mailto:${company.email}`} className="font-semibold text-navy">{company.email}</a>
+        </p>
+      )}
     </div>
   );
 }

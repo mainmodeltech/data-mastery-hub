@@ -1,6 +1,7 @@
 /**
  * Contact.tsx — Lot 2 (docs/design/README.md §2, screens/site/Contact.dc.html)
  * Réutilise useSendContactMessage/contactService (inchangés).
+ * Textes, coordonnées, FAQ, photo et carte viennent du backend (contenus `page.contact` et `site.company`).
  */
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -8,47 +9,56 @@ import { Mail, MapPin, Clock, MessageCircle, CheckCircle, Loader2 } from "lucide
 
 import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
-import { Button, Card, SectionHeader, FaqAccordion } from "@/components/shared";
+import { Button, Card, SectionHeader, FaqAccordion, ContentGate, GoogleMapCard } from "@/components/shared";
 import { useSendContactMessage } from "@/hooks/useContacts";
-import { COMPANY } from "@/config/constants";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import { splitName } from "@/services/api/siteFormsService";
 import { submitErrorMessage } from "@/lib/formErrors";
 import type { CreateContactMessageDTO } from "@/types";
+import type { PageContact, SiteCompany } from "@/types/siteContent";
 
 const inputClass =
   "w-full rounded-card border border-[#D6CEC0] bg-white px-4 py-2.5 font-sans text-sm text-ink outline-none focus:border-navy";
 
-const CONTACT_METHODS = [
-  { icon: MessageCircle, label: "WhatsApp", value: COMPANY.phone, helper: "Réponse dans la journée", href: COMPANY.whatsappUrl, highlight: true },
-  { icon: Mail, label: "E-mail", value: COMPANY.email, helper: "Pour les devis et documents", href: `mailto:${COMPANY.email}`, highlight: false },
-  { icon: MapPin, label: "Adresse", value: COMPANY.address, helper: "Sur rendez-vous", href: null, highlight: false },
-  { icon: Clock, label: "Horaires", value: "Lun–Ven 9h–18h · Sam 9h–13h", helper: "Heure de Dakar (GMT)", href: null, highlight: false },
-];
-
-const FAQ_ITEMS = [
-  { question: "Quand démarre la prochaine cohorte ?", answer: "Consultez le calendrier des sessions sur la page Formations pour la prochaine date disponible." },
-  { question: "Quels moyens de paiement acceptez-vous ?", answer: "Wave, Orange Money et virement bancaire." },
-  { question: "Proposez-vous des facilités de paiement ?", answer: "Oui, un paiement en plusieurs fois est possible — précisez-le dans votre message." },
-  { question: "Les formations sont-elles accessibles à distance ?", answer: "Cela dépend de la formation — le format est indiqué sur chaque fiche formation." },
-  { question: "Pouvez-vous facturer mon entreprise ?", answer: "Oui, nous émettons une facture ou un bon de commande entreprise sur demande." },
-];
-
 type Role = "particulier" | "entreprise";
 
-/** Liens du site (?sujet=coaching…) → libellé du sujet pré-sélectionné. */
-const SUBJECT_BY_PARAM: Record<string, string> = {
-  coaching: "Réserver un coaching",
-  cohorte: "Candidater à une cohorte",
-  entreprise: "Formation pour mon entreprise",
-  partenariat: "Partenariat",
-};
+function contactMethods(company: SiteCompany) {
+  return [
+    { icon: MessageCircle, label: "WhatsApp", value: company.phone, helper: company.whatsappHelper, href: company.whatsappUrl, highlight: true },
+    { icon: Mail, label: "E-mail", value: company.email, helper: company.emailHelper, href: `mailto:${company.email}`, highlight: false },
+    { icon: MapPin, label: "Adresse", value: company.address, helper: company.addressHelper, href: null, highlight: false },
+    { icon: Clock, label: "Horaires", value: company.hours, helper: company.hoursHelper, href: null, highlight: false },
+  ];
+}
 
 export default function Contact() {
+  const page = useSiteContent("page.contact");
+  const company = useSiteContent("site.company");
+
+  return (
+    <SiteLayout>
+      <SeoHead {...PAGE_SEO.contact} />
+      <ContentGate
+        content={page.content && company.content ? { page: page.content, company: company.content } : undefined}
+        isLoading={page.isLoading || company.isLoading}
+        isError={page.isError || company.isError}
+        onRetry={() => { page.refetch(); company.refetch(); }}
+      >
+        {({ page: p, company: c }) => <ContactBody content={p} company={c} />}
+      </ContentGate>
+    </SiteLayout>
+  );
+}
+
+function ContactBody({ content, company }: { content: PageContact; company: SiteCompany }) {
   const [searchParams] = useSearchParams();
-  const defaultSubject = SUBJECT_BY_PARAM[searchParams.get("sujet") ?? ""] ?? "";
-  const [role, setRole] = useState<Role>(searchParams.get("sujet") === "entreprise" ? "entreprise" : "particulier");
+  const subjectParam = searchParams.get("sujet") ?? "";
+  // Liens du site (?sujet=coaching…) → sujet pré-sélectionné.
+  const defaultSubject = content.form.subjects.find((s) => s.param && s.param === subjectParam)?.value ?? "";
+  const [role, setRole] = useState<Role>(subjectParam === "entreprise" ? "entreprise" : "particulier");
   const [submitted, setSubmitted] = useState(false);
   const sendMessage = useSendContactMessage();
+  const form = content.form;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -72,23 +82,21 @@ export default function Contact() {
   };
 
   return (
-    <SiteLayout>
-      <SeoHead {...PAGE_SEO.contact} />
-
+    <>
       <section className="grid gap-10 px-6 py-20 lg:grid-cols-[1fr,1.2fr] lg:px-20">
         {/* Left: intro + contact methods */}
         <div className="flex flex-col gap-6">
           <div>
-            <span className="font-sans text-sm font-bold uppercase tracking-[1.5px] text-cta">CONTACT</span>
+            <span className="font-sans text-sm font-bold uppercase tracking-[1.5px] text-cta">{content.eyebrow}</span>
             <h1 className="mt-3 font-heading text-[clamp(32px,4.5vw,48px)] font-extrabold tracking-[-1.5px] text-navy">
-              Parlons de votre projet.
+              {content.title}
             </h1>
-            <p className="mt-3 text-ink-secondary">Le plus rapide reste WhatsApp.</p>
+            <p className="mt-3 text-ink-secondary">{content.intro}</p>
           </div>
 
           <div className="flex flex-col gap-3">
-            {CONTACT_METHODS.map((m) => {
-              const content = (
+            {contactMethods(company).map((m) => {
+              const inner = (
                 <div
                   className={
                     m.highlight
@@ -114,29 +122,38 @@ export default function Contact() {
               );
               return m.href ? (
                 <a key={m.label} href={m.href} target="_blank" rel="noreferrer">
-                  {content}
+                  {inner}
                 </a>
               ) : (
-                <div key={m.label}>{content}</div>
+                <div key={m.label}>{inner}</div>
               );
             })}
           </div>
+
+          {content.image && (
+            <img
+              src={content.image}
+              alt={content.imageAlt}
+              loading="lazy"
+              className="hidden aspect-[4/3] w-full rounded-hero object-cover lg:block"
+            />
+          )}
         </div>
 
         {/* Right: form */}
-        <Card radius="card" className="p-8">
+        <Card radius="card" className="self-start p-8">
           {submitted ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
               <CheckCircle className="h-12 w-12 text-success" />
-              <p className="font-heading text-lg font-bold text-navy">Message envoyé !</p>
-              <p className="text-sm text-ink-secondary">Nous vous répondrons sous 24h ouvrées.</p>
+              <p className="font-heading text-lg font-bold text-navy">{form.successTitle}</p>
+              <p className="text-sm text-ink-secondary">{form.successText}</p>
               <Button variant="outline" onClick={() => setSubmitted(false)}>
-                Envoyer un autre message
+                {form.successAgain}
               </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {(["particulier", "entreprise"] as Role[]).map((r) => (
                   <button
                     key={r}
@@ -149,34 +166,32 @@ export default function Contact() {
                         : "rounded-pill border border-[#D6CEC0] px-4 py-2 font-sans text-sm text-ink-secondary"
                     }
                   >
-                    {r === "particulier" ? "Je suis un particulier" : "Je représente une entreprise"}
+                    {r === "particulier" ? form.particulierLabel : form.entrepriseLabel}
                   </button>
                 ))}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <input name="name" required placeholder="Awa Ndiaye" className={inputClass} aria-label="Nom et prénom" />
-                <input name="phone" type="tel" placeholder="+221 …" className={inputClass} aria-label="Téléphone / WhatsApp" />
-                <input name="email" type="email" required placeholder="vous@exemple.com" className={inputClass} aria-label="E-mail" />
+                <input name="name" required placeholder={form.namePlaceholder} className={inputClass} aria-label="Nom et prénom" />
+                <input name="phone" type="tel" placeholder={form.phonePlaceholder} className={inputClass} aria-label="Téléphone / WhatsApp" />
+                <input name="email" type="email" required placeholder={form.emailPlaceholder} className={inputClass} aria-label="E-mail" />
                 <select name="subject" required defaultValue={defaultSubject} className={inputClass} aria-label="Sujet">
-                  <option value="" disabled>Sujet</option>
-                  <option value="Candidater à une cohorte">Candidater à une cohorte</option>
-                  <option value="Réserver un coaching">Réserver un coaching</option>
-                  <option value="Formation pour mon entreprise">Formation pour mon entreprise</option>
-                  <option value="Partenariat">Partenariat</option>
-                  <option value="Autre">Autre</option>
+                  <option value="" disabled>{form.subjectPlaceholder}</option>
+                  {form.subjects.map((s) => (
+                    <option key={s.value} value={s.value}>{s.value}</option>
+                  ))}
                 </select>
               </div>
 
               {role === "entreprise" && (
-                <input name="company" placeholder="Nom de l'entreprise" className={inputClass} aria-label="Entreprise" />
+                <input name="company" placeholder={form.companyPlaceholder} className={inputClass} aria-label="Entreprise" />
               )}
 
               <textarea
                 name="message"
                 required
                 rows={4}
-                placeholder="Dites-nous en quelques lignes ce dont vous avez besoin."
+                placeholder={form.messagePlaceholder}
                 className={inputClass}
                 aria-label="Votre message"
               />
@@ -185,30 +200,30 @@ export default function Contact() {
                 <p role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{submitErrorMessage(sendMessage.error)}</p>
               )}
               <Button type="submit" variant="primary" shape="pill" disabled={sendMessage.isPending}>
-                {sendMessage.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Envoyer le message"}
+                {sendMessage.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : form.submitLabel}
               </Button>
-              <p className="text-center text-xs text-ink-secondary">
-                Réponse sous 24h ouvrées. Vos données ne sont utilisées que pour vous répondre.
-              </p>
+              <p className="text-center text-xs text-ink-secondary">{form.note}</p>
             </form>
           )}
         </Card>
       </section>
 
-      {/* Map placeholder */}
-      <section className="px-6 pb-16 lg:px-20">
-        <div className="flex h-64 items-center justify-center rounded-hero border border-[#E7E0D4] bg-surface-sand text-sm text-ink-secondary">
-          Carte — emplacement des locaux à Dakar
-        </div>
-      </section>
+      {/* Carte Google Maps */}
+      {company.map.enabled && company.map.query && (
+        <section className="px-6 pb-16 lg:px-20">
+          <GoogleMapCard query={company.map.query} zoom={company.map.zoom} title={company.map.title} />
+        </section>
+      )}
 
       {/* FAQ */}
-      <section className="px-6 pb-20 lg:px-20">
-        <SectionHeader eyebrow="QUESTIONS FRÉQUENTES" title="Les réponses aux questions les plus courantes" />
-        <div className="mx-auto mt-8 max-w-3xl">
-          <FaqAccordion items={FAQ_ITEMS} />
-        </div>
-      </section>
-    </SiteLayout>
+      {content.faq.items.length > 0 && (
+        <section className="px-6 pb-20 lg:px-20">
+          <SectionHeader eyebrow={content.faq.eyebrow} title={content.faq.title} />
+          <div className="mx-auto mt-8 max-w-3xl">
+            <FaqAccordion items={content.faq.items} />
+          </div>
+        </section>
+      )}
+    </>
   );
 }
