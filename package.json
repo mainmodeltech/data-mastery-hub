@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test:unit": "node --experimental-strip-types --test tests/unit/lib.test.ts",
     "build:seo": "vite build && tsx scripts/prerender.ts",
     "preview:seo": "vite preview"
   },
