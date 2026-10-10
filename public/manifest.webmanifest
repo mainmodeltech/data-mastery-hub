@@ -1,0 +1,18 @@
+{
+  "name": "Model Technologie",
+  "short_name": "Model Tech",
+  "description": "Formations data et Power BI à Dakar : votre espace apprenant, vos lives, vos ressources et vos certificats.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/espace",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF7F2",
+  "theme_color": "#1A3A5B",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "/logo-mark.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/logo-mark.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
+  ]
+}

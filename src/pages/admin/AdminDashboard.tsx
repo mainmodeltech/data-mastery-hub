@@ -208,7 +208,7 @@ export default function AdminDashboard() {
         { n: a.openQuestions, title: "Questions sans réponse", to: "/admin/bootcamp-sessions" },
         { n: a.projectsToReview, title: "Projets à corriger", to: "/admin/bootcamp-sessions" },
         { n: a.upcomingLives, title: "Lives dans les 7 jours", to: "/admin/bootcamp-sessions" },
-        { n: a.failedEmails, title: "E-mails en échec (7 jours)", to: null, urgent: true },
+        { n: a.failedEmails, title: "E-mails en échec (7 jours)", to: "/admin/emails", urgent: true },
       ].filter((q) => q.n > 0)
     : [];
 

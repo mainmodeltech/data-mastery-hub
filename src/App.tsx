@@ -72,6 +72,7 @@ const AdminNewsletter = lazy(() => import('./pages/admin/AdminNewsletter'));
 const AdminContenus = lazy(() => import('./pages/admin/AdminContenus'));
 const AdminFactures = lazy(() => import('./pages/admin/AdminFactures'));
 const AdminCertificats = lazy(() => import('./pages/admin/AdminCertificats'));
+const EspacePaiements = lazy(() => import('./pages/EspacePaiements'));
 const AdminEmails = lazy(() => import('./pages/admin/AdminEmails'));
 const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
@@ -167,6 +168,7 @@ const App = () => (
                   {/* Lot 6 — évaluations (quiz, projet final, conditions du certificat) */}
                   <Route path="/espace/calendrier" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCalendrier /></ProtectedRoute>} />
                   <Route path="/espace/ressources" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceRessources /></ProtectedRoute>} />
+                  <Route path="/espace/paiements" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspacePaiements /></ProtectedRoute>} />
                   <Route path="/espace/profil" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceProfil /></ProtectedRoute>} />
                   <Route path="/espace/certificats" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCertificats /></ProtectedRoute>} />
                   <Route path="/espace/evaluations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceEvaluations /></ProtectedRoute>} />

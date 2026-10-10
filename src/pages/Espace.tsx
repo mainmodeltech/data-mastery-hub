@@ -5,6 +5,7 @@
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Link } from "react-router-dom";
+import { todoHref } from "@/lib/learnerLinks";
 import { Award, ChevronRight, Loader2, Play } from "lucide-react";
 
 import { Button, Card, Pill, ProgressBar } from "@/components/shared";
@@ -190,11 +191,14 @@ export default function Espace() {
                         key={t.id}
                         className={`flex items-center gap-3 border-t border-[#E7E0D4] py-3.5 first:border-t-0 ${i >= 2 ? "hidden lg:flex" : ""}`}
                       >
-                        <div className="flex min-w-0 flex-1 flex-col">
-                          <span className="truncate font-semibold text-ink">{t.title}</span>
-                          <span className="truncate text-[13px] text-ink-secondary">{t.subtitle}</span>
-                        </div>
-                        <Pill variant={t.tone === "warning" ? "warning" : "info"}>{t.badge}</Pill>
+                        <Link to={todoHref(t.id)} className="flex min-w-0 flex-1 items-center gap-3 hover:text-navy">
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <span className="truncate font-semibold text-ink">{t.title}</span>
+                            <span className="truncate text-[13px] text-ink-secondary">{t.subtitle}</span>
+                          </div>
+                          <Pill variant={t.tone === "warning" ? "warning" : "info"}>{t.badge}</Pill>
+                          <ChevronRight className="h-4 w-4 shrink-0 text-ink-secondary" aria-hidden="true" />
+                        </Link>
                       </li>
                     ))}
                     {dash.todos.length === 0 && <li className="text-sm text-ink-secondary">Rien à faire pour le moment.</li>}

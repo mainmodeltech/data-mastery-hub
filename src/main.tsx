@@ -3,6 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 import {GoogleReCaptchaProvider} from "react-google-recaptcha-v3";
 import { HelmetProvider } from "react-helmet-async";
+import { registerPwa } from "./lib/pwa";
 
 
 createRoot(document.getElementById("root")!).render(
@@ -12,3 +13,5 @@ createRoot(document.getElementById("root")!).render(
         </HelmetProvider>
     </GoogleReCaptchaProvider>
 );
+
+registerPwa();

@@ -1,7 +1,8 @@
 /**
- * /espace/profil — compte de l'apprenant (GET /auth/me) et changement de mot de passe
+ * /espace/profil — compte de l'apprenant (GET/PUT /learner/profile : nom, téléphone, pays) et changement de mot de passe
  * (PUT /auth/change-password : 204, 400 si le mot de passe actuel est incorrect).
  */
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +15,7 @@ import { inputClass } from "@/components/admin/AdminKit";
 import { LearnerShell } from "@/components/learner/LearnerShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLearnerProfile, useUpdateLearnerProfile } from "@/hooks/useLearner";
 import { authService } from "@/services/api/authService";
 import { ApiError } from "@/services/httpClient";
 
@@ -34,6 +36,66 @@ function PasswordField({ label, error, children }: { label: string; error?: stri
       {children}
       {error && <span role="alert" className="text-xs font-normal text-error">{error}</span>}
     </label>
+  );
+}
+
+function ProfileForm() {
+  const { toast } = useToast();
+  const profile = useLearnerProfile();
+  const update = useUpdateLearnerProfile();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [country, setCountry] = useState("");
+
+  useEffect(() => {
+    if (!profile.data) return;
+    setFirstName(profile.data.firstName ?? "");
+    setLastName(profile.data.lastName ?? "");
+    setPhone(profile.data.phone ?? "");
+    setCountry(profile.data.country ?? "");
+  }, [profile.data]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await update.mutateAsync({ firstName: firstName.trim(), lastName: lastName.trim(), phone: phone.trim(), country: country.trim() });
+      toast({ title: "Profil mis à jour" });
+    } catch (err) {
+      toast({ title: "Mise à jour impossible", description: err instanceof ApiError ? err.message : "Réessayez dans un instant.", variant: "destructive" });
+    }
+  };
+
+  return (
+    <Card radius="stat" className="flex flex-col gap-4 border border-[#E7E0D4] p-5 lg:p-6">
+      <h2 className="font-heading text-xl font-bold text-navy">Mes informations</h2>
+      {profile.isLoading && <Loader2 className="h-5 w-5 animate-spin text-ink-secondary" />}
+      {profile.isError && <p role="alert" className="text-sm text-error">Impossible de charger votre profil pour le moment.</p>}
+      {profile.data && (
+        <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">Prénom
+            <input required maxLength={100} className={inputClass} value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">Nom
+            <input maxLength={100} className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">Téléphone / WhatsApp
+            <input type="tel" maxLength={30} className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">Pays
+            <input maxLength={100} className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)} autoComplete="country-name" />
+          </label>
+          <p className="text-xs text-ink-secondary sm:col-span-2">
+            E-mail : <strong className="text-ink">{profile.data.email}</strong>{profile.data.emailVerified ? " (vérifié)" : ""}. Pour le modifier, contactez-nous.
+          </p>
+          <div className="sm:col-span-2">
+            <Button type="submit" variant="navy" shape="rounded" className="w-fit" disabled={update.isPending || !firstName.trim()}>
+              {update.isPending ? <Loader2 className="animate-spin" /> : "Enregistrer"}
+            </Button>
+          </div>
+        </form>
+      )}
+    </Card>
   );
 }
 
@@ -83,6 +145,8 @@ export default function EspaceProfil() {
             <LogOut />Se déconnecter
           </Button>
         </Card>
+
+        <ProfileForm />
 
         <Card radius="stat" className="flex flex-col gap-4 border border-[#E7E0D4] p-5 lg:p-6">
           <h2 className="font-heading text-xl font-bold text-navy">Changer mon mot de passe</h2>

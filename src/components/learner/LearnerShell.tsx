@@ -4,11 +4,12 @@
  */
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { Award, BookOpen, CalendarDays, CircleHelp, FileText, Home, User } from "lucide-react";
+import { Award, BookOpen, CalendarDays, CircleHelp, FileText, Home, User, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { AppLayout, type AppNavItem } from "@/components/layouts/AppLayout";
 import { ComingSoonLink } from "@/components/layouts/ComingSoonLink";
+import { NotificationsBell } from "@/components/learner/NotificationsBell";
 import { useAuth } from "@/hooks/useAuth";
 
 export const LEARNER_NAV: AppNavItem[] = [
@@ -18,6 +19,7 @@ export const LEARNER_NAV: AppNavItem[] = [
   { href: "/espace/evaluations", label: "Évaluations", icon: CircleHelp },
   { href: "/espace/ressources", label: "Ressources", icon: FileText },
   { href: "/espace/certificats", label: "Certificats", icon: Award },
+  { href: "/espace/paiements", label: "Mes paiements", icon: Wallet },
   { href: "/espace/profil", label: "Mon profil", icon: User },
 ];
 
@@ -96,6 +98,7 @@ export function LearnerShell({ children, title, greeting, description, withTabBa
       avatarInitials={initials}
       hideSearch
       hideNotifications
+      headerExtra={<NotificationsBell />}
       bottomNav={withTabBar ? <MobileTabBar /> : undefined}
       helpSlot={
         <div className="flex flex-col gap-2">
