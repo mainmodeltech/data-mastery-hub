@@ -27,6 +27,7 @@ import {
   Mail,
   FileText,
   Receipt,
+  MessagesSquare,
   Award,
   Send,
 } from "lucide-react";
@@ -49,6 +50,7 @@ const navItems: RoleNavItem[] = [
   { href: "/admin/certificats", label: "Certificats", icon: Award, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare, section: "Relation", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/communaute", label: "Communauté", icon: MessagesSquare, section: "Relation", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail, section: "Relation", roles: ROLE_GROUPS.CONTENT },
   { href: "/admin/emails", label: "Journal d'e-mails", icon: Send, section: "Relation", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/contenus", label: "Pages du site", icon: FileText, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },

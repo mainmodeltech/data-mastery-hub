@@ -4,10 +4,12 @@
  *
  * Lecture vidéo : <iframe> si le serveur fournit `videoEmbedUrl` (Vimeo / YouTube) ; sinon
  * <video> natif sur `videoUrl` ; sinon un état « vidéo pas encore hébergée » — aucun faux lecteur.
- * Les notes sont enregistrées sur l'appareil (localStorage) ; les questions à l'équipe passent
+ * Les notes sont enregistrées sur le serveur (copie locale en secours) ; les questions à l'équipe passent
  * par LessonQuestions ; les quiz se passent depuis /evaluations (Lot 6).
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { learnerService } from "@/services/api/learnerService";
+import { lowQualityEmbedUrl, useMediaPrefs } from "@/hooks/useMediaPrefs";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Check, Download, ListTree, Loader2, Lock, MessageCircle, Play, X,
@@ -57,26 +59,90 @@ function ResourceRow({ r, locked }: { r: LessonResource; locked: boolean }) {
   );
 }
 
+type NoteStatus = "idle" | "saving" | "saved" | "local";
+
+/**
+ * Notes personnelles : enregistrées sur le serveur (synchronisées entre appareils) avec une copie locale ;
+ * si le serveur est injoignable, la note reste sur l'appareil et le statut l'indique.
+ */
 function Notes({ lessonId }: { lessonId: string }) {
   const key = `notes:${lessonId}`;
   const [value, setValue] = useState("");
+  const [status, setStatus] = useState<NoteStatus>("idle");
+  const loaded = useRef(false);
+  const timer = useRef<number | undefined>(undefined);
+
   useEffect(() => {
-    try { setValue(localStorage.getItem(key) ?? ""); } catch { setValue(""); }
-  }, [key]);
+    let cancelled = false;
+    loaded.current = false;
+    let local = "";
+    try { local = localStorage.getItem(key) ?? ""; } catch { /* stockage indisponible */ }
+    setValue(local);
+    setStatus("idle");
+    learnerService.note(lessonId)
+      .then((note) => {
+        if (cancelled) return;
+        // Le serveur fait foi ; une note locale jamais synchronisée est conservée et renvoyée
+        if (note.content === "" && local !== "") {
+          setStatus("saving");
+          learnerService.saveNote(lessonId, local).then(() => !cancelled && setStatus("saved")).catch(() => !cancelled && setStatus("local"));
+        } else {
+          setValue(note.content);
+          try { localStorage.setItem(key, note.content); } catch { /* ignoré */ }
+        }
+      })
+      .catch(() => { if (!cancelled) setStatus("local"); })
+      .finally(() => { loaded.current = true; });
+    return () => { cancelled = true; window.clearTimeout(timer.current); };
+  }, [lessonId, key]);
+
+  const change = (next: string) => {
+    setValue(next);
+    try { localStorage.setItem(key, next); } catch { /* ignoré */ }
+    setStatus("saving");
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      learnerService.saveNote(lessonId, next).then(() => setStatus("saved")).catch(() => setStatus("local"));
+    }, 800);
+  };
+
+  const statusText: Record<NoteStatus, string> = {
+    idle: "Vos notes sont synchronisées entre vos appareils.",
+    saving: "Enregistrement…",
+    saved: "Enregistrée.",
+    local: "Enregistrée sur cet appareil ; la synchronisation reprendra dès que la connexion revient.",
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <textarea
         aria-label="Mes notes"
         rows={6}
+        maxLength={10000}
         value={value}
         placeholder="Vos notes sur cette leçon…"
-        onChange={(e) => {
-          setValue(e.target.value);
-          try { localStorage.setItem(key, e.target.value); } catch { /* stockage indisponible */ }
-        }}
+        onChange={(e) => change(e.target.value)}
         className="w-full rounded-card border border-[#D6CEC0] bg-white p-3 text-sm outline-none focus:border-navy"
       />
-      <span className="text-xs text-ink-secondary">Notes enregistrées sur cet appareil uniquement.</span>
+      <span role="status" className="text-xs text-ink-secondary">{statusText[status]}</span>
+    </div>
+  );
+}
+
+/** Modes de lecture : économie de données (chargement à la demande, basse qualité) et audio seul. */
+function MediaModeBar({ prefs }: { prefs: ReturnType<typeof useMediaPrefs> }) {
+  const chip = (active: boolean) =>
+    `inline-flex min-h-[36px] items-center gap-1.5 rounded-pill border px-3.5 text-[13px] font-semibold ${
+      active ? "border-navy bg-navy text-white" : "border-[#D6CEC0] bg-white text-navy"
+    }`;
+  return (
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Modes de lecture">
+      <button type="button" aria-pressed={prefs.dataSaver} onClick={() => prefs.setDataSaver(!prefs.dataSaver)} className={chip(prefs.dataSaver)}>
+        Économie de données
+      </button>
+      <button type="button" aria-pressed={prefs.audioOnly} onClick={() => prefs.setAudioOnly(!prefs.audioOnly)} className={chip(prefs.audioOnly)}>
+        Audio seul
+      </button>
     </div>
   );
 }
@@ -86,6 +152,10 @@ function LessonBody({ lesson, formationId, onProgress, onEnded, startAt }: {
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastSent = useRef(0);
+  const prefs = useMediaPrefs();
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => { setStarted(false); }, [lesson.id]);
 
   useEffect(() => {
     if (videoRef.current && startAt > 0) videoRef.current.currentTime = startAt;
@@ -95,36 +165,60 @@ function LessonBody({ lesson, formationId, onProgress, onEnded, startAt }: {
     // Vimeo / YouTube : l'adresse d'intégration vient du serveur, jamais construite depuis videoUrl.
     // Le lecteur tiers ne remonte pas la position : la leçon se marque terminée à la main.
     if (lesson.videoEmbedUrl) {
+      const loadOnDemand = prefs.dataSaver && !started;
       return (
-        <iframe
-          key={lesson.id}
-          src={lesson.videoEmbedUrl}
-          title={lesson.title}
-          allow="fullscreen; picture-in-picture"
-          allowFullScreen
-          referrerPolicy="strict-origin-when-cross-origin"
-          className="aspect-video w-full rounded-[18px] border-0 bg-navy-dark"
-        />
+        <div className="flex flex-col gap-2">
+          <MediaModeBar prefs={prefs} />
+          {loadOnDemand ? (
+            <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-[18px] bg-navy-dark px-6 text-center">
+              <p className="text-sm text-[#D5DEE8]">Économie de données : la vidéo ne se charge qu'à votre demande.</p>
+              <Button type="button" variant="primary" shape="pill" onClick={() => setStarted(true)}>
+                <Play />{prefs.audioOnly ? "Écouter" : "Lire la vidéo"}
+              </Button>
+            </div>
+          ) : (
+            <iframe
+              key={`${lesson.id}-${prefs.audioOnly}`}
+              src={prefs.dataSaver ? lowQualityEmbedUrl(lesson.videoEmbedUrl) : lesson.videoEmbedUrl}
+              title={lesson.title}
+              allow="fullscreen; picture-in-picture"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              className={prefs.audioOnly ? "h-16 w-full rounded-[18px] border-0 bg-navy-dark" : "aspect-video w-full rounded-[18px] border-0 bg-navy-dark"}
+            />
+          )}
+        </div>
       );
     }
     if (lesson.videoUrl) {
+      const progress = {
+        onTimeUpdate: (e: React.SyntheticEvent<HTMLMediaElement>) => {
+          const t = Math.floor(e.currentTarget.currentTime);
+          if (Math.abs(t - lastSent.current) >= 10) {
+            lastSent.current = t;
+            onProgress(t);
+          }
+        },
+        onEnded,
+      };
       return (
-        <video
-          ref={videoRef}
-          key={lesson.id}
-          src={lesson.videoUrl}
-          controls
-          playsInline
-          className="aspect-video w-full rounded-[18px] bg-navy-dark"
-          onTimeUpdate={(e) => {
-            const t = Math.floor(e.currentTarget.currentTime);
-            if (Math.abs(t - lastSent.current) >= 10) {
-              lastSent.current = t;
-              onProgress(t);
-            }
-          }}
-          onEnded={onEnded}
-        />
+        <div className="flex flex-col gap-2">
+          <MediaModeBar prefs={prefs} />
+          {prefs.audioOnly ? (
+            <audio key={lesson.id} src={lesson.videoUrl} controls preload="none" className="w-full" {...progress} />
+          ) : (
+            <video
+              ref={videoRef}
+              key={lesson.id}
+              src={lesson.videoUrl}
+              controls
+              playsInline
+              preload={prefs.dataSaver ? "none" : "metadata"}
+              className="aspect-video w-full rounded-[18px] bg-navy-dark"
+              {...progress}
+            />
+          )}
+        </div>
       );
     }
     return (

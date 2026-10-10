@@ -88,7 +88,47 @@ export interface ResourceEntry {
   lessonTitle: string | null;
 }
 
+export interface CommunityPost {
+  id: string;
+  /** Prénom et initiale du nom (jamais l'e-mail). */
+  author: string;
+  mine: boolean;
+  content: string;
+  createdAt: string;
+  replies: CommunityPost[];
+}
+
+export interface CommunityPage {
+  threads: CommunityPost[];
+  totalThreads: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface LessonNote {
+  lessonId: string;
+  /** Vide tant que l'apprenant n'a rien écrit. */
+  content: string;
+  updatedAt: string | null;
+}
+
 export const learnerService = {
+  community: (formationId: string, page = 0): Promise<CommunityPage> =>
+    httpClient.get<CommunityPage>(`/learner/formations/${formationId}/community`, { params: { page, size: 20 } }),
+
+  communityPost: (formationId: string, content: string, parentId?: string): Promise<CommunityPost> =>
+    httpClient.post<CommunityPost>(`/learner/formations/${formationId}/community`, { content, parentId }),
+
+  communityDelete: async (postId: string): Promise<void> => {
+    await httpClient.delete<void>(`/learner/community/${postId}`);
+  },
+
+  /** Note personnelle d'une leçon (synchronisée entre les appareils). */
+  note: (lessonId: string): Promise<LessonNote> => httpClient.get<LessonNote>(`/learner/lessons/${lessonId}/note`),
+
+  saveNote: (lessonId: string, content: string): Promise<LessonNote> =>
+    httpClient.put<LessonNote>(`/learner/lessons/${lessonId}/note`, { content }),
+
   profile: (): Promise<LearnerProfile> => httpClient.get<LearnerProfile>("/learner/profile"),
 
   updateProfile: (payload: UpdateLearnerProfile): Promise<LearnerProfile> =>

@@ -72,6 +72,8 @@ const AdminNewsletter = lazy(() => import('./pages/admin/AdminNewsletter'));
 const AdminContenus = lazy(() => import('./pages/admin/AdminContenus'));
 const AdminFactures = lazy(() => import('./pages/admin/AdminFactures'));
 const AdminCertificats = lazy(() => import('./pages/admin/AdminCertificats'));
+const EspaceCommunaute = lazy(() => import('./pages/EspaceCommunaute'));
+const AdminCommunaute = lazy(() => import('./pages/admin/AdminCommunaute'));
 const EspacePaiements = lazy(() => import('./pages/EspacePaiements'));
 const AdminEmails = lazy(() => import('./pages/admin/AdminEmails'));
 const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
@@ -168,6 +170,7 @@ const App = () => (
                   {/* Lot 6 — évaluations (quiz, projet final, conditions du certificat) */}
                   <Route path="/espace/calendrier" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCalendrier /></ProtectedRoute>} />
                   <Route path="/espace/ressources" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceRessources /></ProtectedRoute>} />
+                  <Route path="/espace/communaute" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCommunaute /></ProtectedRoute>} />
                   <Route path="/espace/paiements" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspacePaiements /></ProtectedRoute>} />
                   <Route path="/espace/profil" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceProfil /></ProtectedRoute>} />
                   <Route path="/espace/certificats" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCertificats /></ProtectedRoute>} />
@@ -203,6 +206,7 @@ const App = () => (
                   <Route path="/admin/apprenants" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminApprenants /></ProtectedRoute>} />
                   <Route path="/admin/newsletter" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminNewsletter /></ProtectedRoute>} />
                   <Route path="/admin/contenus" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminContenus /></ProtectedRoute>} />
+                  <Route path="/admin/communaute" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminCommunaute /></ProtectedRoute>} />
                   <Route path="/admin/factures" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminFactures /></ProtectedRoute>} />
                   <Route path="/admin/certificats" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminCertificats /></ProtectedRoute>} />
                   <Route path="/admin/emails" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminEmails /></ProtectedRoute>} />

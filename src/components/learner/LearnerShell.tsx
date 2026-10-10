@@ -4,7 +4,7 @@
  */
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { Award, BookOpen, CalendarDays, CircleHelp, FileText, Home, User, Wallet } from "lucide-react";
+import { Award, BookOpen, CalendarDays, CircleHelp, FileText, Home, User, Users, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { AppLayout, type AppNavItem } from "@/components/layouts/AppLayout";
@@ -18,6 +18,7 @@ export const LEARNER_NAV: AppNavItem[] = [
   { href: "/espace/calendrier", label: "Calendrier & lives", icon: CalendarDays },
   { href: "/espace/evaluations", label: "Évaluations", icon: CircleHelp },
   { href: "/espace/ressources", label: "Ressources", icon: FileText },
+  { href: "/espace/communaute", label: "Communauté", icon: Users },
   { href: "/espace/certificats", label: "Certificats", icon: Award },
   { href: "/espace/paiements", label: "Mes paiements", icon: Wallet },
   { href: "/espace/profil", label: "Mon profil", icon: User },

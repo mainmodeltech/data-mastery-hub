@@ -8,6 +8,7 @@ export const LEARNER_KEYS = {
   enrollments: ["learner", "enrollments"] as const,
   calendar: ["learner", "calendar"] as const,
   resources: ["learner", "resources"] as const,
+  community: (formationId: string, page: number) => ["learner", "community", formationId, page] as const,
 };
 
 export function useLearnerProfile() {
@@ -47,4 +48,31 @@ export function useLearnerCalendar() {
 
 export function useLearnerResources() {
   return useQuery({ queryKey: LEARNER_KEYS.resources, queryFn: learnerService.resources, staleTime: 60 * 1000 });
+}
+
+// ─── Communauté ───────────────────────────────────────────────────────────────
+
+export function useCommunity(formationId: string | undefined, page: number) {
+  return useQuery({
+    queryKey: LEARNER_KEYS.community(formationId ?? "", page),
+    queryFn: () => learnerService.community(formationId as string, page),
+    enabled: !!formationId,
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function useCommunityPost(formationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ content, parentId }: { content: string; parentId?: string }) => learnerService.communityPost(formationId, content, parentId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["learner", "community", formationId] }),
+  });
+}
+
+export function useCommunityDelete(formationId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (postId: string) => learnerService.communityDelete(postId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["learner", "community", formationId] }),
+  });
 }
