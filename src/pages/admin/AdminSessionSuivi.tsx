@@ -3,8 +3,9 @@
  * Route : /admin/sessions/:id
  *
  * Suivi d'une session : KPI, apprenants (progression, quiz, projet, certificat), lives et appel.
- * Les actions qui dépendent des comptes apprenants (ajout, message) et des certificats (Lot 7)
- * sont affichées mais marquées « en cours » plutôt que simulées. L'export CSV et l'appel sont réels.
+ * Actions réelles : appel, export CSV, ajout d'un apprenant (candidature manuelle rattachée à la session),
+ * message aux apprenants, délivrance de certificats (dérogation motivée pour les administrateurs),
+ * correction du projet final, réponse aux questions des leçons et affectation du formateur.
  */
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -14,12 +15,16 @@ import { Check, Download, Loader2, MessageCircle, Plus, Award } from "lucide-rea
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button, Card, Pill } from "@/components/shared";
-import { ComingSoonLink } from "@/components/layouts/ComingSoonLink";
+import { ManualRegistrationDialog } from "@/components/admin/ManualRegistrationDialog";
+import {
+  IssueCertificatesDialog, MessagesCard, ProjectReviewDialog, QuestionsCard, SessionMessageDialog, TrainerAssign,
+} from "@/components/admin/SessionActions";
 import { DemoDataBanner } from "@/components/learner/LearnerShell";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { useSaveAttendance, useSessionTracking } from "@/hooks/useEvaluations";
+import { EVALUATION_KEYS, useSaveAttendance, useSessionTracking } from "@/hooks/useEvaluations";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { hasAnyRole, ROLE_GROUPS } from "@/lib/roles";
@@ -88,7 +93,7 @@ function progressColor(p: number): string {
   return p >= 85 ? "#1F6B4F" : "#8A5A00";
 }
 
-function LearnerRow({ l, selected, onToggle }: { l: TrackedLearner; selected: boolean; onToggle: () => void }) {
+function LearnerRow({ l, selected, onToggle, onReview }: { l: TrackedLearner; selected: boolean; onToggle: () => void; onReview: () => void }) {
   return (
     <div className={cn("flex flex-col gap-3 border-b border-[#E7E0D4] px-4 py-4 text-sm lg:py-3.5", ROW_GRID)}>
       <span className="flex items-center gap-3">
@@ -126,7 +131,12 @@ function LearnerRow({ l, selected, onToggle }: { l: TrackedLearner; selected: bo
         <span className="text-xs text-ink-secondary">{l.progressPercent} %</span>
       </span>
       <span className="font-semibold"><span className="font-normal text-ink-secondary lg:hidden">Quiz : </span>{l.quizPassed}/{l.quizTotal}</span>
-      <span><Pill variant={PROJECT_PILL[l.project]}>{PROJECT_STATUS_LABELS[l.project]}</Pill></span>
+      <span className="flex flex-wrap items-center gap-2">
+        <Pill variant={PROJECT_PILL[l.project]}>{PROJECT_STATUS_LABELS[l.project]}</Pill>
+        {(l.project === "SUBMITTED" || l.project === "CHANGES_REQUESTED") && (
+          <button type="button" onClick={onReview} className="text-xs font-semibold text-navy underline underline-offset-2 hover:text-cta">Corriger</button>
+        )}
+      </span>
       <span><Pill variant={CERT_PILL[l.certificate]}>{CERTIFICATE_STATUS_LABELS[l.certificate]}</Pill></span>
     </div>
   );
@@ -237,6 +247,12 @@ export default function AdminSessionSuivi() {
   const tracking = result?.data;
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [attendanceOpen, setAttendanceOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [issueOpen, setIssueOpen] = useState(false);
+  const [reviewing, setReviewing] = useState<TrackedLearner | null>(null);
+  const qc = useQueryClient();
+  const canForce = hasAnyRole(user?.roles, ROLE_GROUPS.ADMINS);
 
   const kpis = useMemo(() => {
     if (!tracking) return [];
@@ -299,12 +315,14 @@ export default function AdminSessionSuivi() {
                     <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => exportCsv(tracking)}>
                       <Download />Exporter CSV
                     </Button>
-                    <ComingSoonLink
-                      title="Ajouter un apprenant"
-                      className="rounded-card bg-navy px-4 py-2 text-sm font-semibold text-white"
-                    >
-                      <Plus className="h-4 w-4" />Ajouter un apprenant
-                    </ComingSoonLink>
+                    <Button type="button" variant="outline" shape="rounded" size="sm" disabled={tracking.learners.length === 0} onClick={() => { setSelected(new Set()); setMessageOpen(true); }}>
+                      <MessageCircle />Écrire à la session
+                    </Button>
+                    {canForce && (
+                      <Button type="button" variant="navy" shape="rounded" size="sm" onClick={() => setAddOpen(true)}>
+                        <Plus />Ajouter un apprenant
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -313,12 +331,12 @@ export default function AdminSessionSuivi() {
                     <span className="flex-1 font-bold text-navy">
                       {selected.size} apprenant{selected.size > 1 ? "s" : ""} sélectionné{selected.size > 1 ? "s" : ""}
                     </span>
-                    <ComingSoonLink title="Envoyer un message" className="rounded-card border border-[#D6CEC0] bg-white px-4 py-2 text-sm font-semibold text-navy">
-                      <MessageCircle className="h-4 w-4" />Envoyer un message
-                    </ComingSoonLink>
-                    <ComingSoonLink title="Délivrer le certificat" className="rounded-card bg-navy px-4 py-2 text-sm font-semibold text-white">
-                      <Award className="h-4 w-4" />Délivrer le certificat
-                    </ComingSoonLink>
+                    <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => setMessageOpen(true)}>
+                      <MessageCircle />Envoyer un message
+                    </Button>
+                    <Button type="button" variant="navy" shape="rounded" size="sm" onClick={() => setIssueOpen(true)}>
+                      <Award />Délivrer le certificat
+                    </Button>
                   </div>
                 )}
 
@@ -330,7 +348,7 @@ export default function AdminSessionSuivi() {
                     <p className="px-4 py-6 text-sm text-ink-secondary">Aucun apprenant inscrit à cette session pour le moment.</p>
                   )}
                   {tracking.learners.map((l) => (
-                    <LearnerRow key={l.learnerId} l={l} selected={selected.has(l.learnerId)} onToggle={() => toggle(l.learnerId)} />
+                    <LearnerRow key={l.learnerId} l={l} selected={selected.has(l.learnerId)} onToggle={() => toggle(l.learnerId)} onReview={() => setReviewing(l)} />
                   ))}
                 </div>
               </Card>
@@ -351,6 +369,7 @@ export default function AdminSessionSuivi() {
                       <span className="text-right font-semibold">{v}</span>
                     </div>
                   ))}
+                  {canForce && <TrainerAssign sessionId={id} currentName={tracking.trainerName} />}
                 </Card>
 
                 <Card radius="stat" className="flex flex-col gap-1 border border-[#E7E0D4] p-5 lg:p-6">
@@ -363,8 +382,31 @@ export default function AdminSessionSuivi() {
                     </Button>
                   )}
                 </Card>
+
+                <QuestionsCard sessionId={id} />
+                <MessagesCard sessionId={id} />
               </div>
             </div>
+
+            {addOpen && <ManualRegistrationDialog presetFormationId={tracking.formationId ?? undefined} presetSessionId={id} onClose={() => setAddOpen(false)} />}
+            {messageOpen && (
+              <SessionMessageDialog
+                sessionId={id}
+                recipients={tracking.learners.filter((l) => selected.has(l.learnerId))}
+                totalLearners={tracking.learners.length}
+                onClose={() => setMessageOpen(false)}
+              />
+            )}
+            {issueOpen && (
+              <IssueCertificatesDialog
+                sessionId={id}
+                learners={tracking.learners.filter((l) => selected.has(l.learnerId))}
+                canForce={canForce}
+                onClose={() => setIssueOpen(false)}
+                onDone={() => qc.invalidateQueries({ queryKey: EVALUATION_KEYS.tracking(id) })}
+              />
+            )}
+            {reviewing && <ProjectReviewDialog sessionId={id} learner={reviewing} onClose={() => setReviewing(null)} />}
 
             {attendanceOpen && (
               <AttendanceDialog open={attendanceOpen} onOpenChange={setAttendanceOpen} tracking={tracking} sessionId={id} />

@@ -26,6 +26,9 @@ import {
   ShieldCheck,
   Mail,
   FileText,
+  Receipt,
+  Award,
+  Send,
 } from "lucide-react";
 
 type RoleNavItem = AppNavItem & { roles: readonly string[] };
@@ -42,9 +45,12 @@ const navItems: RoleNavItem[] = [
   { href: "/admin/paiements", label: "Paiements", icon: Banknote, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/inscriptions", label: "Inscriptions", icon: ClipboardList, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/masterclass", label: "Masterclass", icon: ClipboardList, section: "Admissions", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/factures", label: "Factures", icon: Receipt, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
+  { href: "/admin/certificats", label: "Certificats", icon: Award, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag, section: "Admissions", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare, section: "Relation", roles: ROLE_GROUPS.CONTENT },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail, section: "Relation", roles: ROLE_GROUPS.CONTENT },
+  { href: "/admin/emails", label: "Journal d'e-mails", icon: Send, section: "Relation", roles: ROLE_GROUPS.ADMINS },
   { href: "/admin/contenus", label: "Pages du site", icon: FileText, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },
   { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquare, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },
   { href: "/admin/alumni", label: "Alumni", icon: GraduationCap, section: "Contenu du site", roles: ROLE_GROUPS.CONTENT },

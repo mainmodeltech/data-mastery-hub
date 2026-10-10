@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { paymentAdminService, paymentLinkService } from "@/services/api/paymentService";
 import { REGISTRATION_KEYS } from "@/hooks/useRegistrations";
 import { QUERY_CONFIG } from "@/config/constants";
+import type { ManualRegistrationPayload } from "@/services/api/paymentService";
 import type { AcceptRegistrationPayload, DeclarePaymentPayload, ManualPaymentPayload } from "@/types/payment.type";
 
 export const PAYMENT_KEYS = {
@@ -49,6 +50,22 @@ export function useAcceptRegistration() {
   const refresh = useRefreshPipeline();
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: AcceptRegistrationPayload }) => paymentAdminService.accept(id, payload),
+    onSuccess: refresh,
+  });
+}
+
+export function useCreateManualRegistration() {
+  const refresh = useRefreshPipeline();
+  return useMutation({
+    mutationFn: (payload: ManualRegistrationPayload) => paymentAdminService.createManual(payload),
+    onSuccess: refresh,
+  });
+}
+
+export function useCancelRegistration() {
+  const refresh = useRefreshPipeline();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => paymentAdminService.cancel(id, reason),
     onSuccess: refresh,
   });
 }

@@ -154,9 +154,11 @@ export default function FormationDetail() {
             <Button variant="primary" shape="pill" onClick={() => setRegistering(true)}>
               Candidater
             </Button>
-            <Button variant="outline" shape="pill">
-              Télécharger le programme
-            </Button>
+            {formation.curriculum.length > 0 && (
+              <Button asChild variant="outline" shape="pill">
+                <a href="#programme">Voir le programme</a>
+              </Button>
+            )}
             <p className="text-center text-xs text-ink-secondary">
               Inscription, paiement (Wave, Orange Money, virement) et suivi gérés par Model Technologie.
             </p>
@@ -165,6 +167,7 @@ export default function FormationDetail() {
       </section>
 
       {/* Pour qui */}
+      {formation.profiles.length > 0 && (
       <section className="px-6 py-14 lg:px-20">
         <SectionHeader eyebrow="POUR QUI" title="Cette formation est faite pour vous si…" />
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -176,9 +179,12 @@ export default function FormationDetail() {
           ))}
         </div>
       </section>
+      )}
 
       {/* Vous saurez / Programme */}
-      <section className="grid gap-10 px-6 py-14 lg:grid-cols-[1fr,2fr] lg:px-20">
+      {(formation.outcomes.length > 0 || formation.curriculum.length > 0) && (
+      <section id="programme" className="grid gap-10 px-6 py-14 lg:grid-cols-[1fr,2fr] lg:px-20">
+        {formation.outcomes.length > 0 && (
         <div>
           <h2 className="font-heading text-xl font-bold text-navy">À la fin de la formation</h2>
           <ul className="mt-4 space-y-3">
@@ -190,6 +196,8 @@ export default function FormationDetail() {
             ))}
           </ul>
         </div>
+        )}
+        {formation.curriculum.length > 0 && (
         <div className="flex flex-col gap-3">
           <h2 className="font-heading text-xl font-bold text-navy">Programme</h2>
           {formation.curriculum.map((mod, i) => (
@@ -218,7 +226,9 @@ export default function FormationDetail() {
             </Card>
           ))}
         </div>
+        )}
       </section>
+      )}
 
       {/* Dispensé par */}
       <section className="px-6 py-14 lg:px-20">

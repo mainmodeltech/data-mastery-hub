@@ -24,7 +24,32 @@ interface ApiResponse<T> {
 const PAYMENTS_PAGE_SIZE = 200;
 const PAYMENTS_MAX_PAGES = 25;
 
+/** Candidature saisie par l'équipe (appel, visite, entreprise) — mêmes champs que le formulaire public, sans reCAPTCHA. */
+export interface ManualRegistrationPayload {
+  bootcampId?: string;
+  sessionId?: string;
+  bootcampTitle?: string;
+  promoCode?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  country: string;
+  profile: "STUDENT" | "PROFESSIONAL" | "ENTREPRENEUR";
+  school?: string;
+  company?: string;
+  position?: string;
+  message?: string;
+}
+
 export const paymentAdminService = {
+  createManual: async (payload: ManualRegistrationPayload): Promise<Registration> =>
+    (await httpClient.post<ApiResponse<Registration>>("/admin/registrations", payload)).data,
+
+  /** Annule une inscription (échéances ouvertes annulées, place libérée si elle était confirmée). */
+  cancel: async (registrationId: string, reason: string): Promise<Registration> =>
+    (await httpClient.post<ApiResponse<Registration>>(`/admin/registrations/${registrationId}/cancel`, { reason })).data,
+
   accept: async (registrationId: string, payload: AcceptRegistrationPayload): Promise<Registration> =>
     (await httpClient.post<ApiResponse<Registration>>(`/admin/registrations/${registrationId}/accept`, payload)).data,
 

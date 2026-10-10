@@ -11,6 +11,8 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { Logo } from "@/components/shared/Logo";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { useAuth } from "@/hooks/useAuth";
+import { homePathForRoles } from "@/lib/roles";
 
 export function SiteHeaderNew() {
   const [open, setOpen] = useState(false);
@@ -18,6 +20,10 @@ export function SiteHeaderNew() {
   const { content } = useSiteContent("site.nav");
   const header = content?.header;
   const items = header?.links ?? [];
+  // Connecté : le lien de connexion devient « Mon espace » (espace apprenant ou back-office selon le rôle).
+  const { user } = useAuth();
+  const accountHref = user ? homePathForRoles(user.roles) : "/connexion";
+  const accountLabel = user ? (header?.accountLabel ?? header?.loginLabel) : header?.loginLabel;
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#E7E0D4] bg-site-bg/95 backdrop-blur supports-[backdrop-filter]:bg-site-bg/85">
@@ -36,8 +42,8 @@ export function SiteHeaderNew() {
 
         {header && (
           <div className="ml-auto hidden items-center gap-5 lg:flex">
-            <Link to="/connexion" className="font-sans text-sm font-medium text-navy hover:text-cta">
-              {header.loginLabel}
+            <Link to={accountHref} className="font-sans text-sm font-medium text-navy hover:text-cta">
+              {accountLabel}
             </Link>
             <Button asChild variant="primary" shape="pill" size="sm">
               <Link to={header.applyHref}>{header.applyLabel}</Link>
@@ -72,11 +78,11 @@ export function SiteHeaderNew() {
           ))}
           <div className="mt-2 flex flex-col gap-2 border-t border-[#E7E0D4] pt-4">
             <Link
-              to="/connexion"
+              to={accountHref}
               onClick={() => setOpen(false)}
               className="rounded-card px-3 py-2 text-center font-sans text-sm font-medium text-navy"
             >
-              {header.loginLabel}
+              {accountLabel}
             </Link>
             <Button asChild variant="primary" shape="pill" onClick={() => setOpen(false)}>
               <Link to={header.applyHref}>{header.applyLabel}</Link>

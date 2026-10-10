@@ -144,3 +144,21 @@ export function ReasonDialog({ title, description, confirmLabel, onClose, onSubm
 export function errorMessage(e: unknown, fallback = "Une erreur est survenue."): string {
   return e instanceof Error && e.message && !/^Erreur \d+$/.test(e.message) ? e.message : fallback;
 }
+
+/** Pagination simple (précédent / suivant) pour les listes serveur. */
+export function Pager({
+  page, totalPages, totalElements, onChange,
+}: { page: number; totalPages: number; totalElements: number; onChange: (page: number) => void }) {
+  if (totalPages <= 1) {
+    return <p className="text-xs text-ink-secondary">{totalElements} élément{totalElements > 1 ? "s" : ""}</p>;
+  }
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <span className="text-xs text-ink-secondary">{totalElements} éléments · page {page + 1} sur {totalPages}</span>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" shape="rounded" size="sm" disabled={page <= 0} onClick={() => onChange(page - 1)}>Précédent</Button>
+        <Button type="button" variant="outline" shape="rounded" size="sm" disabled={page >= totalPages - 1} onClick={() => onChange(page + 1)}>Suivant</Button>
+      </div>
+    </div>
+  );
+}

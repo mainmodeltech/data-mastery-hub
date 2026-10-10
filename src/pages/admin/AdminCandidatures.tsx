@@ -19,13 +19,14 @@ import { Copy, ExternalLink, Loader2, Plus, Search, X } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ErrorNotice, errorMessage, Field, inputClass, ReasonDialog } from "@/components/admin/AdminKit";
 import { Button, Pill } from "@/components/shared";
-import { ComingSoonLink } from "@/components/layouts/ComingSoonLink";
+import { CreateInvoiceDialog } from "@/components/admin/CreateInvoiceDialog";
+import { ManualRegistrationDialog } from "@/components/admin/ManualRegistrationDialog";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useRegistrations, useUpdateRegistrationStatus } from "@/hooks/useRegistrations";
 import {
-  useAcceptRegistration, useConfirmPayment, useOpenPayments, useRecordManualPayment,
+  useAcceptRegistration, useCancelRegistration, useConfirmPayment, useOpenPayments, useRecordManualPayment,
   useRejectPayment, useRejectRegistration, useRemindPayment,
 } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
@@ -299,7 +300,8 @@ function Column({ title, count, empty, children }: { title: string; count: numbe
 }
 
 type Dialogs =
-  | { kind: "accept" | "reject" | "manual"; r: Registration }
+  | { kind: "accept" | "reject" | "manual" | "cancel" | "invoice"; r: Registration }
+  | { kind: "newManual" }
   | { kind: "rejectPayment"; payment: AdminPayment }
   | null;
 
@@ -312,6 +314,7 @@ export default function AdminCandidatures() {
   const confirmPayment = useConfirmPayment();
   const rejectPayment = useRejectPayment();
   const remind = useRemindPayment();
+  const cancelRegistration = useCancelRegistration();
 
   const [formation, setFormation] = useState("all");
   const [session, setSession] = useState("all");
@@ -415,9 +418,9 @@ export default function AdminCandidatures() {
           </div>
           <span className="flex-1" />
           <Button asChild variant="outline" shape="rounded" size="sm"><Link to="/admin/promo-codes">Codes promo</Link></Button>
-          <ComingSoonLink title="Inscription manuelle" className="rounded-card bg-navy px-4 py-2.5 font-sans text-sm font-semibold text-white">
+          <Button type="button" variant="navy" shape="rounded" size="sm" onClick={() => setDialog({ kind: "newManual" })}>
             <Plus className="h-4 w-4" /> Inscription manuelle
-          </ComingSoonLink>
+          </Button>
         </div>
 
         {isLoading ? (
@@ -444,11 +447,7 @@ export default function AdminCandidatures() {
                   <button
                     type="button"
                     className="w-fit text-xs font-semibold text-ink-secondary hover:text-error"
-                    onClick={() => {
-                      if (window.confirm(`Annuler l'inscription de ${r.firstName} ${r.lastName} ?`)) {
-                        void run(() => updateStatus.mutateAsync({ id: r.id, status: "CANCELLED" }), "Inscription annulée", "Annulation impossible");
-                      }
-                    }}
+                    onClick={() => setDialog({ kind: "cancel", r })}
                   >
                     Annuler l'inscription
                   </button>
@@ -493,6 +492,13 @@ export default function AdminCandidatures() {
                         <X />Rejeter
                       </Button>
                     </div>
+                    <button
+                      type="button"
+                      className="w-fit text-xs font-semibold text-ink-secondary hover:text-error"
+                      onClick={() => setDialog({ kind: "cancel", r })}
+                    >
+                      Annuler l'inscription
+                    </button>
                   </CandidateCard>
                 );
               })}
@@ -522,6 +528,18 @@ export default function AdminCandidatures() {
                         Marquer terminé
                       </Button>
                     )}
+                    <Button shape="rounded" variant="outline" size="sm" className="w-fit border-transparent" onClick={() => setDialog({ kind: "invoice", r })}>
+                      Facture
+                    </Button>
+                    {r.status === "CONFIRMED" && (
+                      <button
+                        type="button"
+                        className="w-fit text-xs font-semibold text-ink-secondary hover:text-error"
+                        onClick={() => setDialog({ kind: "cancel", r })}
+                      >
+                        Annuler l'inscription
+                      </button>
+                    )}
                   </CandidateCard>
                 );
               })}
@@ -538,6 +556,20 @@ export default function AdminCandidatures() {
         )}
       </div>
 
+      {dialog?.kind === "invoice" && <CreateInvoiceDialog registration={dialog.r} onClose={() => setDialog(null)} />}
+      {dialog?.kind === "newManual" && <ManualRegistrationDialog onClose={() => setDialog(null)} />}
+      {dialog?.kind === "cancel" && (
+        <ReasonDialog
+          title={`Annuler l'inscription de ${dialog.r.firstName} ${dialog.r.lastName}`}
+          description="Les échéances ouvertes sont annulées ; si l'inscription était confirmée, la place est libérée et l'accès à la formation fermé. Un remboursement éventuel se fait depuis « Paiements »."
+          confirmLabel="Annuler l'inscription"
+          onClose={() => setDialog(null)}
+          onSubmit={async (reason) => {
+            await run(() => cancelRegistration.mutateAsync({ id: dialog.r.id, reason }), "Inscription annulée", "Annulation impossible");
+            setDialog(null);
+          }}
+        />
+      )}
       {dialog?.kind === "accept" && <AcceptDialog registration={dialog.r} onClose={() => setDialog(null)} />}
       {dialog?.kind === "manual" && <ManualPaymentDialog registration={dialog.r} onClose={() => setDialog(null)} />}
       {dialog?.kind === "reject" && (

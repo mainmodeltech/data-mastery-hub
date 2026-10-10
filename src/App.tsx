@@ -70,6 +70,9 @@ const AdminSessionSuivi = lazy(() => import('./pages/admin/AdminSessionSuivi'));
 const AdminApprenants = lazy(() => import('./pages/admin/AdminApprenants'));
 const AdminNewsletter = lazy(() => import('./pages/admin/AdminNewsletter'));
 const AdminContenus = lazy(() => import('./pages/admin/AdminContenus'));
+const AdminFactures = lazy(() => import('./pages/admin/AdminFactures'));
+const AdminCertificats = lazy(() => import('./pages/admin/AdminCertificats'));
+const AdminEmails = lazy(() => import('./pages/admin/AdminEmails'));
 const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
 const AdminPartenaires = lazy(() => import('./pages/admin/AdminPartenaires'));
@@ -198,6 +201,9 @@ const App = () => (
                   <Route path="/admin/apprenants" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminApprenants /></ProtectedRoute>} />
                   <Route path="/admin/newsletter" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminNewsletter /></ProtectedRoute>} />
                   <Route path="/admin/contenus" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminContenus /></ProtectedRoute>} />
+                  <Route path="/admin/factures" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminFactures /></ProtectedRoute>} />
+                  <Route path="/admin/certificats" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminCertificats /></ProtectedRoute>} />
+                  <Route path="/admin/emails" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminEmails /></ProtectedRoute>} />
                   <Route path="/admin/comptes" element={<ProtectedRoute roles={ROLE_GROUPS.SUPER}><AdminComptes /></ProtectedRoute>} />
                   <Route path="/admin/domaines" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminDomaines /></ProtectedRoute>} />
                   <Route path="/admin/partenaires" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminPartenaires /></ProtectedRoute>} />

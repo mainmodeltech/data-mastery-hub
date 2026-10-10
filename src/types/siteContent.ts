@@ -31,7 +31,7 @@ export interface SiteCompany {
 // ─── site.nav ─────────────────────────────────────────────────────────────────
 
 export interface SiteNav {
-  header: { links: LinkItem[]; loginLabel: string; applyLabel: string; applyHref: string };
+  header: { links: LinkItem[]; loginLabel: string; /** Libellé du lien affiché à un utilisateur connecté. */ accountLabel: string; applyLabel: string; applyHref: string };
   footer: {
     about: string;
     columns: { title: string; links: LinkItem[] }[];
