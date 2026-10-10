@@ -15,6 +15,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { fill } from "@/lib/template";
+import { computeOrientationResult } from "@/lib/orientation";
 import { PAGE_SEO, SeoHead } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card, Pill, ProgressBar, ContentGate } from "@/components/shared";
@@ -30,17 +31,7 @@ const FEATURE_ICONS: Record<string, LucideIcon> = { zap: Zap, target: Target, tr
 
 type Question = PageOrientation["questions"][number];
 
-// ─── Scoring (règles issues du contenu) ───────────────────────────────────────
-
-function computeResult(answers: Record<string, string>, c: PageOrientation): string {
-    for (const rule of c.rules) {
-        const matched = rule.anyOf.some((clause) =>
-            Object.entries(clause).every(([questionId, values]) => values.includes(answers[questionId])),
-        );
-        if (matched) return rule.result;
-    }
-    return c.defaultResult;
-}
+// ─── Scoring : voir lib/orientation.ts ────────────────────────────────────────
 
 function formatDateFr(iso: string | null): string {
     if (!iso) return "Prochainement";
@@ -369,7 +360,7 @@ function OrientationBody({ c, company }: { c: PageOrientation; company: SiteComp
                 setCurrentStep(currentStep + 1);
                 setSelectedOption(undefined);
             } else {
-                setResultKey(computeResult(newAnswers, c));
+                setResultKey(computeOrientationResult(newAnswers, c.rules, c.defaultResult));
                 setShowResult(true);
             }
             setIsAnimating(false);

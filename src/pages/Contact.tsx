@@ -56,6 +56,10 @@ function ContactBody({ content, company }: { content: PageContact; company: Site
   // Liens du site (?sujet=coaching…) → sujet pré-sélectionné.
   const defaultSubject = content.form.subjects.find((s) => s.param && s.param === subjectParam)?.value ?? "";
   const [role, setRole] = useState<Role>(subjectParam === "entreprise" ? "entreprise" : "particulier");
+  // Pré-remplissage venant de la page Coaching (créneau ou formule choisis)
+  const slot = searchParams.get("creneau");
+  const plan = searchParams.get("formule");
+  const defaultMessage = [slot && `Créneau souhaité : ${slot}.`, plan && `Formule choisie : ${plan}.`].filter(Boolean).join("\n");
   const [submitted, setSubmitted] = useState(false);
   const sendMessage = useSendContactMessage();
   const form = content.form;
@@ -191,6 +195,7 @@ function ContactBody({ content, company }: { content: PageContact; company: Site
                 name="message"
                 required
                 rows={4}
+                defaultValue={defaultMessage}
                 placeholder={form.messagePlaceholder}
                 className={inputClass}
                 aria-label="Votre message"

@@ -194,13 +194,13 @@ export default function AdminAllSessions() {
 
     return (
         <AdminLayout title="Sessions bootcamp">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <div className="flex flex-wrap items-center gap-3">
                     <p className="text-sm text-muted-foreground">
                         {sessions.length} session{sessions.length > 1 ? "s" : ""} au total
                     </p>
                     <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as SessionStatus | "ALL")}>
-                        <SelectTrigger className="w-52">
+                        <SelectTrigger className="w-52 max-w-full">
                             <SelectValue placeholder="Filtrer par statut" />
                         </SelectTrigger>
                         <SelectContent>

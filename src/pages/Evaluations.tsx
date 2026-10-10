@@ -131,8 +131,10 @@ function ProjectCard({ project, formationId }: { project: ProjectOverview; forma
       try {
         await upload.mutateAsync(file);
         toast({ title: "Fichier déposé", description: file.name });
-      } catch {
-        toast({ title: "Échec du dépôt", description: file.name, variant: "destructive" });
+      } catch (err) {
+        // Motif renvoyé par le serveur (taille, format, stockage indisponible…) quand il est explicite
+        const reason = err instanceof Error && err.message && !/^Erreur \d+$/.test(err.message) ? err.message : null;
+        toast({ title: "Échec du dépôt", description: reason ? `${file.name} — ${reason}` : file.name, variant: "destructive" });
       }
     }
   };

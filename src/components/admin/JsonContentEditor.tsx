@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
-export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+import { emptyLike, type Json } from "@/lib/json";
+
+export type { Json };
 
 const LABELS: Record<string, string> = {
   cta: "Bouton d'action", href: "Lien", url: "URL", label: "Libellé", title: "Titre", subtitle: "Sous-titre",
@@ -32,18 +34,6 @@ function humanize(key: string): string {
 const IMAGE_RE = /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i;
 const isImageField = (key: string, value: string) =>
   value.length > 0 && IMAGE_RE.test(value) && /image|photo|logo|url|cover/i.test(key);
-
-/** Copie d'une valeur avec tous les champs vidés : modèle pour un nouvel élément de liste. */
-export function emptyLike(value: Json): Json {
-  if (typeof value === "string") return "";
-  if (typeof value === "number") return 0;
-  if (typeof value === "boolean") return false;
-  if (Array.isArray(value)) return [];
-  if (value && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, emptyLike(v)]));
-  }
-  return "";
-}
 
 /** Intitulé d'un élément de liste : premier champ texte parmi les plus parlants. */
 function itemTitle(item: Json, index: number): string {

@@ -518,9 +518,10 @@ const AdminInscriptions = () => {
   // Ici on affiche les données réelles de la page chargée.
   const kpis = useMemo(() => ({
     total:     totalElements,
-    confirmed: registrations.filter((r) => r.status === "CONFIRMED").length,
-    pending:   registrations.filter((r) => r.status === "PENDING").length,
-    cancelled: registrations.filter((r) => r.status === "CANCELLED").length,
+    // « Confirmées » inclut les inscriptions terminées ; « En attente » tout le parcours avant confirmation
+    confirmed: registrations.filter((r) => r.status === "CONFIRMED" || r.status === "COMPLETED").length,
+    pending:   registrations.filter((r) => r.status === "PENDING" || r.status === "PAYMENT_PENDING" || r.status === "PAYMENT_TO_CONFIRM").length,
+    cancelled: registrations.filter((r) => r.status === "CANCELLED" || r.status === "REJECTED").length,
   }), [registrations, totalElements]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -554,7 +555,7 @@ const AdminInscriptions = () => {
               bgClass="bg-violet-100 dark:bg-violet-900/30"
           />
           <KpiCard
-              label="Confirmées"
+              label="Confirmées / terminées"
               value={kpis.confirmed}
               icon={<CalendarCheck className="h-4 w-4" />}
               colorClass="text-emerald-600"
@@ -568,7 +569,7 @@ const AdminInscriptions = () => {
               bgClass="bg-amber-100 dark:bg-amber-900/30"
           />
           <KpiCard
-              label="Annulées"
+              label="Annulées / refusées"
               value={kpis.cancelled}
               icon={<Ban className="h-4 w-4" />}
               colorClass="text-red-600"

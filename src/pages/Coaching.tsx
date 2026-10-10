@@ -3,6 +3,7 @@
  * Textes, formules, tarifs, FAQ et photo viennent du backend (contenu `page.coaching`). Le bouton « Réserver »
  * envoie vers le formulaire de contact (sujet pré-rempli), faute d'un flux de réservation dédié.
  * Un tarif vide s'affiche « Sur devis » ; les créneaux et le témoignage vides sont masqués.
+ * La réservation se fait par demande : le créneau ou la formule choisis pré-remplissent le message du formulaire de contact.
  */
 import { Link } from "react-router-dom";
 import { Check, Linkedin } from "lucide-react";
@@ -30,6 +31,11 @@ export default function Coaching() {
       </ContentGate>
     </SiteLayout>
   );
+}
+
+/** Adresse du formulaire de contact avec le créneau ou la formule choisis (le message est pré-rempli). */
+function bookingHref(base: string, key: "creneau" | "formule", value: string): string {
+  return `${base}${base.includes("?") ? "&" : "?"}${key}=${encodeURIComponent(value)}`;
 }
 
 function CoachingBody({ c, company }: { c: PageCoaching; company: SiteCompany }) {
@@ -70,7 +76,7 @@ function CoachingBody({ c, company }: { c: PageCoaching; company: SiteCompany })
                   s.available ? (
                     <Link
                       key={`${s.day}-${s.time}`}
-                      to={c.slots.bookHref}
+                      to={bookingHref(c.slots.bookHref, "creneau", `${s.day} ${s.time}`)}
                       className="rounded-card border border-navy px-3 py-2 text-center text-sm font-medium text-navy hover:bg-navy hover:text-white"
                     >
                       {s.day} {s.time}
@@ -144,7 +150,7 @@ function CoachingBody({ c, company }: { c: PageCoaching; company: SiteCompany })
                 shape="pill"
                 className={tier.highlight ? "bg-white text-navy hover:bg-white/90" : undefined}
               >
-                <Link to={c.slots.bookHref}>{c.pricing.choose}</Link>
+                <Link to={bookingHref(c.slots.bookHref, "formule", tier.name)}>{c.pricing.choose}</Link>
               </Button>
             </Card>
           ))}

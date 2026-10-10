@@ -155,8 +155,8 @@ export default function AdminFormationEditor() {
         </>
       }
     >
-      <div className="flex flex-col gap-6">
-        <div role="tablist" className="flex gap-7 overflow-x-auto border-b border-[#E7E0D4] text-[15px] font-semibold">
+      <div className="flex min-w-0 max-w-full flex-col gap-6">
+        <div role="tablist" className="flex max-w-full gap-7 overflow-x-auto border-b border-[#E7E0D4] text-[15px] font-semibold">
           {id && canManageCatalog && <Link to={`/admin/bootcamps/${id}/edit`} className="whitespace-nowrap py-3 text-ink-secondary">Informations</Link>}
           <span role="tab" aria-selected="true" className="-mb-px whitespace-nowrap border-b-2 border-cta py-3 font-bold text-navy">Programme</span>
           <a href="#projet" className="whitespace-nowrap py-3 text-ink-secondary">Projet final</a>
@@ -175,11 +175,11 @@ export default function AdminFormationEditor() {
         {isError && <div role="alert" className="rounded-card bg-error-bg px-5 py-4 text-sm text-error">Impossible de charger le programme de cette formation.</div>}
 
         {content && settings && (
-          <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr),360px]">
-            <Card radius="stat" className="flex flex-col gap-4 p-5 lg:p-6">
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr),360px]">
+            <Card radius="stat" className="flex min-w-0 flex-col gap-4 p-5 lg:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-heading text-xl font-bold text-navy">Programme</h2>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button asChild variant="outline" shape="rounded" size="sm">
                     <Link to={`/espace/formations/${id}`}>Aperçu apprenant</Link>
                   </Button>
