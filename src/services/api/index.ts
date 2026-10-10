@@ -5,7 +5,6 @@
 
 export { authService } from './authService';
 export { registrationService } from './registrationService';
-export { serviceService } from './serviceService';
 export { testimonialService } from './testimonialService';
 export { contactService } from './contactService';
 export { promoCodeService } from './promoCodeService';

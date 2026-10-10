@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { learnerService } from "@/services/api/learnerService";
 import { lowQualityEmbedUrl, useMediaPrefs } from "@/hooks/useMediaPrefs";
+import { useOfflineVideo } from "@/hooks/useOfflineVideo";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Check, Download, ListTree, Loader2, Lock, MessageCircle, Play, X,
@@ -130,7 +131,7 @@ function Notes({ lessonId }: { lessonId: string }) {
 }
 
 /** Modes de lecture : économie de données (chargement à la demande, basse qualité) et audio seul. */
-function MediaModeBar({ prefs }: { prefs: ReturnType<typeof useMediaPrefs> }) {
+function MediaModeBar({ prefs, offline }: { prefs: ReturnType<typeof useMediaPrefs>; offline?: ReturnType<typeof useOfflineVideo> }) {
   const chip = (active: boolean) =>
     `inline-flex min-h-[36px] items-center gap-1.5 rounded-pill border px-3.5 text-[13px] font-semibold ${
       active ? "border-navy bg-navy text-white" : "border-[#D6CEC0] bg-white text-navy"
@@ -143,16 +144,28 @@ function MediaModeBar({ prefs }: { prefs: ReturnType<typeof useMediaPrefs> }) {
       <button type="button" aria-pressed={prefs.audioOnly} onClick={() => prefs.setAudioOnly(!prefs.audioOnly)} className={chip(prefs.audioOnly)}>
         Audio seul
       </button>
+      {offline && offline.state !== "unsupported" && offline.state !== "checking" && (
+        offline.state === "ready" ? (
+          <button type="button" onClick={() => void offline.remove()} className={chip(true)}>
+            Disponible hors ligne{offline.sizeLabel ? ` · ${offline.sizeLabel}` : ""} — retirer
+          </button>
+        ) : (
+          <button type="button" disabled={offline.state === "downloading"} onClick={() => void offline.download()} className={chip(false)}>
+            {offline.state === "downloading" ? "Téléchargement…" : offline.state === "error" ? "Téléchargement impossible — réessayer" : "Télécharger pour regarder hors ligne"}
+          </button>
+        )
+      )}
     </div>
   );
 }
 
-function LessonBody({ lesson, formationId, onProgress, onEnded, startAt }: {
-  lesson: Lesson; formationId: string; onProgress: (s: number) => void; onEnded: () => void; startAt: number;
+function LessonBody({ lesson, formationId, formationTitle, onProgress, onEnded, startAt }: {
+  lesson: Lesson; formationId: string; formationTitle: string; onProgress: (s: number) => void; onEnded: () => void; startAt: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastSent = useRef(0);
   const prefs = useMediaPrefs();
+  const offline = useOfflineVideo(lesson.type === "VIDEO" && !lesson.videoEmbedUrl ? lesson.videoUrl : null, { title: lesson.title, formationTitle });
   const [started, setStarted] = useState(false);
 
   useEffect(() => { setStarted(false); }, [lesson.id]);
@@ -201,16 +214,17 @@ function LessonBody({ lesson, formationId, onProgress, onEnded, startAt }: {
         },
         onEnded,
       };
+      const source = offline.localUrl ?? lesson.videoUrl;
       return (
         <div className="flex flex-col gap-2">
-          <MediaModeBar prefs={prefs} />
+          <MediaModeBar prefs={prefs} offline={offline} />
           {prefs.audioOnly ? (
-            <audio key={lesson.id} src={lesson.videoUrl} controls preload="none" className="w-full" {...progress} />
+            <audio key={`${lesson.id}-${source}`} src={source} controls preload="none" className="w-full" {...progress} />
           ) : (
             <video
               ref={videoRef}
-              key={lesson.id}
-              src={lesson.videoUrl}
+              key={`${lesson.id}-${source}`}
+              src={source}
               controls
               playsInline
               preload={prefs.dataSaver ? "none" : "metadata"}
@@ -328,6 +342,7 @@ export default function CoursePlayer() {
       <LessonBody
         lesson={lesson}
         formationId={formationId}
+        formationTitle={course.content.title}
         startAt={position}
         onProgress={(s) => save(isDone, s)}
         onEnded={() => save(true, duration)}

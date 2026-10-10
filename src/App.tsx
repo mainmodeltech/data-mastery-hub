@@ -72,6 +72,7 @@ const AdminNewsletter = lazy(() => import('./pages/admin/AdminNewsletter'));
 const AdminContenus = lazy(() => import('./pages/admin/AdminContenus'));
 const AdminFactures = lazy(() => import('./pages/admin/AdminFactures'));
 const AdminCertificats = lazy(() => import('./pages/admin/AdminCertificats'));
+const EspaceHorsLigne = lazy(() => import('./pages/EspaceHorsLigne'));
 const EspaceCommunaute = lazy(() => import('./pages/EspaceCommunaute'));
 const AdminCommunaute = lazy(() => import('./pages/admin/AdminCommunaute'));
 const EspacePaiements = lazy(() => import('./pages/EspacePaiements'));
@@ -79,7 +80,6 @@ const AdminEmails = lazy(() => import('./pages/admin/AdminEmails'));
 const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
 const AdminPartenaires = lazy(() => import('./pages/admin/AdminPartenaires'));
-const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
 const AdminMasterclassPage = lazy(() => import('./pages/admin/AdminMasterclassPage.tsx'));
 const AdminAlumni = lazy(() => import('./pages/admin/AdminAlumni'));
@@ -170,6 +170,7 @@ const App = () => (
                   {/* Lot 6 — évaluations (quiz, projet final, conditions du certificat) */}
                   <Route path="/espace/calendrier" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCalendrier /></ProtectedRoute>} />
                   <Route path="/espace/ressources" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceRessources /></ProtectedRoute>} />
+                  <Route path="/espace/hors-ligne" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceHorsLigne /></ProtectedRoute>} />
                   <Route path="/espace/communaute" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCommunaute /></ProtectedRoute>} />
                   <Route path="/espace/paiements" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspacePaiements /></ProtectedRoute>} />
                   <Route path="/espace/profil" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceProfil /></ProtectedRoute>} />
@@ -218,7 +219,6 @@ const App = () => (
                   <Route path="/admin/candidatures" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminCandidatures /></ProtectedRoute>} />
                   <Route path="/admin/inscriptions" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminInscriptions /></ProtectedRoute>} />
                   <Route path="/admin/promo-codes" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminPromoCodes /></ProtectedRoute>} />
-                  <Route path="/admin/services" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminServices /></ProtectedRoute>} />
                   <Route path="/admin/temoignages" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminTemoignages /></ProtectedRoute>} />
                   <Route path="/admin/masterclass" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminMasterclassPage /></ProtectedRoute>} />
                   <Route path="/admin/alumni" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminAlumni /></ProtectedRoute>} />
