@@ -4,18 +4,20 @@
 **Référentiel** : `docs/design/README.md`, `api-contract.md`, `front-handoff.md` et les 27 écrans `docs/design/screens` (aucune autre source).
 **Posture** : Product Owner. Chaque fonctionnalité a été exercée dans le navigateur et/ou via l'API contre le vrai backend, avec un compte par rôle.
 
+> **Mise à jour du 10 octobre 2026 — réalisation du backlog.** Les pourcentages ci-dessous (100 % sur les trois personas) mesurent la grille de cet audit : toutes les lignes sont passées à « livré ». Ils ne disent pas que tout est parfait : les points encore partiels sont listés au §9 (« Statut ») — notamment le revenu partagé des partenaires (S11), les tests de bout en bout du front (S8), le coaching sans réservation en temps réel (C2) et les formulaires protégés par reCAPTCHA, toujours à valider par le PO (§8). Le détail de la réalisation est dans les branches `po/lot-*` des deux dépôts.
+
 ---
 
 ## 1. Synthèse
 
 | Persona | Implémentation | Verdict global |
 |---|---|---|
-| Visiteur / candidat (site public) | **78 %** | Vitrine solide et parcours candidature → paiement fonctionnel ; contenus encore statiques ou vides par endroits |
-| Apprenant | **66 %** | Cœur pédagogique complet (cours, quiz, projet, certificat) ; il manque tout le côté « compte » (paiements, reçus, notifications) |
-| Admin (SUPER_ADMIN / ADMIN) | **69 %** | Pilotage, paiements, catalogue et programme opérationnels ; 8 fonctions déjà prêtes côté API n'ont pas d'écran |
-| Éditeur | Accès OK, **interface inadaptée** | Menu non filtré, pages interdites affichées vides sans message |
-| Formateur | Backend **prêt**, interface **inaccessible** | Connecté, il est renvoyé à la page d'accueil : aucune de ses pages n'est atteignable |
-| Partenaire | Backend **partiel**, interface **inaccessible** | Même blocage ; pas de « mes formations », pas de suivi du revenu partagé |
+| Visiteur / candidat (site public) | **100 %** (était 78 %) | Contenus pilotés par le back-office, carte, photos, PWA, en-tête connecté |
+| Apprenant | **100 %** (était 66 %) | Cours, quiz, projet, certificat + paiements, reçus, notes serveur, notifications, communauté, hors ligne |
+| Admin (SUPER_ADMIN / ADMIN) | **100 %** (était 69 %) | Toutes les fonctions de l'API ont leur écran (factures, certificats, e-mails, contenus, communauté…) |
+| Éditeur | Menu et routes filtrés par rôle | Les pages interdites ne sont plus proposées |
+| Formateur | Accès au suivi de ses sessions via « Mon espace » | Message, questions, correction du projet et certificats depuis le suivi |
+| Partenaire | Accès à ses formations via « Mon espace » | Le suivi du revenu reversé reste à construire (S11) |
 
 **Ce qui fonctionne de bout en bout (vérifié)** : candidature (créée par l'admin) → acceptation avec échéances → e-mail et lien de paiement → déclaration + justificatif côté candidat → confirmation par l'admin → compte apprenant + invitation + accès → cours (vidéo Vimeo, ressources, progression) → quiz → dépôt du projet → correction → certificat PDF vérifiable publiquement.
 
@@ -37,34 +39,34 @@
 
 ---
 
-## 3. Visiteur / candidat — site public (78 %)
+## 3. Visiteur / candidat — site public (100 %, était 78 %)
 
 | # | Fonctionnalité | Impl. | Test | Constat |
 |---|---|---|---|---|
-| V1 | Accueil | ● | ✅ | Cohorte et formations viennent de l'API. Le texte éditorial (titres, témoignages, bandeaux) est codé en dur. |
+| V1 | Accueil | ● | ✅ | Cohorte, formations et témoignages viennent de l'API ; textes, chiffres, métiers, offres, FAQ et photos viennent du backend (contenu `page.home`, éditable dans « Pages du site »). |
 | V2 | Catalogue `/formations` (domaines, niveau, format, métier, prestataire) | ● | ✅ | Filtres opérationnels, données de l'API. |
-| V3 | Fiche formation (gabarit interne/partenaire, sessions, places, tarif) | ◐ | ⚠️ | Pour la formation Scrum, les blocs « Pour qui », « À la fin de la formation » et « Programme » sont **vides**. Le bouton « Télécharger le programme » ne réagit pas. |
+| V3 | Fiche formation (gabarit interne/partenaire, sessions, places, tarif) | ● | ✅ | Les blocs « Pour qui », « À la fin » et « Programme » sont masqués tant qu'ils sont vides (plus de sections creuses) ; le bouton mort est remplacé par « Voir le programme ». La saisie du contenu du Scrum reste à faire dans l'éditeur. |
 | V4 | Candidature (modale : session, pays, code promo) | ● | ⏳ | reCAPTCHA : à tester par le PO. Les champs et la disponibilité des places s'affichent. |
 | V5 | Page de paiement `/paiement/:token` | ● | ✅ | Instructions, déclaration, dépôt de justificatif, états (à payer, en vérification, payé), facture téléchargeable. Le **reçu public existe côté API mais n'est pas proposé**. |
-| V6 | Coaching | ◐ | ⚠️ | Vitrine uniquement : les créneaux (Lun 18h…) sont décoratifs, aucune réservation, tarifs « Sur devis », tous les boutons renvoient vers le formulaire de contact. |
-| V7 | Entreprises + diagnostic | ● | ⏳ | Formulaire présent (reCAPTCHA). « Télécharger la plaquette » non vérifié. |
-| V8 | Alumni | ◐ | ⚠️ | Page fonctionnelle mais **aucune donnée** (0 alumni, 0 projet en base). |
-| V9 | Ressources / blog | ◐ | ⚠️ | Page avec recherche, filtres et newsletter, mais « Ressources » est badgé « EN COURS » dans l'en-tête et « Blog » dans le pied de page alors que la page existe. |
-| V10 | Contact + FAQ | ● | ⏳ | Formulaire présent (reCAPTCHA) ; deux profils (particulier / entreprise). |
+| V6 | Coaching | ● | ✅ | Contenu, formules et tarifs pilotés par le back-office (tarif vide = « Sur devis »). Réservation par demande : le créneau ou la formule choisis pré-remplissent le message du formulaire de contact. Les créneaux fictifs ont été retirés (affichés seulement s'ils sont saisis). |
+| V7 | Entreprises + diagnostic | ● | ⏳ | Formulaire présent (reCAPTCHA). Textes, offres et photos pilotés par le back-office ; le bouton « Télécharger la plaquette » n'apparaît que si un fichier est renseigné. |
+| V8 | Alumni | ● | ✅ | Page alimentée uniquement par les témoignages, alumni et projets réellement publiés (les faux témoignages de repli ont été supprimés) ; statistiques calculées sur les données ; message d'attente tant que rien n'est publié. |
+| V9 | Ressources / blog | ● | ✅ | Page pilotée par le back-office (articles, modèles à télécharger, atelier, newsletter réelle) ; plus aucun contenu d'illustration ni badge « EN COURS ». Tant qu'aucun article n'est publié, la page le dit clairement. |
+| V10 | Contact + FAQ | ● | ⏳ | Formulaire (reCAPTCHA), coordonnées, FAQ et photo pilotés par le back-office ; **carte Google Maps** intégrée (adresse modifiable) ; pré-remplissage depuis le coaching. |
 | V11 | Devenir partenaire | ● | ⏳ | Formulaire présent (reCAPTCHA). |
-| V12 | À propos | ● | ✅ | Équipe et liens LinkedIn. |
-| V13 | Quiz d'orientation | ● | ✅ | 5 questions → recommandation de formation. |
-| V14 | Masterclass | ◐ | ⚠️ | Page figée sur un événement passé (24 mars 2026, « inscriptions closes ») ; l'admin parle du 20 mars. Pas de gestion d'événements. |
+| V12 | À propos | ● | ✅ | Équipe, valeurs, parcours, partenaires et photo pilotés par le back-office. |
+| V13 | Quiz d'orientation | ● | ✅ | Questions, règles de recommandation et résultats pilotés par le back-office ; chaque résultat se relie à une formation du catalogue (titre, durée, prix, session viennent de l'API) ; règles couvertes par des tests unitaires. |
+| V14 | Masterclass | ● | ✅ | Événement (identifiant, date, inscriptions ouvertes/closes, programme, formateur) piloté par le back-office : changer de masterclass ne demande plus de déploiement ; la page admin des inscrits suit l'événement courant. |
 | V15 | Newsletter (inscription, confirmation, désinscription) | ● | ⏳ | Pages présentes ; test à faire avec reCAPTCHA. |
 | V16 | Vérification d'un certificat `/certificats/:id` | ● | ✅ | Affiche le nom, la formation, le signataire, les compétences, le PDF ; état « révoqué » prévu. |
-| V17 | Responsive mobile | ● | ✅ | Aucun débordement horizontal sur les 13 pages publiques testées. |
-| V18 | En-tête adapté à l'utilisateur connecté (« Mon espace ») | ○ | ❌ | Connecté, l'en-tête continue d'afficher « Connexion ». |
-| V19 | PWA installable | ○ | — | Aucun manifeste ni service worker (prévu au cahier). |
+| V17 | Responsive mobile | ● | ✅ | Aucun débordement horizontal sur les pages publiques ni sur les pages admin testées (sessions et éditeur de formation corrigés). |
+| V18 | En-tête adapté à l'utilisateur connecté (« Mon espace ») | ● | ✅ | Connecté, « Connexion » devient « Mon espace » (espace apprenant ou back-office selon le rôle). |
+| V19 | PWA installable | ● | ⏳ | Manifeste, service worker prudent (jamais l'API) et règles nginx livrés ; l'installation se valide en préproduction (HTTPS, build de production). |
 | V20 | Page 404 | ● | ✅ | |
 
 ---
 
-## 4. Apprenant (66 %)
+## 4. Apprenant (100 %, était 66 %)
 
 | # | Fonctionnalité | Impl. | Test | Constat |
 |---|---|---|---|---|
@@ -72,59 +74,59 @@
 | L1b | Connexion par lien / code, Google | ● | ⏳ | Les modes s'affichent d'après `/auth/options`. Échecs (code invalide, jeton invalide) conformes (message générique). La réussite exige le code reçu par e-mail. |
 | L2 | Verrouillage après 5 échecs | ● | ✅ | 429 au 6ᵉ essai ; message + bouton « lien par e-mail » affichés. |
 | L3 | Définition du mot de passe à l'invitation | ● | ✅ | Parcours exercé sur les comptes de test. |
-| L4 | Tableau de bord | ◐ | ⚠️ | Statistiques, reprise de leçon, lives, formations OK. Les « À faire » ne sont **pas cliquables** (« Régler l'échéance 2/2 » n'ouvre pas de lien de paiement). Incohérence : « Rendre votre projet final » persiste sur Power BI alors que le certificat est délivré. |
+| L4 | Tableau de bord | ● | ✅ | « À faire » cliquables (paiement, projet, quiz) ; plus de « Rendre votre projet final » sur une formation déjà certifiée (correctif backend testé). |
 | L5 | Mes formations | ● | ✅ | Statuts : à venir, en cours, certifiée. |
 | L6 | Lecteur de cours | ● | ✅ | Vidéo intégrée via `videoEmbedUrl`, ressources (dont verrou « après le quiz »), progression, déblocage séquentiel, navigation. |
-| L7 | Notes personnelles | ◐ | ⚠️ | Enregistrées uniquement dans le navigateur (perdues au changement d'appareil). |
+| L7 | Notes personnelles | ● | ✅ | Enregistrées sur le serveur (synchronisées entre appareils, copie locale de secours, statut visible). |
 | L8 | Questions au formateur | ● | ✅ | Envoi, liste, réponse reçue par l'apprenant. |
 | L9 | Quiz | ● | ✅ | Tirage, correction, tentatives, seuil. |
-| L10 | Projet final (dépôt, retours) | ● | ⚠️ | Fonctionne, mais l'échec de dépôt n'affiche que « Échec du dépôt » sans le motif renvoyé par le serveur (bucket manquant en local, taille, format). |
+| L10 | Projet final (dépôt, retours) | ● | ✅ | Le motif renvoyé par le serveur (taille, format, stockage) est affiché lors d'un échec de dépôt. |
 | L11 | Conditions du certificat | ● | ✅ | Calculées par le serveur, affichées avec progression. |
-| L12 | Calendrier & lives | ◐ | ⚠️ | Dérivé du programme côté front. L'API dédiée `/learner/calendar` existe et n'est pas utilisée. |
-| L13 | Ressources | ◐ | ⚠️ | Idem : `/learner/resources` non utilisé. |
+| L12 | Calendrier & lives | ● | ✅ | Lu sur `/learner/calendar` (plus de chargement de tous les programmes). |
+| L13 | Ressources | ● | ✅ | Lu sur `/learner/resources`, groupé par formation, verrou « après le quiz » respecté. |
 | L14 | Certificats (liste, PDF, vérification, LinkedIn) | ● | ✅ | PDF généré (≈ 118 Ko), lien LinkedIn fourni par l'API. |
-| L15 | Profil | ◐ | ⚠️ | Nom, e-mail, changement de mot de passe. `/learner/profile` (téléphone, pays) et `/learner/password` existent côté API sans écran. |
-| L16 | Mes paiements, reçus, attestation | ○ | ❌ | L'API fournit paiements, reçus PDF et attestation de formation ; aucun écran. |
-| L17 | Notifications | ○ | — | Pas de centre de notifications (la cloche a été retirée car sans backend). |
-| L18 | Communauté | ○ | — | Aucun backend ; entrée retirée du menu. |
-| L19 | Hors ligne / audio seul / économie de données | ○ | — | Prévu à la maquette mobile, non implémenté. |
-| L20 | PWA | ○ | — | Voir V19. |
+| L15 | Profil | ● | ✅ | Prénom, nom, téléphone et pays modifiables ; changement de mot de passe. |
+| L16 | Mes paiements, reçus, attestation | ● | ✅ | `/espace/paiements` : échéances à régler (lien de paiement), reçus PDF, attestations d'inscription. Vérifié sur un compte de test. |
+| L17 | Notifications | ● | ✅ | Centre de notifications dérivé des données réelles (échéances, projet, quiz, lives des 7 jours, certificat prêt), lu/non lu mémorisé sur l'appareil. Pas de notification push ni d'e-mail supplémentaire. |
+| L18 | Communauté | ● | ✅ | Fil d'entraide par formation (messages et réponses, noms « Prénom N. », suppression de ses messages) ; modération par l'équipe (`/admin/communaute`). 4 tests d'intégration backend. |
+| L19 | Hors ligne / audio seul / économie de données | ● | ⏳ | Mode économie de données (vidéo à la demande, basse qualité), audio seul, téléchargement des vidéos hébergées en direct et page « Hors ligne ». Limite : les vidéos intégrées depuis Vimeo/YouTube ne sont pas téléchargeables. |
+| L20 | PWA | ● | ⏳ | Voir V19. |
 | L21 | Responsive | ● | ✅ | Pas de débordement horizontal sur le lecteur de cours (test mobile). |
 
 ---
 
-## 5. Admin — SUPER_ADMIN / ADMIN (69 %)
+## 5. Admin — SUPER_ADMIN / ADMIN (100 %, était 69 %)
 
 | # | Fonctionnalité | Impl. | Test | Constat |
 |---|---|---|---|---|
 | A1 | Tableau de bord (KPI, entonnoir, courbe, sessions, top formations, répartitions) | ● | ✅ | Données réelles ; périodes 7/30/90 jours/12 mois et personnalisée ; pastilles de menu via `/stats/actions`. |
 | A2 | Paiements (suivi, avancement par formation) | ● | ✅ | Confirmation exercée de bout en bout. Refus, relance, remboursement non exercés (API OK). |
 | A3 | Candidatures (kanban, accepter avec échéances, refuser) | ● | ✅ | L'acceptation renvoie correctement l'erreur « prix numérique manquant » puis envoie le lien. |
-| A4 | Inscription manuelle | ○ | ❌ | Bouton « EN COURS ». API `POST /admin/registrations` fonctionnelle. |
-| A5 | Annulation d'une inscription / remboursement | ◐ | ⚠️ | Remboursement possible depuis Paiements ; **annulation** sans écran (API prête). |
-| A6 | Factures (émission, envoi, annulation, PDF) | ○ | ❌ | API testée : émission 201, liste 200, PDF 200. Aucun écran. |
-| A7 | Inscriptions (liste) | ● | ⚠️ | Les compteurs ignorent le statut « Terminé » (affiche 0 confirmée / 0 en attente pour 2 inscriptions). |
+| A4 | Inscription manuelle | ● | ✅ | Dialogue dans « Candidatures » (formation, session, profil, pays…) ; la candidature arrive dans « Nouvelles candidatures ». Vérifié de bout en bout. |
+| A5 | Annulation d'une inscription / remboursement | ● | ✅ | Annulation avec motif via l'API dédiée (échéances annulées, place libérée) depuis les colonnes de paiement et les inscrits ; remboursement depuis Paiements. |
+| A6 | Factures (émission, envoi, annulation, PDF) | ● | ✅ | Émission depuis la carte d'un inscrit ; page « Factures » : PDF, envoi par e-mail, annulation motivée. |
+| A7 | Inscriptions (liste) | ● | ✅ | Compteurs corrigés : « Confirmées / terminées », « En attente » (tout le parcours avant confirmation), « Annulées / refusées ». |
 | A8 | Formations (liste, fiche, publication) | ● | ✅ | Bouton « Programme » ajouté. |
 | A9 | Éditeur de programme (modules, leçons, vidéo, ressources, quiz, projet, règles du certificat) | ● | ✅ | Création et enregistrement vérifiés ; Vimeo/YouTube reconnus. |
 | A10 | Domaines | ● | ✅ | CRUD OK. |
 | A11 | Partenaires (+ logo) | ● | ✅ | |
-| A12 | Sessions (CRUD) | ● | ✅ | Écran large : défilement horizontal sur mobile. |
-| A13 | Affectation d'un formateur à une session | ○ | ❌ | API OK (testée) ; aucun sélecteur. |
-| A14 | Suivi de session (tableau, appel) | ◐ | ⚠️ | KPI et tableau OK. Boutons « Ajouter un apprenant » et « Envoyer un message » et « Délivrer le certificat » inactifs (« EN COURS »). |
-| A15 | Messages de session, questions des apprenants, correction du projet | ○ | ❌ | API testée : réponse 200, message 202, correction 200. Aucun écran. |
-| A16 | Certificats (liste, révocation, renvoi, dérogation `force`) | ○ | ❌ | API OK (409 explicite si conditions manquantes, 400 sans motif). |
+| A12 | Sessions (CRUD) | ● | ✅ | Débordement mobile corrigé. |
+| A13 | Affectation d'un formateur à une session | ● | ✅ | Sélecteur dans le suivi de session (liste des comptes formateurs actifs). |
+| A14 | Suivi de session (tableau, appel) | ● | ✅ | « Ajouter un apprenant », « Écrire à la session », « Envoyer un message » et « Délivrer le certificat » sont réels (dérogation motivée pour les administrateurs). |
+| A15 | Messages de session, questions des apprenants, correction du projet | ● | ✅ | Historique des messages, réponse aux questions, correction du projet (fichiers rendus, valider ou demander des modifications). |
+| A16 | Certificats (liste, révocation, renvoi, dérogation `force`) | ● | ✅ | Page « Certificats » : lien de vérification, PDF, renvoi, révocation motivée ; délivrance par dérogation depuis le suivi de session. |
 | A17 | Apprenants (inviter, activer/désactiver, accès) | ● | ✅ | Invitation par e-mail OK. |
 | A18 | Comptes back-office | ● | ✅ | Création/invitation par rôle ; réservé SUPER_ADMIN. |
 | A19 | Codes promo / parrainage | ● | ✅ | Création, validation publique, suppression OK. |
 | A20 | Boîte de messages (contact, diagnostic, partenaire) | ● | ✅ | |
 | A21 | Newsletter (liste) | ● | ✅ | |
-| A22 | Masterclass (inscrits) | ◐ | ⚠️ | Un seul événement figé. |
+| A22 | Masterclass (inscrits) | ● | ✅ | Suit l'événement courant défini dans « Pages du site ». |
 | A23 | Témoignages | ● | ✅ | |
 | A24 | Alumni | ● | ✅ | |
 | A25 | Projets alumni | ● | ✅ | |
-| A26 | Contenus du site (`site-settings`) | ○ | ❌ | API disponible, base vide, aucun écran : rien du site n'est éditable. |
-| A27 | Journal d'e-mails | ○ | ❌ | API disponible (`/admin/email-logs`) ; le dashboard compte les e-mails en échec sans lien vers leur détail. |
-| — | Page « Services » (héritée) | — | ⚠️ | Page orpheline hors menu, vide : à supprimer. |
+| A26 | Contenus du site (`site-settings`) | ● | ✅ | « Pages du site » : 13 contenus (menu, pied de page, coordonnées, accueil, formations, coaching, entreprises, ressources, partenaires, alumni, à propos, contact, masterclass, quiz) en éditeur de formulaire ou JSON, avec « Restaurer » la version d'origine. |
+| A27 | Journal d'e-mails | ● | ✅ | Page « Journal d'e-mails » (filtres, erreurs, état de la messagerie, test d'envoi SUPER_ADMIN) ; l'alerte « e-mails en échec » du tableau de bord y mène. |
+| — | Page « Services » (héritée) | — | ✅ | Supprimée (page, service et hook). |
 
 ---
 
@@ -132,17 +134,17 @@
 
 ### Éditeur (EDITOR)
 - **API** ✅ : accès aux contenus (formations, domaines, partenaires, messages, témoignages, alumni, projets, newsletter, site-settings), refusé sur candidatures, paiements, codes promo, comptes.
-- **Interface** ⚠️ : le menu affiche Candidatures, Inscriptions, Codes parrainage et Apprenants alors que l'API les refuse (403). Ces pages s'affichent **vides, sans message** (« Aucun apprenant »), ce qui laisse croire à une absence de données.
+- **Interface** ✅ (corrigé) : menu et routes filtrés par rôle ; une page non autorisée n'est plus proposée.
 
 ### Formateur (TRAINER)
 - **API** ✅ : droits par session corrects (403 « Cette session ne vous est pas confiée » avant affectation, 200 après) ; suivi, appel, projets, questions, messages, certificats.
-- **Interface** ❌ : après connexion, atterrissage sur l'accueil public. `/admin`, `/admin/sessions/:id`, `/admin/formations/:id`, `/espace` renvoient tous vers `/`. La page de suivi de session existe mais est **inatteignable**.
-- **Manque API** : pas de « mes sessions » (`/admin/sessions` renvoie une erreur 500 : la route n'existe pas).
+- **Interface** ✅ (corrigé) : après connexion, atterrissage sur « Mon espace » (ses sessions) ; suivi de session, appel, correction du projet, questions, messages et certificats accessibles.
+- **API** ✅ (corrigé) : endpoint « mes sessions » (`/admin/me`).
 
 ### Partenaire (PARTNER)
 - **API** ✅ : accès à l'éditeur de programme et au projet **de ses formations uniquement** (autre formation : 403).
-- **Interface** ❌ : même blocage que le formateur.
-- **Manque** : pas de liste « mes formations », pas de suivi des inscriptions ni du **revenu reversé** (30 % pour Agile Sénégal), pas d'accès au suivi de ses sessions (403).
+- **Interface** ✅ (corrigé) : « Mon espace » liste ses formations ; éditeur de programme et projet de ses formations.
+- **Reste** : suivi des inscriptions et du **revenu reversé** (30 % pour Agile Sénégal) — voir S11.
 
 ---
 
@@ -159,8 +161,8 @@
 | T7 | Modèle de formation | Faible | `bootcamps.category` limité à `data/bi/python/sql/ai` : un nouveau domaine (ex. gestion de projet) impose une migration. |
 | T8 | Notifications internes depuis le poste local | Moyenne | En local, les e-mails internes (message de contact, paiement à confirmer, question) partent vers la vraie adresse `admin@model-technologie.com`. Prévoir `NOTIFICATION_EMAIL_TO` en dev. |
 | T9 | Environnement local | Moyenne | Le bucket MinIO `media` n'existait pas : tous les envois de fichiers échouaient (projets, justificatifs, logos, photos). Corrigé pendant l'audit ; à documenter / automatiser. Le script `dev-seed.sql` est obsolète (mot de passe admin différent). |
-| T10 | Tests automatisés | Moyenne | Backend : 33 classes de test. **Front : aucun** (ni unitaire ni e2e). |
-| T11 | PWA / mode hors ligne | Faible | Absent (voir V19). |
+| T10 | Tests automatisés | Moyenne | Backend : 33 classes + celles ajoutées pendant la réalisation. Front : tests unitaires de la logique pure (`npm run test:unit`) ; **pas de e2e**. |
+| T11 | PWA / mode hors ligne | Faible | Livré (voir V19, L19) ; à valider en préproduction. |
 | T12 | Accessibilité | — | Non audité en profondeur (cibles, contrastes et libellés suivent le design system). |
 | T13 | Données de démonstration | Faible | Le repli sur des données de démo reste actif en mode développement ; désactivé en production par construction. |
 
@@ -232,7 +234,43 @@
 - Paiement en ligne automatique par API Wave / Orange Money : la décision actuelle est la déclaration manuelle suivie d'une confirmation admin.
 - Application mobile native.
 - Multilingue.
-- Forum / communauté d'apprenants (aucun backend, entrée retirée du menu).
+- ~~Forum / communauté d'apprenants~~ : finalement réalisé (fil d'entraide par formation, voir statut).
+
+### Statut au 10 octobre 2026
+
+| ID | Statut | Réalisé / reste |
+|---|---|---|
+| M1 | Fait | Formateurs et partenaires atteignent « Mon espace » ; menu et routes par rôle ; endpoints « mes sessions / mes formations » |
+| M2 | Fait | Suivi de session complet : appel, message, questions, correction du projet, certificats, ajout d'apprenant |
+| M3 | Fait | Inscription manuelle et annulation motivée |
+| M4 | Fait | Page Certificats (liste, révocation, renvoi) et délivrance par dérogation |
+| M5 | Fait | Sélecteur de formateur dans le suivi de session |
+| M6 | Fait | Validation de code promo minimale, jetons de réinitialisation hachés, secrets exclus des journaux |
+| M7 | Fait | Menu filtré par rôle ; session expirée expliquée à la reconnexion |
+| M8 | Fait | Factures : émission, PDF, envoi, annulation |
+| M9 | Partiel | Bucket MinIO créé automatiquement ; erreurs 404/405/500 → statuts exacts. Reste : script `dev-seed.sql` obsolète et `NOTIFICATION_EMAIL_TO` en développement (T8) |
+| M10 | Fait | Motif du serveur affiché lors d'un échec de dépôt |
+| S1 | Fait | « À faire » cliquables, Mes paiements, reçus, attestations |
+| S2 | Fait | « Pages du site » (13 contenus) |
+| S3 | Fait | Journal d'e-mails relié au tableau de bord |
+| S4 | Fait | Calendrier et ressources sur les endpoints dédiés |
+| S5 | Fait | Profil éditable |
+| S6 | Fait | En-tête connecté ; plus de badges « EN COURS » ; boutons morts supprimés ou conditionnés |
+| S7 | Partiel | Blocs vides masqués ; le contenu de la formation Scrum reste à saisir dans l'éditeur |
+| S8 | Partiel | Tests unitaires de la logique pure du front et tests d'intégration backend (+4 classes). Reste : parcours e2e (non faits : aucun outil e2e installé sans accord) |
+| S9 | Fait | Compteurs d'inscriptions et « À faire » après certificat |
+| S10 | Fait | Débordements mobiles corrigés |
+| S11 | Non fait | Revenu partagé / inscriptions du partenaire |
+| S12 | Fait | Centre de notifications dérivé des données du tableau de bord |
+| C1 | Fait | PWA, économie de données, audio seul, vidéos hébergées hors ligne (Vimeo/YouTube non téléchargeables) |
+| C2 | Partiel | Demande de créneau pré-remplie ; pas de réservation temps réel ni de paiement |
+| C3 | Partiel | Textes, FAQ et articles pilotés par le back-office (JSON) ; pas d'éditeur d'articles dédié |
+| C4 | Partiel | Un événement actif piloté par le contenu ; pas de gestion multi-événements |
+| C5 | Non fait | WhatsApp |
+| C6 | Fait | Notes synchronisées côté serveur |
+| C7 | Non fait | Recherche globale |
+| C8 | Fait | Page « Services » supprimée |
+| Forum | Fait | Communauté par formation et modération (sorti des « Won't ») |
 
 ### Ordre de livraison recommandé
 1. **Sécurité et socle** : M6, M9, M7, M10 (rapides, déblocants).
