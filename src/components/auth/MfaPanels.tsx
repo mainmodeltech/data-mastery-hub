@@ -19,7 +19,7 @@ import type { MfaEnrollment } from "@/types/auth.type";
 const fieldClass =
   "w-full rounded-xl border border-[#D6CEC0] bg-white px-4 py-3.5 font-sans text-base text-ink outline-none focus:border-navy";
 
-const heading = "font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[40px]";
+const heading = "font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.5rem]";
 
 function ErrorBox({ message }: { message: string }) {
   return <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{message}</div>;
@@ -105,7 +105,7 @@ export function MfaVerifyPanel() {
         type="submit"
         variant="primary"
         size="lg"
-        className="rounded-xl text-[17px]"
+        className="rounded-xl text-[1.0625rem]"
         disabled={loading || (recovery ? code.length < 10 : code.length !== 6)}
       >
         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Valider"}
@@ -113,7 +113,7 @@ export function MfaVerifyPanel() {
       <button
         type="button"
         onClick={() => { setRecovery((r) => !r); setCode(""); setError(""); }}
-        className="text-center text-[15px] font-semibold text-navy hover:underline"
+        className="text-center text-[0.9375rem] font-semibold text-navy hover:underline"
       >
         {recovery ? "Utiliser l'application d'authentification" : "Je n'ai plus accès à mon application : utiliser un code de secours"}
       </button>
@@ -182,7 +182,7 @@ export function MfaEnrollPanel() {
 
       {error && <ErrorBox message={error} />}
 
-      <ol className="flex flex-col gap-4 text-[15px] text-ink">
+      <ol className="flex flex-col gap-4 text-[0.9375rem] text-ink">
         <li>
           <strong>1.</strong> Installez une application d'authentification sur votre téléphone (Google Authenticator,
           Microsoft Authenticator, Authy, 1Password, Bitwarden…).
@@ -209,7 +209,7 @@ export function MfaEnrollPanel() {
                   >
                     Ouvrir mon application d'authentification
                   </a>
-                  <span className="text-[13px] text-ink-secondary">
+                  <span className="text-[0.8125rem] text-ink-secondary">
                     (utile si vous êtes sur le téléphone qui porte l'application). Sinon, choisissez « saisir une clé » dans l'application et recopiez :
                   </span>
                   <div className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export function MfaEnrollPanel() {
                       {copied ? <Check className="h-5 w-5 text-success" /> : <Copy className="h-5 w-5" />}
                     </button>
                   </div>
-                  <span className="text-[13px] text-ink-secondary">Type : basé sur le temps (TOTP) · 6 chiffres · 30 secondes.</span>
+                  <span className="text-[0.8125rem] text-ink-secondary">Type : basé sur le temps (TOTP) · 6 chiffres · 30 secondes.</span>
                 </div>
               </details>
             </>
@@ -257,7 +257,7 @@ export function MfaEnrollPanel() {
           className={`${fieldClass} text-center font-heading text-2xl font-bold tracking-[0.5em]`}
         />
       </div>
-      <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[17px]" disabled={loading || !enrollment || code.length !== 6}>
+      <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[1.0625rem]" disabled={loading || !enrollment || code.length !== 6}>
         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Activer et continuer"}
       </Button>
     </form>
@@ -305,7 +305,7 @@ function RecoveryCodesPanel({ codes, onDone }: { codes: string[]; onDone: () => 
       </div>
       <ul aria-label="Codes de secours" className="grid grid-cols-2 gap-2 rounded-xl border border-[#E7E0D4] bg-surface-sand p-4">
         {codes.map((c) => (
-          <li key={c} className="select-all text-center font-mono text-[15px] font-bold tracking-wider text-navy">{c}</li>
+          <li key={c} className="select-all text-center font-mono text-[0.9375rem] font-bold tracking-wider text-navy">{c}</li>
         ))}
       </ul>
       <div className="flex flex-wrap gap-3">
@@ -316,11 +316,11 @@ function RecoveryCodesPanel({ codes, onDone }: { codes: string[]; onDone: () => 
           <Download /> Télécharger
         </Button>
       </div>
-      <label className="flex items-start gap-3 text-[15px] text-ink">
+      <label className="flex items-start gap-3 text-[0.9375rem] text-ink">
         <input type="checkbox" checked={saved} onChange={(e) => setSaved(e.target.checked)} className="mt-1 h-4 w-4 accent-[#1A3A5B]" />
         J'ai conservé ces codes en lieu sûr.
       </label>
-      <Button type="button" variant="primary" size="lg" className="rounded-xl text-[17px]" disabled={!saved} onClick={onDone}>
+      <Button type="button" variant="primary" size="lg" className="rounded-xl text-[1.0625rem]" disabled={!saved} onClick={onDone}>
         Accéder au back-office
       </Button>
     </div>

@@ -286,7 +286,7 @@ function CandidateCard({ r, children }: { r: Registration; children?: React.Reac
         </span>
       </div>
       {(context || r.message) && (
-        <span className="line-clamp-2 text-[13px] text-ink-secondary">
+        <span className="line-clamp-2 text-[0.8125rem] text-ink-secondary">
           {context}{context && r.message ? " · " : ""}{r.message ? `« ${r.message} »` : ""}
         </span>
       )}
@@ -299,10 +299,10 @@ function Column({ title, count, empty, children }: { title: string; count: numbe
   return (
     <div className="flex min-w-0 flex-col gap-3 rounded-stat bg-[#ECE6DB] p-3.5">
       <div className="flex items-center justify-between px-1 pt-1">
-        <span className="font-sans text-[15px] font-bold text-navy">{title}</span>
-        <span className="rounded-pill bg-white px-2.5 py-0.5 text-[13px] font-bold text-ink-secondary">{count}</span>
+        <span className="font-sans text-[0.9375rem] font-bold text-navy">{title}</span>
+        <span className="rounded-pill bg-white px-2.5 py-0.5 text-[0.8125rem] font-bold text-ink-secondary">{count}</span>
       </div>
-      {count === 0 && <p className="px-1 text-[13px] text-ink-secondary">{empty}</p>}
+      {count === 0 && <p className="px-1 text-[0.8125rem] text-ink-secondary">{empty}</p>}
       {children}
     </div>
   );
@@ -390,7 +390,7 @@ export default function AdminCandidatures() {
     const s = r.paymentSummary;
     return (
       <div className="flex flex-col gap-2">
-        <div className="text-[13px] text-ink-secondary">
+        <div className="text-[0.8125rem] text-ink-secondary">
           {pending && (
             <div>
               Échéance {pending.installmentNumber}/{pending.installmentCount} · <strong className="text-ink">{formatAmount(pending.amount, pending.currency)}</strong>
@@ -487,7 +487,7 @@ export default function AdminCandidatures() {
                 const reference = declared?.reference ?? s?.declaredReference;
                 return (
                   <CandidateCard key={r.id} r={r}>
-                    <div className="text-[13px] text-ink-secondary">
+                    <div className="text-[0.8125rem] text-ink-secondary">
                       {method ? (PAYMENT_METHOD_LABELS[method as PaymentMethod] ?? method) : "Paiement"}
                       {declared && <> · <strong className="text-ink">{formatAmount(declared.amount, declared.currency)}</strong></>}
                       {reference && <> · réf. {reference}</>}

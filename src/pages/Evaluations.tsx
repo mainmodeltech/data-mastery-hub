@@ -147,7 +147,7 @@ function ProjectCard({ project, formationId }: { project: ProjectOverview; forma
           {project.status === "NOT_STARTED" && project.deadlineLabel ? project.deadlineLabel : PROJECT_STATUS_LABELS[project.status]}
         </Pill>
       </div>
-      <p className="text-[15px] leading-relaxed text-ink-secondary">{project.brief}</p>
+      <p className="text-[0.9375rem] leading-relaxed text-ink-secondary">{project.brief}</p>
 
       {!validated && (
         <div
@@ -161,7 +161,7 @@ function ProjectCard({ project, formationId }: { project: ProjectOverview; forma
         >
           <Upload className="h-7 w-7 text-navy" aria-hidden="true" />
           <span className="font-bold text-navy">Glissez vos fichiers ici</span>
-          <span className="text-[13px] text-ink-secondary">
+          <span className="text-[0.8125rem] text-ink-secondary">
             {project.acceptedExtensions.map((e) => `.${e}`).join(", ")} — {project.maxSizeMb} Mo max
           </span>
           <input
@@ -204,7 +204,7 @@ function ProjectCard({ project, formationId }: { project: ProjectOverview; forma
 
       {project.feedback.length > 0 && (
         <div className="flex flex-col gap-2.5">
-          <span className="text-[13px] font-bold tracking-[1px] text-ink-secondary">HISTORIQUE</span>
+          <span className="text-[0.8125rem] font-bold tracking-[1px] text-ink-secondary">HISTORIQUE</span>
           {project.feedback.map((fb) => (
             <div key={fb.id} className="flex items-start gap-3 rounded-xl bg-app-bg p-3.5">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill bg-[#0F5C73] text-xs font-bold text-white">
@@ -231,7 +231,7 @@ function ConditionRow({ c }: { c: CertificateCondition }) {
   const valueColor = c.met ? "text-success" : partial ? "text-warning" : "text-ink-secondary";
   return (
     <div className="flex flex-col gap-2 border-b border-[#E7E0D4] py-3 last:border-b-0">
-      <div className="flex justify-between gap-3 text-[15px]">
+      <div className="flex justify-between gap-3 text-[0.9375rem]">
         <span className="font-semibold">{c.label}</span>
         <span className={cn("shrink-0 font-bold", valueColor)}>{c.valueLabel}</span>
       </div>
@@ -276,7 +276,7 @@ export default function Evaluations() {
             <Card radius="stat" className="flex min-w-0 flex-col gap-1 border border-[#E7E0D4] p-5 lg:p-6">
               <h2 className="mb-2 font-heading text-xl font-bold text-navy">Conditions pour obtenir le certificat</h2>
               {overview.conditions.map((c) => <ConditionRow key={c.key} c={c} />)}
-              <p className="pt-3 text-[13px] text-ink-secondary">
+              <p className="pt-3 text-[0.8125rem] text-ink-secondary">
                 Dès que tout est vert, votre certificat est généré et vous recevez le lien par e-mail.
               </p>
             </Card>

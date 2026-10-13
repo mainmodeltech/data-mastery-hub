@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import { ComingSoonLink } from "./ComingSoonLink";
 import { Logo } from "@/components/shared/Logo";
+import { DensityControl } from "./DensityControl";
+import { useDensity } from "@/hooks/useDensity";
 
 export interface AppNavItem {
   href: string;
@@ -59,6 +61,7 @@ export function AppLayout({
 }: AppLayoutProps) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { density, setDensity } = useDensity();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location.pathname === href : location.pathname.startsWith(href);
@@ -103,7 +106,7 @@ export function AppLayout({
               item.section && item.section !== navItems[index - 1]?.section ? (
                 <p
                   key={`section-${item.section}`}
-                  className={cn("px-3 pb-1 text-[11px] font-bold uppercase tracking-[1px] text-[#8FA5BC]", index > 0 && "pt-4")}
+                  className={cn("px-3 pb-1 text-[0.6875rem] font-bold uppercase tracking-[1px] text-[#8FA5BC]", index > 0 && "pt-4")}
                 >
                   {item.section}
                 </p>
@@ -142,7 +145,7 @@ export function AppLayout({
                   {item.badge ? (
                     <span
                       aria-label={`${item.badge} à traiter`}
-                      className="flex h-5 min-w-5 items-center justify-center rounded-pill bg-cta px-1.5 text-[11px] font-bold text-white"
+                      className="flex h-5 min-w-5 items-center justify-center rounded-pill bg-cta px-1.5 text-[0.6875rem] font-bold text-white"
                     >
                       {item.badge > 99 ? "99+" : item.badge}
                     </span>
@@ -168,16 +171,17 @@ export function AppLayout({
 
           <div className="min-w-0">
             {greeting && (
-              <h1 className="truncate font-heading text-[28px] font-extrabold text-navy">{greeting}</h1>
+              <h1 className="truncate font-heading text-[1.75rem] font-extrabold text-navy">{greeting}</h1>
             )}
             {title && !greeting && (
-              <h1 className="truncate font-heading text-xl font-bold text-navy lg:text-[28px] lg:font-extrabold">{title}</h1>
+              <h1 className="truncate font-heading text-xl font-bold text-navy lg:text-[1.75rem] lg:font-extrabold">{title}</h1>
             )}
             {description && <p className="truncate text-sm text-ink-secondary">{description}</p>}
           </div>
 
           <div className="ml-auto flex items-center gap-3">
             {headerExtra}
+            <DensityControl density={density} onChange={setDensity} />
             {!hideSearch && (
               <div className="hidden items-center gap-2 rounded-card bg-app-bg px-4 py-2.5 sm:flex">
                 <Search className="h-4 w-4 text-ink-secondary" />

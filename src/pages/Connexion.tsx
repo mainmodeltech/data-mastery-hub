@@ -160,8 +160,8 @@ export default function Connexion() {
       onClick={() => goTo("link-request")}
       className={
         rateLimited
-          ? "w-full rounded-xl border border-navy bg-white px-4 py-3.5 text-[15px] font-semibold text-navy hover:bg-navy/5"
-          : "text-center text-[15px] font-semibold text-navy hover:underline"
+          ? "w-full rounded-xl border border-navy bg-white px-4 py-3.5 text-[0.9375rem] font-semibold text-navy hover:bg-navy/5"
+          : "text-center text-[0.9375rem] font-semibold text-navy hover:underline"
       }
     >
       Recevoir un lien de connexion par e-mail
@@ -182,10 +182,10 @@ export default function Connexion() {
           {!pendingMfa && view === "password" && (
             <>
               <div className="flex flex-col gap-2">
-                <h1 className="font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[44px]">
+                <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.75rem]">
                   Bon retour parmi nous
                 </h1>
-                <p className="text-base text-ink-secondary lg:text-[17px]">
+                <p className="text-base text-ink-secondary lg:text-[1.0625rem]">
                   Connectez-vous pour reprendre votre formation.
                 </p>
               </div>
@@ -198,7 +198,7 @@ export default function Connexion() {
                     onUnavailable={() => setGoogleBroken(true)}
                   />
                   {passwordEnabled && (
-                    <div className="flex items-center gap-3 text-[13px] text-ink-secondary">
+                    <div className="flex items-center gap-3 text-[0.8125rem] text-ink-secondary">
                       <span className="h-px flex-1 bg-[#E7E0D4]" />
                       ou avec votre e-mail
                       <span className="h-px flex-1 bg-[#E7E0D4]" />
@@ -261,7 +261,7 @@ export default function Connexion() {
                     </div>
                   </div>
 
-                  <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[17px]" disabled={loading}>
+                  <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[1.0625rem]" disabled={loading}>
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Se connecter"}
                   </Button>
                 </form>
@@ -284,7 +284,7 @@ export default function Connexion() {
                 <ArrowLeft className="h-4 w-4" /> Retour
               </button>
               <div className="flex flex-col gap-2">
-                <h1 className="font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[40px]">
+                <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.5rem]">
                   Recevoir un lien de connexion
                 </h1>
                 <p className="text-base text-ink-secondary">
@@ -306,7 +306,7 @@ export default function Connexion() {
                   className={fieldClass}
                 />
               </div>
-              <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[17px]" disabled={loading}>
+              <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[1.0625rem]" disabled={loading}>
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Envoyer le lien et le code"}
               </Button>
             </form>
@@ -321,7 +321,7 @@ export default function Connexion() {
                 <span className="flex h-12 w-12 items-center justify-center rounded-pill bg-success-bg">
                   <MailCheck className="h-6 w-6 text-success" />
                 </span>
-                <h1 className="font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[40px]">
+                <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.5rem]">
                   Vérifiez votre boîte mail
                 </h1>
                 <p className="text-base text-ink-secondary">
@@ -346,14 +346,14 @@ export default function Connexion() {
                   className={`${fieldClass} text-center font-heading text-2xl font-bold tracking-[0.5em]`}
                 />
               </div>
-              <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[17px]" disabled={loading || code.length !== 6}>
+              <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[1.0625rem]" disabled={loading || code.length !== 6}>
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Se connecter"}
               </Button>
               <button
                 type="button"
                 disabled={resendIn > 0 || loading}
                 onClick={() => void sendLink()}
-                className="text-center text-[15px] font-semibold text-navy enabled:hover:underline disabled:text-ink-secondary"
+                className="text-center text-[0.9375rem] font-semibold text-navy enabled:hover:underline disabled:text-ink-secondary"
               >
                 {resendIn > 0 ? `Renvoyer un lien dans ${resendIn} s` : "Renvoyer un lien et un code"}
               </button>
@@ -361,14 +361,14 @@ export default function Connexion() {
           )}
         </div>
 
-        <span className="hidden text-[13px] text-ink-secondary lg:block">
+        <span className="hidden text-[0.8125rem] text-ink-secondary lg:block">
           © {new Date().getFullYear()} Model Technologie · <Link to="/contact">Aide</Link>
         </span>
       </div>
 
       <div className="relative hidden flex-col justify-end gap-7 overflow-hidden bg-navy p-16 lg:flex">
         <div className="absolute inset-x-16 top-16 flex h-[420px] flex-col gap-3.5 rounded-callout bg-navy-medium p-7">
-          <span className="text-[13px] font-bold uppercase tracking-[1px] text-cta-on-navy">
+          <span className="text-[0.8125rem] font-bold uppercase tracking-[1px] text-cta-on-navy">
             REPRENDRE OÙ VOUS EN ÉTIEZ
           </span>
           <span className="font-heading text-2xl font-bold text-white">Power BI · Module 3 — Mesures DAX</span>
@@ -378,10 +378,10 @@ export default function Connexion() {
           <ProgressBar value={64} variant="accent-on-navy" aria-label="Progression de l'exemple" />
           <span className="text-sm text-[#D5DEE8]">64 % terminé · 3 leçons restantes</span>
         </div>
-        <p className="font-heading text-[30px] font-bold leading-tight text-white">
+        <p className="font-heading text-[1.875rem] font-bold leading-tight text-white">
           « Mon reporting mensuel prenait 2 jours. Maintenant 2 heures. »
         </p>
-        <span className="text-[15px] text-[#D5DEE8]">Emmanuel Bouadi — Data Analyst, Wave</span>
+        <span className="text-[0.9375rem] text-[#D5DEE8]">Emmanuel Bouadi — Data Analyst, Wave</span>
       </div>
     </div>
   );

@@ -296,7 +296,7 @@ export default function AdminSessionSuivi() {
               {kpis.map((k) => (
                 <Card key={k.label} radius="stat" className="flex flex-col gap-2 border border-[#E7E0D4] p-5">
                   <span className="text-sm text-ink-secondary">{k.label}</span>
-                  <span className="font-heading text-[30px] font-extrabold text-navy">{k.value}</span>
+                  <span className="font-heading text-[1.875rem] font-extrabold text-navy">{k.value}</span>
                 </Card>
               ))}
             </div>

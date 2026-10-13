@@ -426,7 +426,7 @@ const AdminMessages = () => {
                                 {item.subject ?? <span className="text-muted-foreground italic">Sans objet</span>}
                               </p>
                               {item.type && item.type !== "CONTACT" && (
-                                <p className="text-[11px] text-primary mt-0.5">{TYPE_LABELS[item.type]}</p>
+                                <p className="text-[0.6875rem] text-primary mt-0.5">{TYPE_LABELS[item.type]}</p>
                               )}
                             </TableCell>
 

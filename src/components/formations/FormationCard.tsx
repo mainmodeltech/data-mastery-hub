@@ -51,14 +51,14 @@ export function FormationCard({ formation }: FormationCardProps) {
         <div className="flex items-center gap-2 text-xs text-ink-secondary">
           {formation.deliveredBy === "INTERNAL" ? (
             <>
-              <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-navy font-heading text-[10px] font-extrabold text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-navy font-heading text-[0.625rem] font-extrabold text-white">
                 M
               </span>
               Dispensé par Model Technologie
             </>
           ) : (
             <>
-              <span className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-dashed border-[#D6CEC0] text-[10px] text-ink-secondary">
+              <span className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-dashed border-[#D6CEC0] text-[0.625rem] text-ink-secondary">
                 {formation.partner?.name.slice(0, 1)}
               </span>
               Dispensé par {formation.partner?.name}

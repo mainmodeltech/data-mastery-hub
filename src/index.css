@@ -128,6 +128,11 @@ All colors MUST be HSL.
   }
 }
 
+/* Densité d'affichage (back-office et espace apprenant) : posée par useDensity sur <html>. Tout est en rem. */
+html[data-density="compact"] { font-size: 12.8px; }
+html[data-density="standard"] { font-size: 13.6px; }
+html[data-density="large"] { font-size: 16px; }
+
 @layer base {
   * {
     @apply border-border;

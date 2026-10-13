@@ -37,7 +37,7 @@ export function ComingSoonLink({ title, className, badge = true, onOpen, childre
       >
         {children}
         {badge && (
-          <span className="rounded-pill bg-warning-bg px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wide text-warning">
+          <span className="rounded-pill bg-warning-bg px-2 py-0.5 font-sans text-[0.625rem] font-bold uppercase tracking-wide text-warning">
             en cours
           </span>
         )}

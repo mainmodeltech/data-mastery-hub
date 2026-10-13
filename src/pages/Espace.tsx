@@ -82,7 +82,7 @@ export default function Espace() {
               ].map((k) => (
                 <Card key={k.label} radius="stat" className="flex flex-col gap-1 p-5">
                   <span className="text-sm text-ink-secondary">{k.label}</span>
-                  <span className="font-heading text-[28px] font-extrabold text-navy">{k.value}</span>
+                  <span className="font-heading text-[1.75rem] font-extrabold text-navy">{k.value}</span>
                 </Card>
               ))}
             </div>
@@ -194,7 +194,7 @@ export default function Espace() {
                         <Link to={todoHref(t.id)} className="flex min-w-0 flex-1 items-center gap-3 hover:text-navy">
                           <div className="flex min-w-0 flex-1 flex-col">
                             <span className="truncate font-semibold text-ink">{t.title}</span>
-                            <span className="truncate text-[13px] text-ink-secondary">{t.subtitle}</span>
+                            <span className="truncate text-[0.8125rem] text-ink-secondary">{t.subtitle}</span>
                           </div>
                           <Pill variant={t.tone === "warning" ? "warning" : "info"}>{t.badge}</Pill>
                           <ChevronRight className="h-4 w-4 shrink-0 text-ink-secondary" aria-hidden="true" />
@@ -239,7 +239,7 @@ export default function Espace() {
                     return (
                       <div key={l.id} className={`flex items-center gap-3 ${i >= 1 ? "hidden lg:flex" : ""}`}>
                         <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-card bg-app-bg">
-                          <span className="text-[11px] font-bold uppercase text-cta">{format(d, "EEE", { locale: fr })}</span>
+                          <span className="text-[0.6875rem] font-bold uppercase text-cta">{format(d, "EEE", { locale: fr })}</span>
                           <span className="font-heading text-lg font-extrabold text-navy">{format(d, "dd")}</span>
                         </div>
                         <div className="flex min-w-0 flex-1 flex-col">

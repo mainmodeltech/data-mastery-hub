@@ -48,7 +48,7 @@ export function ProgrammePanel({ formationId, content, view, currentLessonId, ex
       <div className="flex flex-col gap-2.5 p-5">
         <span className="font-heading text-lg font-bold text-navy">Programme</span>
         <ProgressBar value={view.percent} aria-label="Progression du cours" className="h-2" />
-        <span className="text-[13px] text-ink-secondary">
+        <span className="text-[0.8125rem] text-ink-secondary">
           {view.doneCount} leçons sur {view.totalCount} · {view.percent} %
         </span>
       </div>

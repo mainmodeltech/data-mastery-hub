@@ -145,7 +145,7 @@ export default function Paiement() {
     <Frame>
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-1">
-          <h1 className="font-heading text-[30px] font-extrabold leading-tight tracking-[-0.5px] text-navy">Bonjour {p.firstName},</h1>
+          <h1 className="font-heading text-[1.875rem] font-extrabold leading-tight tracking-[-0.5px] text-navy">Bonjour {p.firstName},</h1>
           <p className="text-ink-secondary">
             votre candidature pour <strong className="text-ink">{p.bootcampTitle ?? "la formation"}</strong>
             {p.sessionName ? <> ({p.sessionName})</> : null} est acceptée.
@@ -175,7 +175,7 @@ export default function Paiement() {
               <span className="text-sm text-ink-secondary">
                 {p.installmentCount > 1 ? `Échéance ${p.installmentNumber} sur ${p.installmentCount}` : "Montant à régler"}
               </span>
-              <span className="font-heading text-[40px] font-extrabold leading-none text-navy">{formatAmount(p.amount, p.currency)}</span>
+              <span className="font-heading text-[2.5rem] font-extrabold leading-none text-navy">{formatAmount(p.amount, p.currency)}</span>
             </div>
             {p.dueDate && awaitingPayment && <Pill variant="warning">À régler avant le {date(p.dueDate)}</Pill>}
           </div>

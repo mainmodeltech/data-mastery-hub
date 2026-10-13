@@ -83,7 +83,7 @@ function HomeBody({ c, company }: { c: PageHome; company: SiteCompany }) {
           {nextSession ? c.hero.badgeOpen : c.hero.badgeClosed}
         </span>
         {/* Copie mobile dédiée (plus courte, cf. Mobile.dc.html) */}
-        <h1 className="max-w-4xl font-heading text-[40px] font-extrabold leading-[1] tracking-[-1.2px] text-navy sm:hidden">
+        <h1 className="max-w-4xl font-heading text-[2.5rem] font-extrabold leading-[1] tracking-[-1.2px] text-navy sm:hidden">
           {c.hero.titleMobile.before} <span className="text-cta">{c.hero.titleMobile.accent}</span>
         </h1>
         <p className="max-w-2xl text-lg text-ink-secondary sm:hidden">{c.hero.subtitleMobile}</p>
@@ -132,7 +132,7 @@ function HomeBody({ c, company }: { c: PageHome; company: SiteCompany }) {
               key={s.label}
               className={`flex flex-col gap-1.5 bg-site-bg p-5 sm:p-7 ${i >= 2 ? "hidden sm:flex" : ""}`}
             >
-              <span className="font-heading text-[34px] font-extrabold text-navy lg:text-[52px]">{s.value}</span>
+              <span className="font-heading text-[2.125rem] font-extrabold text-navy lg:text-[3.25rem]">{s.value}</span>
               <span className="text-sm text-ink-secondary">{s.label}</span>
             </div>
           ))}
@@ -239,7 +239,7 @@ function HomeBody({ c, company }: { c: PageHome; company: SiteCompany }) {
                   >
                     {(f.tag ?? f.domain?.name ?? c.parcours.fallbackTag).toUpperCase()}
                   </span>
-                  <h3 className={highlight ? "font-heading text-[28px] font-bold text-white" : "font-heading text-[28px] font-bold text-navy"}>
+                  <h3 className={highlight ? "font-heading text-[1.75rem] font-bold text-white" : "font-heading text-[1.75rem] font-bold text-navy"}>
                     {f.title}
                   </h3>
                   <p className={highlight ? "text-base text-[#D5DEE8]" : "text-base text-ink-secondary"}>{f.description}</p>
@@ -350,7 +350,7 @@ function HomeBody({ c, company }: { c: PageHome; company: SiteCompany }) {
           {c.highlights.map((h) => (
             <Card key={h.eyebrow} radius="callout" className="flex flex-col gap-3.5 p-10">
               <span className="font-sans text-sm font-bold uppercase tracking-[1.5px] text-cta">{h.eyebrow}</span>
-              <h3 className="font-heading text-[32px] font-bold leading-tight text-navy">{h.title}</h3>
+              <h3 className="font-heading text-[2rem] font-bold leading-tight text-navy">{h.title}</h3>
               <p className="text-lg text-ink-secondary">{h.description}</p>
             </Card>
           ))}
@@ -383,7 +383,7 @@ function HomeBody({ c, company }: { c: PageHome; company: SiteCompany }) {
           {c.enterprises.offers.map((o) => (
             <div key={o.eyebrow} className="flex flex-col gap-3.5 rounded-card bg-navy-medium p-8">
               <span className="text-xs font-bold uppercase tracking-[1px] text-cta-on-navy">{o.eyebrow}</span>
-              <h3 className="font-heading text-[26px] font-bold leading-snug">{o.title}</h3>
+              <h3 className="font-heading text-[1.625rem] font-bold leading-snug">{o.title}</h3>
               <p className="text-base text-[#D5DEE8]">{o.description}</p>
             </div>
           ))}

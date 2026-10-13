@@ -33,14 +33,14 @@ function ResourceRow({ r, locked }: { r: LessonResource; locked: boolean }) {
   return (
     <div className="flex items-center gap-3 border-b border-[#E7E0D4] py-3">
       <span
-        className="w-[38px] shrink-0 rounded-lg py-1.5 text-center text-[11px] font-extrabold text-white"
+        className="w-[38px] shrink-0 rounded-lg py-1.5 text-center text-[0.6875rem] font-extrabold text-white"
         style={{ background: FILE_COLORS[r.fileType] ?? "#4A5566" }}
       >
         {r.fileType}
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-[15px] font-semibold text-ink">{r.name}</span>
-        <span className="text-[13px] text-ink-secondary">{locked ? "Disponible après le quiz" : r.sizeLabel ?? r.note ?? ""}</span>
+        <span className="truncate text-[0.9375rem] font-semibold text-ink">{r.name}</span>
+        <span className="text-[0.8125rem] text-ink-secondary">{locked ? "Disponible après le quiz" : r.sizeLabel ?? r.note ?? ""}</span>
       </span>
       {locked ? (
         <Lock className="h-4 w-4 text-ink-secondary" aria-label="Verrouillé" />
@@ -54,7 +54,7 @@ function ResourceRow({ r, locked }: { r: LessonResource; locked: boolean }) {
           <Download className="h-[18px] w-[18px]" />
         </a>
       ) : (
-        <span className="rounded-pill bg-warning-bg px-2 py-0.5 text-[10px] font-bold uppercase text-warning">bientôt</span>
+        <span className="rounded-pill bg-warning-bg px-2 py-0.5 text-[0.625rem] font-bold uppercase text-warning">bientôt</span>
       )}
     </div>
   );
@@ -133,7 +133,7 @@ function Notes({ lessonId }: { lessonId: string }) {
 /** Modes de lecture : économie de données (chargement à la demande, basse qualité) et audio seul. */
 function MediaModeBar({ prefs, offline }: { prefs: ReturnType<typeof useMediaPrefs>; offline?: ReturnType<typeof useOfflineVideo> }) {
   const chip = (active: boolean) =>
-    `inline-flex min-h-[36px] items-center gap-1.5 rounded-pill border px-3.5 text-[13px] font-semibold ${
+    `inline-flex min-h-[36px] items-center gap-1.5 rounded-pill border px-3.5 text-[0.8125rem] font-semibold ${
       active ? "border-navy bg-navy text-white" : "border-[#D6CEC0] bg-white text-navy"
     }`;
   return (
@@ -335,8 +335,8 @@ export default function CoursePlayer() {
   const body = (
     <div className="flex min-w-0 flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-bold tracking-[1px] text-cta">{heading}</span>
-        <h2 className="font-heading text-2xl font-extrabold text-navy lg:text-[30px]">{label && `${label} · `}{title}</h2>
+        <span className="text-[0.8125rem] font-bold tracking-[1px] text-cta">{heading}</span>
+        <h2 className="font-heading text-2xl font-extrabold text-navy lg:text-[1.875rem]">{label && `${label} · `}{title}</h2>
       </div>
 
       <LessonBody
@@ -348,7 +348,7 @@ export default function CoursePlayer() {
         onEnded={() => save(true, duration)}
       />
       {lesson.type === "VIDEO" && !lesson.videoEmbedUrl && duration > 0 && (
-        <div className="flex justify-between text-[13px] text-ink-secondary">
+        <div className="flex justify-between text-[0.8125rem] text-ink-secondary">
           <span>{formatDuration(position)} / {formatDuration(duration)}</span>
           <span>{videoPercent} % vu</span>
         </div>
@@ -374,7 +374,7 @@ export default function CoursePlayer() {
         </div>
       </div>
 
-      <div role="tablist" className="flex gap-7 overflow-x-auto border-b border-[#E7E0D4] text-[15px] font-semibold">
+      <div role="tablist" className="flex gap-7 overflow-x-auto border-b border-[#E7E0D4] text-[0.9375rem] font-semibold">
         {([
           ["resources", `Ressources (${resources.length})`],
           ["description", "Description"],
@@ -410,7 +410,7 @@ export default function CoursePlayer() {
       </div>
 
       {!isDesktop && next && (
-        <div className="rounded-card bg-warning-bg px-4 py-3 text-[13px] text-warning">
+        <div className="rounded-card bg-warning-bg px-4 py-3 text-[0.8125rem] text-warning">
           Suivant : {next.lesson.title}.
         </div>
       )}
@@ -426,7 +426,7 @@ export default function CoursePlayer() {
           className="m-4 flex flex-col gap-1.5 rounded-[14px] bg-warning-bg p-4"
         >
           <span className="text-sm font-bold text-warning">{quizLesson.title}</span>
-          <span className="text-[13px] text-ink">
+          <span className="text-[0.8125rem] text-ink">
             {course.content.settings.sequentialUnlock
               ? `${quizLesson.quiz.passThreshold} % requis pour ouvrir le module suivant.`
               : `${quizLesson.quiz.questionCount} questions · ${quizLesson.quiz.passThreshold} % requis.`}

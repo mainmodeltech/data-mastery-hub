@@ -80,7 +80,7 @@ export default function Certificat() {
           ) : (
             <Pill variant="success"><BadgeCheck className="h-4 w-4" />Certificat authentique</Pill>
           )}
-          <h1 className="font-heading text-[30px] font-extrabold leading-tight tracking-[-0.5px] text-navy">{c.recipientName}</h1>
+          <h1 className="font-heading text-[1.875rem] font-extrabold leading-tight tracking-[-0.5px] text-navy">{c.recipientName}</h1>
           <p className="text-ink-secondary">
             {revoked ? "n'est plus titulaire de ce certificat" : "a validé la formation"}{" "}
             <strong className="text-ink">{c.formationTitle}</strong>

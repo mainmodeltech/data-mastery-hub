@@ -45,7 +45,7 @@ export function MobileTabBar() {
             key={t.href}
             title={t.label}
             badge={false}
-            className="min-h-[56px] flex-col justify-center gap-0.5 text-[11px] font-medium text-[#8A93A0]"
+            className="min-h-[56px] flex-col justify-center gap-0.5 text-[0.6875rem] font-medium text-[#8A93A0]"
           >
             <t.icon className="h-5 w-5" />
             {t.label}
@@ -56,7 +56,7 @@ export function MobileTabBar() {
             to={t.href}
             end={t.end}
             className={({ isActive }) =>
-              `flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${
+              `flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[0.6875rem] font-medium ${
                 isActive ? "font-bold text-navy" : "text-[#8A93A0]"
               }`
             }
@@ -104,7 +104,7 @@ export function LearnerShell({ children, title, greeting, description, withTabBa
       bottomNav={withTabBar ? <MobileTabBar /> : undefined}
       helpSlot={
         <div className="flex flex-col gap-2">
-          <span className="text-[13px] text-[#D5DEE8]">Besoin d'aide ?</span>
+          <span className="text-[0.8125rem] text-[#D5DEE8]">Besoin d'aide ?</span>
           <a href="/contact" className="text-sm font-bold text-white">Écrire à l'équipe →</a>
         </div>
       }
