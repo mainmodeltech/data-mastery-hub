@@ -115,7 +115,7 @@ Cochez la colonne **OK / KO**. Un parcours se déroule dans l'ordre. Le **parcou
 
 | # | Profil | Étapes | Résultat attendu | OK / KO |
 |---|---|---|---|:-:|
-| S1 | Tout le personnel | Première connexion : mot de passe puis écran « Sécurisez votre compte » ; ajouter le compte dans l'application (clé à saisir ou bouton « Ouvrir mon application ») ; saisir le code | Les **10 codes de secours** s'affichent ; le bouton « Accéder au back-office » reste grisé tant que la case « J'ai conservé ces codes » n'est pas cochée | ☐ |
+| S1 | Tout le personnel | Première connexion : mot de passe puis écran « Sécurisez votre compte » ; **scanner le QR code** avec l'application d'authentification (si impossible : « Je ne peux pas scanner le QR code » → clé à recopier ou lien « Ouvrir mon application ») ; saisir le code à 6 chiffres affiché | Les **10 codes de secours** s'affichent ; le bouton « Accéder au back-office » reste grisé tant que la case « J'ai conservé ces codes » n'est pas cochée | ☐ |
 | S2 | Tout le personnel | Se déconnecter, se reconnecter | Après le mot de passe, le code à 6 chiffres est demandé ; un code faux est refusé ; 5 codes faux verrouillent quelques minutes | ☐ |
 | S3 | Tout le personnel | Se connecter avec **un code de secours** (lien « Je n'ai plus accès à mon application ») | Connexion réussie ; le même code ne marche pas une seconde fois | ☐ |
 | S4 | Tout le personnel | Connexion par **lien/code e-mail** (ou Google) | Le code de l'application d'authentification est demandé ensuite : l'e-mail seul ne suffit plus | ☐ |
