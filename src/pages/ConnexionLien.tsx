@@ -5,7 +5,7 @@
  * session puis redirige selon le rôle (apprenant → /espace, back-office → /admin).
  */
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, XCircle } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -17,6 +17,7 @@ import { ApiError } from "@/services/httpClient";
 
 export default function ConnexionLien() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const { applySession } = useAuth();
   usePostLoginRedirect();
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +36,8 @@ export default function ConnexionLien() {
     }
     authService
       .verifyLogin({ token: value })
-      .then((session) => applySession(session))
+      // Personnel : le lien prouve l'identité, le second facteur reste à valider sur la page de connexion
+      .then((session) => { if (applySession(session) === "mfa") navigate("/connexion", { replace: true }); })
       .catch((err) => {
         setError(
           err instanceof ApiError && err.status === 429
@@ -45,7 +47,7 @@ export default function ConnexionLien() {
               : "Lien ou code invalide, expiré ou déjà utilisé."
         );
       });
-  }, [applySession]);
+  }, [applySession, navigate]);
 
   return (
     <div className="flex min-h-screen flex-col items-center gap-10 bg-site-bg px-6 py-12">

@@ -22,7 +22,7 @@ import { ApiError } from "@/services/httpClient";
 const schema = z
   .object({
     currentPassword: z.string().min(1, "Saisissez votre mot de passe actuel"),
-    newPassword: z.string().min(8, "Au moins 8 caractères"),
+    newPassword: z.string().min(10, "Au moins 10 caractères"),
     confirm: z.string(),
   })
   .refine((v) => v.newPassword === v.confirm, { path: ["confirm"], message: "Les deux mots de passe ne correspondent pas" })
@@ -111,10 +111,13 @@ export default function EspaceProfil() {
     try {
       await change.mutateAsync(values);
       reset();
-      toast({ title: "Mot de passe modifié" });
+      // Le serveur a terminé toutes les sessions du compte (sécurité) : reconnexion avec le nouveau mot de passe
+      signOut();
+      navigate("/connexion", { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
-        setError("currentPassword", { message: /^Erreur \d+$/.test(err.message) ? "Mot de passe actuel incorrect" : err.message });
+        const refused = /trop courant|au moins|adresse e-mail|dépasser/i.test(err.message);
+        setError(refused ? "newPassword" : "currentPassword", { message: /^Erreur \d+$/.test(err.message) ? "Mot de passe actuel incorrect" : err.message });
       } else {
         toast({ title: "Modification impossible", description: "Réessayez dans un instant.", variant: "destructive" });
       }

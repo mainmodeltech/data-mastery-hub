@@ -7,6 +7,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { AlertCircle, CheckCircle, Eye, EyeOff, Loader2, Lock } from "lucide-react";
 
 import { authService } from "@/services/api/authService";
+import { ApiError } from "@/services/httpClient";
 import { AuthCardLayout } from "@/components/layouts/AuthCardLayout";
 import { Button } from "@/components/shared";
 
@@ -45,8 +46,8 @@ const AdminResetPassword = () => {
       setError("Les mots de passe ne correspondent pas.");
       return;
     }
-    if (newPassword.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.");
+    if (newPassword.length < 10) {
+      setError("Le mot de passe doit contenir au moins 10 caractères (12 pour le personnel).");
       return;
     }
 
@@ -54,8 +55,13 @@ const AdminResetPassword = () => {
     try {
       await authService.resetPassword(token, newPassword);
       setSuccess(true);
-    } catch {
-      setError("Le lien est invalide ou a expiré. Veuillez faire une nouvelle demande.");
+    } catch (err) {
+      // Le serveur explique le refus (mot de passe trop courant, trop court…) ou signale un lien invalide
+      setError(
+        err instanceof ApiError && err.status === 400 && err.message && !/^Erreur \d+$/.test(err.message)
+          ? err.message
+          : "Le lien est invalide ou a expiré. Veuillez faire une nouvelle demande."
+      );
     } finally {
       setLoading(false);
     }
@@ -77,7 +83,7 @@ const AdminResetPassword = () => {
   return (
     <AuthCardLayout
       title="Nouveau mot de passe"
-      description="Choisissez un mot de passe sécurisé (8 caractères minimum)."
+      description="Choisissez une phrase de passe longue : 10 caractères minimum (12 pour le personnel), sans mot courant."
     >
       {success ? (
         <div className="flex flex-col items-center gap-4 text-center">
@@ -105,7 +111,7 @@ const AdminResetPassword = () => {
                 id="rp-new"
                 type={showPassword ? "text" : "password"}
                 required
-                minLength={8}
+                minLength={10}
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}

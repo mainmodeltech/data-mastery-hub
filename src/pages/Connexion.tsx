@@ -20,6 +20,7 @@ import { Button } from "@/components/shared/Button";
 import { ProgressBar } from "@/components/shared/ProgressBar";
 import { Logo } from "@/components/shared/Logo";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { MfaEnrollPanel, MfaVerifyPanel } from "@/components/auth/MfaPanels";
 import { authService } from "@/services/api/authService";
 import { ApiError } from "@/services/httpClient";
 
@@ -39,7 +40,7 @@ function authErrorMessage(err: unknown, fallback: string): string {
 }
 
 export default function Connexion() {
-  const { signIn, applySession } = useAuth();
+  const { signIn, applySession, pendingMfa } = useAuth();
   usePostLoginRedirect();
   const { data: options } = useAuthOptions();
 
@@ -86,7 +87,12 @@ export default function Connexion() {
     setLoading(true);
     setError("");
     setRateLimited(false);
-    const { error: signInError, status } = await signIn(email.trim(), password);
+    const { error: signInError, status, mfa } = await signIn(email.trim(), password);
+    if (mfa) {
+      setPassword("");
+      setLoading(false);
+      return;
+    }
     if (signInError) {
       setError(signInError);
       setRateLimited(status === 429);
@@ -121,7 +127,7 @@ export default function Connexion() {
     setError("");
     try {
       const session = await authService.verifyLogin({ email: email.trim(), code });
-      applySession(session);
+      if (applySession(session) === "mfa") setLoading(false);
     } catch (err) {
       setError(authErrorMessage(err, "Lien ou code invalide, expiré ou déjà utilisé."));
       setLoading(false);
@@ -133,7 +139,7 @@ export default function Connexion() {
     setError("");
     try {
       const session = await authService.loginWithGoogle(credential);
-      applySession(session);
+      if (applySession(session) === "mfa") setLoading(false);
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         setGoogleBroken(true); // Google n'est pas configuré côté serveur
@@ -146,7 +152,7 @@ export default function Connexion() {
     }
   };
 
-  const showGoogle = !!googleClientId && !googleBroken && view === "password";
+  const showGoogle = !!googleClientId && !googleBroken && view === "password" && !pendingMfa;
 
   const linkButton = (
     <button
@@ -170,7 +176,10 @@ export default function Connexion() {
         </Link>
 
         <div className="my-auto flex w-full max-w-[440px] flex-col gap-5">
-          {view === "password" && (
+          {pendingMfa?.kind === "verify" && <MfaVerifyPanel />}
+          {pendingMfa?.kind === "enroll" && <MfaEnrollPanel />}
+
+          {!pendingMfa && view === "password" && (
             <>
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[44px]">
@@ -269,7 +278,7 @@ export default function Connexion() {
             </>
           )}
 
-          {view === "link-request" && (
+          {!pendingMfa && view === "link-request" && (
             <form onSubmit={sendLink} className="flex flex-col gap-5">
               <button type="button" onClick={() => goTo("password")} className="flex w-fit items-center gap-1.5 text-sm font-semibold text-navy">
                 <ArrowLeft className="h-4 w-4" /> Retour
@@ -303,7 +312,7 @@ export default function Connexion() {
             </form>
           )}
 
-          {view === "link-code" && (
+          {!pendingMfa && view === "link-code" && (
             <form onSubmit={verifyCode} className="flex flex-col gap-5">
               <button type="button" onClick={() => goTo("link-request")} className="flex w-fit items-center gap-1.5 text-sm font-semibold text-navy">
                 <ArrowLeft className="h-4 w-4" /> Changer d'adresse

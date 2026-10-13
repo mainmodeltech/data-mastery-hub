@@ -51,6 +51,8 @@ export interface AdminUserAccount {
   fullName: string;
   roles: string[];
   active: boolean;
+  /** Double authentification activée sur ce compte. */
+  mfaEnabled?: boolean;
   partnerId: string | null;
   lastLoginAt: string | null;
   createdAt: string;
