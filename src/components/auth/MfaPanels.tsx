@@ -5,10 +5,11 @@
  *   - MfaEnrollPanel     : première connexion — enregistrer le compte dans l'application, confirmer avec un premier
  *                          code, puis noter les codes de secours (affichés une seule fois)
  *
- * Le secret est affiché en clair (copiable) et sous forme de lien otpauth:// (ouvre directement l'application sur
- * mobile) : pas de QR code pour l'instant, aucune dépendance supplémentaire.
+ * Enrôlement : un QR code (adresse otpauth://, généré dans le navigateur — le secret ne quitte jamais la page) à scanner avec
+ * l'application d'authentification ; en secours, la clé à recopier et un lien qui ouvre l'application sur mobile.
  */
 import { useEffect, useRef, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { ArrowLeft, Check, Copy, Download, KeyRound, Loader2, ShieldCheck, Smartphone } from "lucide-react";
 
 import { Button } from "@/components/shared/Button";
@@ -186,35 +187,51 @@ export function MfaEnrollPanel() {
           <strong>1.</strong> Installez une application d'authentification sur votre téléphone (Google Authenticator,
           Microsoft Authenticator, Authy, 1Password, Bitwarden…).
         </li>
-        <li className="flex flex-col gap-2">
-          <span><strong>2.</strong> Ajoutez ce compte dans l'application :</span>
+        <li className="flex flex-col gap-3">
+          <span>
+            <strong>2.</strong> Dans l'application, ajoutez un compte (« + » ou « Scanner un QR code ») et <strong>scannez ce code</strong> :
+          </span>
           {enrollment ? (
-            <div className="flex flex-col gap-3 rounded-xl border border-[#E7E0D4] bg-surface-sand p-4">
-              <a
-                href={enrollment.otpauthUri}
-                className="w-fit rounded-pill border-2 border-navy px-4 py-2 text-sm font-bold text-navy hover:bg-navy/5"
+            <>
+              <div
+                role="img"
+                aria-label="QR code à scanner avec l'application d'authentification"
+                className="mx-auto w-fit rounded-xl border border-[#E7E0D4] bg-white p-3"
               >
-                Ouvrir mon application d'authentification
-              </a>
-              <span className="text-[13px] text-ink-secondary">Sur ordinateur, ou si le bouton ne fait rien : choisissez « saisir une clé » et recopiez :</span>
-              <div className="flex items-center gap-2">
-                <code
-                  aria-label="Clé secrète"
-                  className="flex-1 select-all break-all rounded-lg bg-white px-3 py-2 font-mono text-base font-bold tracking-wider text-navy"
-                >
-                  {grouped(enrollment.secret)}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => void copy(enrollment.secret)}
-                  aria-label="Copier la clé"
-                  className="rounded-lg border border-[#D6CEC0] bg-white p-2.5 text-navy hover:bg-navy/5"
-                >
-                  {copied ? <Check className="h-5 w-5 text-success" /> : <Copy className="h-5 w-5" />}
-                </button>
+                <QRCodeSVG value={enrollment.otpauthUri} size={192} level="M" marginSize={2} bgColor="#FFFFFF" fgColor="#16202E" />
               </div>
-              <span className="text-[13px] text-ink-secondary">Type : basé sur le temps (TOTP) · 6 chiffres · 30 secondes.</span>
-            </div>
+              <details className="rounded-xl border border-[#E7E0D4] bg-surface-sand p-4 text-sm">
+                <summary className="cursor-pointer font-semibold text-navy">Je ne peux pas scanner le QR code</summary>
+                <div className="mt-3 flex flex-col gap-3">
+                  <a
+                    href={enrollment.otpauthUri}
+                    className="w-fit rounded-pill border-2 border-navy px-4 py-2 text-sm font-bold text-navy hover:bg-navy/5"
+                  >
+                    Ouvrir mon application d'authentification
+                  </a>
+                  <span className="text-[13px] text-ink-secondary">
+                    (utile si vous êtes sur le téléphone qui porte l'application). Sinon, choisissez « saisir une clé » dans l'application et recopiez :
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <code
+                      aria-label="Clé secrète"
+                      className="flex-1 select-all break-all rounded-lg bg-white px-3 py-2 font-mono text-base font-bold tracking-wider text-navy"
+                    >
+                      {grouped(enrollment.secret)}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => void copy(enrollment.secret)}
+                      aria-label="Copier la clé"
+                      className="rounded-lg border border-[#D6CEC0] bg-white p-2.5 text-navy hover:bg-navy/5"
+                    >
+                      {copied ? <Check className="h-5 w-5 text-success" /> : <Copy className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  <span className="text-[13px] text-ink-secondary">Type : basé sur le temps (TOTP) · 6 chiffres · 30 secondes.</span>
+                </div>
+              </details>
+            </>
           ) : !error ? (
             <Loader2 className="h-5 w-5 animate-spin text-ink-secondary" aria-label="Préparation…" />
           ) : null}
