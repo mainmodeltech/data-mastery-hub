@@ -152,6 +152,35 @@ Cochez la colonne **OK / KO**. Un parcours se déroule dans l'ordre. Le **parcou
 | 40 | Formateur | *Mon espace* : seules **ses** sessions sont listées | Aucune session d'un autre formateur | ☐ |
 | 41 | Partenaire | *Mon espace* : seules **ses** formations ; éditer le programme d'une formation d'un **autre** partenaire par adresse directe | Accès refusé | ☐ |
 
+### Profils par métier et droits (phase 3a)
+
+Les profils « Admin », « Éditeur » et « Super Admin » ci-dessus sont remplacés, au fil de la mise en production, par des **profils par métier** : Direction, Finance, Admissions, Pédagogie, Communication, Formateur, Partenaire, Lecture seule / Audit. Une personne peut en **cumuler plusieurs** (ex. le responsable administratif : Finance + Admissions). La direction règle les droits de chaque profil dans **Profils & droits** (cartes + matrice pour la revue des accès). Les anciens profils restent disponibles pendant la transition ; leur périmètre n'a pas changé.
+
+| Profil | Ce qu'il voit | Ce qu'il ne peut **pas** faire |
+|---|---|---|
+| **Direction** | Tout, y compris comptes, profils et droits | — |
+| **Finance** | Tableau de bord financier, paiements, factures, parrainage, tarifs, parts de revenu des partenaires | Accepter une candidature, gérer les comptes, modifier le contenu pédagogique |
+| **Admissions** | Candidatures, inscriptions, apprenants, messages ; **statut** des paiements ; tableau d'**activité sans montants** | Confirmer/rembourser un paiement, voir les factures, changer un prix |
+| **Pédagogie** | Formations, programmes, sessions, certificats (dérogation comprise), communauté | Voir les paiements ou les candidatures, changer un prix |
+| **Communication** | Site, témoignages, alumni, projets, newsletter, messages, masterclass | Candidatures, paiements, apprenants, catalogue |
+| **Formateur** | **Ses** sessions : appel, projets, questions, messages | Certificats, catalogue, candidatures, paiements |
+| **Lecture seule / Audit** | Finances et journal, sans rien modifier | Toute modification |
+
+| # | Profil | Étapes | Résultat attendu | OK / KO |
+|---|---|---|---|:-:|
+| 42 | Direction | **Profils & droits** : ouvrir *Finance*, retirer un droit, enregistrer ; se connecter avec un compte Finance | Le menu et les boutons du compte Finance suivent le nouveau réglage à la reconnexion ; *Rétablir les droits par défaut* le remet | ☐ |
+| 43 | Direction | **Profils & droits** : créer un profil « Responsable partenariats » avec 2 droits, l'attribuer à un compte, puis tenter de le supprimer | Création possible ; suppression refusée tant qu'un compte l'a | ☐ |
+| 44 | Direction | **Comptes** : donner *Finance* + *Admissions* à un compte | Le compte voit l'union des deux menus ; son profil s'affiche « Admissions · Finance » | ☐ |
+| 45 | Admissions | **Candidatures** : accepter au prix normal ; tenter de saisir un autre montant | Le champ *Montant total* est grisé (droit « Déroger au prix » requis) ; l'acceptation au tarif fonctionne | ☐ |
+| 46 | Admissions | **Paiements** : ouvrir la liste | Statuts visibles, aucun bouton *Confirmer*, *Relancer* ou *Rembourser* ; *Factures* absentes du menu | ☐ |
+| 47 | Admissions | **Tableau de bord** | Candidatures, acceptations, inscriptions — **aucun montant** | ☐ |
+| 48 | Finance | **Tableau de bord** et **Paiements** : confirmer, refuser, rembourser | Montants visibles ; actions disponibles | ☐ |
+| 49 | Finance | **Formations** → *Tarifs* : changer le prix d'une formation | Seul le prix est enregistré (titre et autres champs ignorés) | ☐ |
+| 50 | Pédagogie | **Formations** : modifier le titre, puis tenter de changer le prix | Titre modifié ; le prix est en lecture seule | ☐ |
+| 51 | Pédagogie | **Sessions** : affecter un formateur ; délivrer un certificat | Possible ; le formateur ne voit que ses sessions | ☐ |
+| 52 | Communication | Menu : *Candidatures*, *Paiements*, *Apprenants* | Absents du menu et inaccessibles par adresse directe (redirection) | ☐ |
+| 53 | Audit | Tout parcourir, tenter une action | Lecture seule : aucun bouton d'action, 403 si forcé par l'API | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |

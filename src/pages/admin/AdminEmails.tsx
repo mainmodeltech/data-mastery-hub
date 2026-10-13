@@ -14,7 +14,6 @@ import { Button, Card, Pill } from "@/components/shared";
 import { useAuth } from "@/hooks/useAuth";
 import { useEmailLogs, useMailStatus, useSendTestEmail } from "@/hooks/useAdminOps";
 import { useToast } from "@/hooks/use-toast";
-import { hasAnyRole, ROLE_GROUPS } from "@/lib/roles";
 
 const stamp = (iso: string | null | undefined) => (iso ? format(parseISO(iso), "d MMM yyyy HH:mm", { locale: fr }) : "—");
 
@@ -33,8 +32,8 @@ const STATUS_PILL: Record<string, { variant: "success" | "error" | "neutral"; la
 
 export default function AdminEmails() {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const isSuper = hasAnyRole(user?.roles, ROLE_GROUPS.SUPER);
+  const { can } = useAuth();
+  const isSuper = can("SYSTEM_MANAGE");   // e-mail de test : réglage système
   const [page, setPage] = useState(0);
   const [status, setStatus] = useState("");
   const [type, setType] = useState("");

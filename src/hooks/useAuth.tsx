@@ -14,7 +14,9 @@
  *   - verifyMfa()       → code de l'application d'authentification ou code de secours
  *   - startMfaEnrollment() / confirmMfaEnrollment() → première configuration (obligatoire pour le personnel)
  *   - signOut()         → termine la session côté serveur (POST /auth/logout) puis localement
- *   - user              → contenu du jeton d'accès (email, roles, userType)
+ *   - user              → contenu du jeton d'accès (email, roles, userType) + droits et profils (GET /auth/me, personnel)
+ *   - can(...droits)    → vrai si le compte a au moins un des droits (cumul des profils) ; masque menu, routes et boutons,
+ *                         le serveur restant la vraie protection
  */
 
 import {
@@ -23,12 +25,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { authService } from "@/services/api/authService";
 import { authEvents } from "@/services/api/authEvents";
 import { ApiError, refreshAccessToken, tokenStorage } from "@/services/httpClient";
-import type { AuthResponse, MfaEnrollment, PendingMfa } from "@/types/auth.type";
+import type { AuthResponse, AuthUser as ProfileUser, MfaEnrollment, PendingMfa } from "@/types/auth.type";
+import { BACKOFFICE_ACCESS, hasAnyPermission } from "@/lib/permissions";
 
 /**
  * Indice (pas un secret) : une session a été ouverte sur ce navigateur. Sans lui, on évite l'appel de
@@ -62,6 +66,12 @@ interface AuthUser {
   email: string;
   roles: string[];
   userType?: "ADMIN" | "LEARNER";
+  /** Compte du personnel (back-office), quel que soit son profil. */
+  isStaff: boolean;
+  /** Droits cumulés de ses profils (chargés depuis le serveur) ; vide pour un apprenant. */
+  permissions: string[];
+  /** Noms affichables de ses profils (« Finance », « Admissions »…). */
+  profileLabels: string[];
 }
 
 export interface SignInResult {
@@ -84,6 +94,8 @@ interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   loading: boolean;
+  /** Au moins un des droits (ex. can("PAYMENTS_MANAGE")) ; faux sans session. */
+  can: (...required: string[]) => boolean;
   /** Second facteur en attente (personnel) : la page de connexion affiche l'étape correspondante. */
   pendingMfa: PendingMfa | null;
   signIn: (email: string, password: string) => Promise<SignInResult>;
@@ -110,11 +122,14 @@ function decodeJwt(token: string): JwtPayload | null {
   }
 }
 
-function payloadToUser(payload: JwtPayload): AuthUser {
+function payloadToUser(payload: JwtPayload, profile: ProfileUser | null): AuthUser {
   return {
     email: payload.sub,
     roles: payload.roles ?? [],
     userType: payload.uty,
+    isStaff: payload.uty === "ADMIN",
+    permissions: payload.uty === "ADMIN" ? [BACKOFFICE_ACCESS, ...(profile?.permissions ?? [])] : [],
+    profileLabels: profile?.profileLabels ?? [],
   };
 }
 
@@ -137,6 +152,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken]   = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingMfa, setPendingMfa] = useState<PendingMfa | null>(null);
+  /** Profil du compte du personnel (droits), relu à chaque nouveau jeton : un changement de droits se voit au plus 15 min plus tard. */
+  const [profile, setProfile] = useState<ProfileUser | null>(null);
+  const [profileSettled, setProfileSettled] = useState(false);
+  const profileLoaded = useRef(false);
 
   // Initialisation : rouvre la session à partir du cookie de rafraîchissement (si ce navigateur en a une)
   useEffect(() => {
@@ -147,8 +166,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     refreshAccessToken().then((fresh) => {
       if (cancelled) return;
-      if (fresh) setToken(fresh);
-      else setSessionHint(false);
+      if (fresh) {
+        profileLoaded.current = false;
+        setProfileSettled(false);   // les droits du personnel restent à lire : les pages attendent
+        setToken(fresh);
+      } else setSessionHint(false);
       setLoading(false);
     });
     return () => { cancelled = true; };
@@ -165,17 +187,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => { offToken(); offUnauthorized(); };
   }, []);
 
-  // Dérive l'objet user depuis le token JWT
-  const user = useMemo<AuthUser | null>(() => {
-    if (!token) return null;
-    const payload = decodeJwt(token);
-    return payload ? payloadToUser(payload) : null;
-  }, [token]);
+  const payload = useMemo(() => (token ? decodeJwt(token) : null), [token]);
+  const isStaffSession = payload?.uty === "ADMIN";
+
+  // Droits du personnel : le jeton ne porte que les profils, les droits viennent du serveur (modifiables par la direction)
+  useEffect(() => {
+    if (!token || !isStaffSession) {
+      setProfile(null);
+      profileLoaded.current = false;
+      setProfileSettled(true);
+      return;
+    }
+    // Première lecture après l'ouverture de session : les pages attendent (pas de redirection avec des droits vides) ;
+    // les relectures suivantes (nouveau jeton toutes les 15 min) se font sans rien démonter.
+    if (!profileLoaded.current) setProfileSettled(false);
+    let cancelled = false;
+    authService.getCurrentUser()
+      .then((me) => { if (!cancelled) { setProfile(me); profileLoaded.current = true; } })
+      .catch(() => { if (!cancelled) setProfile(null); })   // sans droits connus, rien d'autre que « Mon espace » ne s'affiche
+      .finally(() => { if (!cancelled) setProfileSettled(true); });
+    return () => { cancelled = true; };
+  }, [token, isStaffSession]);
+
+  // Dérive l'objet user depuis le token JWT et le profil
+  const user = useMemo<AuthUser | null>(() => (payload ? payloadToUser(payload, profile) : null), [payload, profile]);
+
+  const can = useCallback(
+    (...required: string[]) => hasAnyPermission(user?.permissions, required),
+    [user?.permissions]
+  );
 
   const openSession = useCallback((accessToken: string) => {
     tokenStorage.setAccessToken(accessToken);
     setSessionHint(true);
     setPendingMfa(null);
+    profileLoaded.current = false;
+    setProfileSettled(false);   // les droits du personnel restent à lire : pas de redirection avant
     setToken(accessToken);
   }, []);
 
@@ -262,8 +309,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const value = useMemo<AuthContextType>(
-      () => ({ user, token, loading, pendingMfa, signIn, applySession, verifyMfa, startMfaEnrollment, confirmMfaEnrollment, cancelMfa, signOut }),
-      [user, token, loading, pendingMfa, signIn, applySession, verifyMfa, startMfaEnrollment, confirmMfaEnrollment, cancelMfa, signOut]
+      () => ({ user, token, loading: loading || (isStaffSession && !profileSettled), can, pendingMfa, signIn, applySession, verifyMfa, startMfaEnrollment, confirmMfaEnrollment, cancelMfa, signOut }),
+      [user, token, loading, isStaffSession, profileSettled, can, pendingMfa, signIn, applySession, verifyMfa, startMfaEnrollment, confirmMfaEnrollment, cancelMfa, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

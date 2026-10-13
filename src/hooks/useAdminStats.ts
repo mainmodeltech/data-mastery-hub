@@ -1,15 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "@/hooks/useAuth";
-import { hasAnyRole } from "@/lib/roles";
+import { ACCESS } from "@/lib/permissions";
 import { statsService } from "@/services/api/statsService";
 
-/** Seuls SUPER_ADMIN et ADMIN accèdent aux statistiques (les montants sont sensibles). */
-export const STATS_ROLES = ["SUPER_ADMIN", "ADMIN"] as const;
-
+/** Tableau de bord : financier et/ou d'activité (les montants dépendent du droit financier, voir `financeVisible`). */
 export function useCanSeeStats(): boolean {
-  const { user } = useAuth();
-  return hasAnyRole(user?.roles, STATS_ROLES);
+  const { can } = useAuth();
+  return can(...ACCESS.DASHBOARD);
 }
 
 export const STATS_KEYS = {
@@ -22,7 +20,8 @@ export const STATS_KEYS = {
  * l'onglet est masqué (refetchIntervalInBackground: false) et rafraîchit au retour sur l'onglet.
  */
 export function useAdminActions() {
-  const enabled = useCanSeeStats();
+  const { user } = useAuth();
+  const enabled = !!user?.isStaff;   // chacun ne reçoit que les files qu'il traite
   return useQuery({
     queryKey: STATS_KEYS.actions,
     queryFn: statsService.actions,

@@ -3,6 +3,7 @@
  * l'apprenant, révocation (motif). La délivrance se fait depuis le suivi de session.
  * Réservé SUPER_ADMIN et ADMIN.
  */
+import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -25,7 +26,9 @@ const FILTERS = [
   { key: "REVOKED", label: "Révoqués" },
 ];
 
-export default function AdminCertificats() {
+export default function AdminCertificats() {  const { can } = useAuth();
+  const canManage = can("CERTIFICATES_MANAGE");
+
   const { toast } = useToast();
   const [page, setPage] = useState(0);
   const [status, setStatus] = useState("");
@@ -134,10 +137,14 @@ export default function AdminCertificats() {
                         {c.status !== "REVOKED" && (
                           <>
                             <Button type="button" variant="outline" shape="rounded" size="sm" disabled={busy === `pdf-${c.publicId}`} onClick={() => void downloadPdf(c)}>PDF</Button>
-                            <Button type="button" variant="outline" shape="rounded" size="sm" disabled={busy === `mail-${c.publicId}`} onClick={() => void sendAgain(c)}>
-                              {busy === `mail-${c.publicId}` ? <Loader2 className="animate-spin" /> : <Mail />} Renvoyer
-                            </Button>
-                            <Button type="button" variant="outline" shape="rounded" size="sm" className="border-transparent text-error" onClick={() => setRevoking(c)}>Révoquer</Button>
+                            {canManage && (
+                              <>
+                                <Button type="button" variant="outline" shape="rounded" size="sm" disabled={busy === `mail-${c.publicId}`} onClick={() => void sendAgain(c)}>
+                                  {busy === `mail-${c.publicId}` ? <Loader2 className="animate-spin" /> : <Mail />} Renvoyer
+                                </Button>
+                                <Button type="button" variant="outline" shape="rounded" size="sm" className="border-transparent text-error" onClick={() => setRevoking(c)}>Révoquer</Button>
+                              </>
+                            )}
                           </>
                         )}
                       </div>

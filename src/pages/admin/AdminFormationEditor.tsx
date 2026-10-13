@@ -22,7 +22,6 @@ import { errorMessage } from "@/components/admin/AdminKit";
 import { LessonForm, newClientId } from "@/components/admin/LessonForm";
 import { ProjectBriefCard } from "@/components/admin/ProjectBriefCard";
 import { useAuth } from "@/hooks/useAuth";
-import { hasAnyRole, ROLE_GROUPS } from "@/lib/roles";
 import { useAdminCourseContent, useSaveAdminCourseContent } from "@/hooks/useCourse";
 import { useFormations } from "@/hooks/useFormations";
 import { useToast } from "@/hooks/use-toast";
@@ -85,9 +84,9 @@ function lessonSubtitle(l: Lesson): string {
 
 export default function AdminFormationEditor() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { can } = useAuth();
   // Un partenaire n'édite que le programme de ses formations : pas la fiche catalogue ni les sessions
-  const canManageCatalog = hasAnyRole(user?.roles, ROLE_GROUPS.CONTENT);
+  const canManageCatalog = can("CATALOG_MANAGE");
   const { toast } = useToast();
   const { data: formations = [] } = useFormations();
   const formation = formations.find((f) => f.id === id);

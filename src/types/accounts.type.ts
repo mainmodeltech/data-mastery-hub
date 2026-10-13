@@ -27,23 +27,11 @@ export interface LearnerPayload {
   country?: string;
 }
 
-export type StaffRole = "SUPER_ADMIN" | "ADMIN" | "EDITOR" | "TRAINER" | "PARTNER";
+/** Nom d'un profil sans préfixe (« FINANCE », « RESPONSABLE_PARTENARIATS »). Les profils sont gérés dans « Profils & droits ». */
+export type StaffRole = string;
 
-export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
-  SUPER_ADMIN: "Super administrateur",
-  ADMIN: "Administrateur",
-  EDITOR: "Éditeur de contenu",
-  TRAINER: "Formateur",
-  PARTNER: "Partenaire",
-};
-
-export const STAFF_ROLE_HINTS: Record<StaffRole, string> = {
-  SUPER_ADMIN: "Tout, y compris la gestion des comptes.",
-  ADMIN: "Candidatures, paiements, catalogue et contenu.",
-  EDITOR: "Contenu du site (témoignages, alumni, projets…).",
-  TRAINER: "Suivi de ses sessions et contenu de cours.",
-  PARTNER: "Ses propres formations (partenaire obligatoire).",
-};
+/** Profil qui exige un partenaire rattaché (les droits de ce profil ne portent que sur les formations du partenaire). */
+export const PARTNER_PROFILE = "PARTNER";
 
 export interface AdminUserAccount {
   id: string;

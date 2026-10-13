@@ -61,6 +61,10 @@ export interface AuthUser {
     partnerId?: string | null;
     /** Personnel : la double authentification est activée. */
     mfaEnabled?: boolean;
+    /** Personnel : droits cumulés de ses profils (ex. PAYMENTS_MANAGE). */
+    permissions?: string[];
+    /** Personnel : noms affichables de ses profils (ex. « Finance »). */
+    profileLabels?: string[];
 }
 
 /** GET /auth/options : modes de connexion actifs côté serveur */
