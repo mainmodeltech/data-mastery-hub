@@ -3,6 +3,7 @@
  * Création et modification passent par l'éditeur de fiche (BootcampForm) ; les sessions
  * (dates, places, prix) par « Sessions ». La publication se bascule directement ici.
  */
+import { useAuth } from "@/hooks/useAuth";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpenCheck, CalendarDays, Eye, EyeOff, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
@@ -19,7 +20,9 @@ import type { Formation } from "@/types/formation.type";
 const LEVEL_LABELS: Record<string, string> = { DEBUTANT: "Débutant", INTERMEDIAIRE: "Intermédiaire", AVANCE: "Avancé" };
 const FORMAT_LABELS: Record<string, string> = { PRESENTIEL: "Présentiel", EN_LIGNE: "En ligne", HYBRIDE: "Hybride" };
 
-export default function AdminBootcamps() {
+export default function AdminBootcamps() {  const { can } = useAuth();
+  const canManage = can("CATALOG_MANAGE");
+
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: formations = [], isLoading, isError } = useAdminFormations();
@@ -60,9 +63,11 @@ export default function AdminBootcamps() {
       title="Formations"
       description={`${formations.length} formation${formations.length > 1 ? "s" : ""} au catalogue`}
       actions={
-        <Button asChild size="sm" shape="rounded">
-          <Link to="/admin/bootcamps/new"><Plus />Nouvelle formation</Link>
-        </Button>
+        canManage ? (
+          <Button asChild size="sm" shape="rounded">
+            <Link to="/admin/bootcamps/new"><Plus />Nouvelle formation</Link>
+          </Button>
+        ) : undefined
       }
     >
       <div className="flex flex-col gap-4">
@@ -112,13 +117,17 @@ export default function AdminBootcamps() {
               </span>
             </div>
             <div className="flex min-w-0 flex-wrap gap-2 sm:shrink-0">
-              <Button type="button" variant="outline" shape="rounded" size="sm" disabled={toggle.isPending} onClick={() => toggle.mutate(f.id)}>
-                {f.published ? <><EyeOff />Dépublier</> : <><Eye />Publier</>}
-              </Button>
-              <Button asChild variant="navy" shape="rounded" size="sm"><Link to={`/admin/formations/${f.id}`}><BookOpenCheck />Programme</Link></Button>
+              {canManage && (
+                <Button type="button" variant="outline" shape="rounded" size="sm" disabled={toggle.isPending} onClick={() => toggle.mutate(f.id)}>
+                  {f.published ? <><EyeOff />Dépublier</> : <><Eye />Publier</>}
+                </Button>
+              )}
+              {can("PROGRAM_MANAGE") && <Button asChild variant="navy" shape="rounded" size="sm"><Link to={`/admin/formations/${f.id}`}><BookOpenCheck />Programme</Link></Button>}
               <Button asChild variant="outline" shape="rounded" size="sm"><Link to={`/admin/bootcamp-sessions?bootcamp=${f.id}`}><CalendarDays />Sessions</Link></Button>
-              <Button asChild variant="outline" shape="rounded" size="sm"><Link to={`/admin/bootcamps/${f.id}/edit`}><Pencil />Modifier</Link></Button>
-              <Button type="button" variant="outline" shape="rounded" size="sm" aria-label={`Supprimer ${f.title}`} onClick={() => setDeleting(f)}><Trash2 /></Button>
+              {(canManage || can("PRICING_MANAGE")) && (
+                <Button asChild variant="outline" shape="rounded" size="sm"><Link to={`/admin/bootcamps/${f.id}/edit`}><Pencil />{canManage ? "Modifier" : "Tarifs"}</Link></Button>
+              )}
+              {canManage && <Button type="button" variant="outline" shape="rounded" size="sm" aria-label={`Supprimer ${f.title}`} onClick={() => setDeleting(f)}><Trash2 /></Button>}
             </div>
           </Card>
         ))}

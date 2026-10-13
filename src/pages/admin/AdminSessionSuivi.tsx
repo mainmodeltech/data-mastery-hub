@@ -27,7 +27,6 @@ import { EVALUATION_KEYS, useSaveAttendance, useSessionTracking } from "@/hooks/
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { hasAnyRole, ROLE_GROUPS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { csvRow, downloadCsv } from "@/lib/csv";
 import {
@@ -232,9 +231,9 @@ function LiveRow({ live, total }: { live: SessionLive; total: number }) {
 
 export default function AdminSessionSuivi() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
-  // Le programme de la formation n'est ouvert qu'au personnel et aux partenaires (403 pour un formateur)
-  const canOpenProgram = hasAnyRole(user?.roles, ROLE_GROUPS.PROGRAM);
+  const { can } = useAuth();
+  // Le programme de la formation n'est ouvert qu'à qui peut le modifier (403 pour un formateur)
+  const canOpenProgram = can("PROGRAM_MANAGE");
   const { data: result, isLoading, isError } = useSessionTracking(id);
   const tracking = result?.data;
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -244,7 +243,10 @@ export default function AdminSessionSuivi() {
   const [issueOpen, setIssueOpen] = useState(false);
   const [reviewing, setReviewing] = useState<TrackedLearner | null>(null);
   const qc = useQueryClient();
-  const canForce = hasAnyRole(user?.roles, ROLE_GROUPS.ADMINS);
+  const canForce = can("CERTIFICATES_OVERRIDE");          // délivrer un certificat par dérogation
+  const canAddLearner = can("ENROLLMENTS_MANAGE");
+  const canAssignTrainer = can("SESSIONS_ASSIGN");
+  const canIssueCertificate = can("CERTIFICATES_MANAGE");
 
   const kpis = useMemo(() => {
     if (!tracking) return [];
@@ -310,7 +312,7 @@ export default function AdminSessionSuivi() {
                     <Button type="button" variant="outline" shape="rounded" size="sm" disabled={tracking.learners.length === 0} onClick={() => { setSelected(new Set()); setMessageOpen(true); }}>
                       <MessageCircle />Écrire à la session
                     </Button>
-                    {canForce && (
+                    {canAddLearner && (
                       <Button type="button" variant="navy" shape="rounded" size="sm" onClick={() => setAddOpen(true)}>
                         <Plus />Ajouter un apprenant
                       </Button>
@@ -361,7 +363,7 @@ export default function AdminSessionSuivi() {
                       <span className="text-right font-semibold">{v}</span>
                     </div>
                   ))}
-                  {canForce && <TrainerAssign sessionId={id} currentName={tracking.trainerName} />}
+                  {canAssignTrainer && <TrainerAssign sessionId={id} currentName={tracking.trainerName} />}
                 </Card>
 
                 <Card radius="stat" className="flex flex-col gap-1 border border-[#E7E0D4] p-5 lg:p-6">

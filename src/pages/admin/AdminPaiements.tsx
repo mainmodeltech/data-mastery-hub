@@ -16,6 +16,7 @@ import { Button, Card, Pill, ProgressBar } from "@/components/shared";
 import {
   useAllPayments, useConfirmPayment, useRefundPayment, useRejectPayment, useRemindPayment,
 } from "@/hooks/usePayments";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -147,6 +148,9 @@ function FormationProgress({ group }: { group: FormationGroup }) {
 type Pending = { kind: "reject" | "refund"; payment: AdminPayment } | null;
 
 export default function AdminPaiements() {
+  const { can } = useAuth();
+  const canManage = can("PAYMENTS_MANAGE");
+  const canRefund = can("PAYMENTS_REFUND");
   const { toast } = useToast();
   const { data, isLoading, isError, error } = useAllPayments();
   const confirm = useConfirmPayment();
@@ -288,16 +292,16 @@ export default function AdminPaiements() {
                             </td>
                             <td className="py-3 text-right">
                               <div className="flex flex-wrap justify-end gap-1.5">
-                                {p.status === "DECLARED" && (
+                                {p.status === "DECLARED" && canManage && (
                                   <>
                                     <Button size="sm" shape="rounded" variant="navy" disabled={confirm.isPending} onClick={() => void run(() => confirm.mutateAsync(p.id), "Paiement confirmé")}>Confirmer</Button>
                                     <Button size="sm" shape="rounded" variant="outline" onClick={() => setPending({ kind: "reject", payment: p })}>Refuser</Button>
                                   </>
                                 )}
-                                {p.status === "PENDING" && (
+                                {p.status === "PENDING" && canManage && (
                                   <Button size="sm" shape="rounded" variant="outline" disabled={remind.isPending} onClick={() => void run(() => remind.mutateAsync(p.id), "Relance envoyée")}>Relancer</Button>
                                 )}
-                                {p.status === "CONFIRMED" && (
+                                {p.status === "CONFIRMED" && canRefund && (
                                   <Button size="sm" shape="rounded" variant="outline" onClick={() => setPending({ kind: "refund", payment: p })}>Rembourser</Button>
                                 )}
                                 <Button asChild size="sm" shape="rounded" variant="outline">

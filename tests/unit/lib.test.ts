@@ -10,6 +10,8 @@ import { todoHref } from "../../src/lib/learnerLinks.ts";
 import { emptyLike } from "../../src/lib/json.ts";
 import { csvCell, csvRow } from "../../src/lib/csv.ts";
 import { computeOrientationResult, type OrientationRule } from "../../src/lib/orientation.ts";
+import { ACCESS, BACKOFFICE_ACCESS, backOfficeHomeFor, hasAnyPermission } from "../../src/lib/permissions.ts";
+import { homePathFor, profileTitle } from "../../src/lib/roles.ts";
 
 test("fill remplace les variables connues et laisse les inconnues", () => {
   assert.equal(fill("{count} inscrits le {date}", { count: "150+", date: "24 mars" }), "150+ inscrits le 24 mars");
@@ -75,4 +77,34 @@ test("csvCell neutralise les formules et protège les séparateurs", () => {
   assert.equal(csvCell(-5), "-5"); // un nombre reste un nombre
   assert.equal(csvCell(null), "");
   assert.equal(csvRow(["a", 1, null, "=1+1"]), "a;1;;'=1+1");
+});
+
+
+test("hasAnyPermission : un seul droit suffit, aucun droit connu = refus", () => {
+  assert.equal(hasAnyPermission(["PAYMENTS_VIEW"], ACCESS.PAYMENTS), true);
+  assert.equal(hasAnyPermission(["PAYMENTS_VIEW"], ACCESS.INVOICES), false);
+  assert.equal(hasAnyPermission(["DASHBOARD_ACTIVITY"], ACCESS.DASHBOARD), true);   // tableau d'activité sans le financier
+  assert.equal(hasAnyPermission([], ACCESS.PAYMENTS), false);
+  assert.equal(hasAnyPermission(undefined, ACCESS.PAYMENTS), false);
+});
+
+test("la page d'accueil d'un compte suit ses droits", () => {
+  assert.equal(backOfficeHomeFor(["DASHBOARD_FINANCE", BACKOFFICE_ACCESS]), "/admin");
+  assert.equal(backOfficeHomeFor(["APPLICATIONS_VIEW"]), "/admin/candidatures");   // admissions sans tableau de bord
+  assert.equal(backOfficeHomeFor(["CATALOG_VIEW"]), "/admin/bootcamps");
+  assert.equal(backOfficeHomeFor(["SITE_CONTENT_VIEW"]), "/admin/contenus");
+  assert.equal(backOfficeHomeFor(["SESSIONS_VIEW"]), "/admin/espace");              // formateur : « Mon espace »
+  assert.equal(backOfficeHomeFor([]), "/admin/espace");
+});
+
+test("homePathFor : personnel, apprenant, anonyme", () => {
+  assert.equal(homePathFor({ isStaff: true, userType: "ADMIN", permissions: ["DASHBOARD_FINANCE"] }), "/admin");
+  assert.equal(homePathFor({ isStaff: false, userType: "LEARNER", permissions: [] }), "/espace");
+  assert.equal(homePathFor(null), "/");
+});
+
+test("profileTitle cumule les noms des profils", () => {
+  assert.equal(profileTitle({ profileLabels: ["Admissions", "Finance"], userType: "ADMIN" }), "Admissions · Finance");
+  assert.equal(profileTitle({ profileLabels: [], userType: "LEARNER" }), "Apprenant");
+  assert.equal(profileTitle(null), "Utilisateur");
 });

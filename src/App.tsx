@@ -12,14 +12,13 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QUERY_CONFIG } from '@/config/constants';
 import ProtectedRoute from '@/components/admin/ProtectedRoute';
-import { LEARNER_ROLES, ROLE_GROUPS, STAFF_ROLES } from '@/lib/roles';
+import { ACCESS } from '@/lib/permissions';
 import AdminPromoCodes from "@/pages/admin/AdminPromoCodes.tsx";
 import MasterclassPage from "@/pages/MasterclassPage";
 import AdminForgotPassword from "@/pages/admin/AdminForgotPassword.tsx";
 import AdminResetPassword from "@/pages/admin/AdminResetPassword.tsx";
 
 // L'espace apprenant est aussi ouvert au personnel (aperçu depuis l'éditeur de formation)
-const LEARNER_AREA_ROLES = [...LEARNER_ROLES, ...STAFF_ROLES];
 
 // ============================================================
 // Lazy loading des pages
@@ -78,6 +77,7 @@ const AdminCommunaute = lazy(() => import('./pages/admin/AdminCommunaute'));
 const EspacePaiements = lazy(() => import('./pages/EspacePaiements'));
 const AdminEmails = lazy(() => import('./pages/admin/AdminEmails'));
 const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
+const AdminProfils = lazy(() => import('./pages/admin/AdminProfils'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
 const AdminPartenaires = lazy(() => import('./pages/admin/AdminPartenaires'));
 const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
@@ -163,21 +163,21 @@ const App = () => (
                   <Route path="/connexion" element={<Connexion />} />
                   <Route path="/connexion/lien" element={<ConnexionLien />} />
                   {/* Le personnel y accède aussi : bouton « Aperçu apprenant » de l'éditeur de formation */}
-                  <Route path="/espace" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><Espace /></ProtectedRoute>} />
-                  <Route path="/espace/formations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><MesFormations /></ProtectedRoute>} />
-                  <Route path="/espace/formations/:id" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
-                  <Route path="/espace/formations/:id/lecons/:lessonId" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><CoursePlayer /></ProtectedRoute>} />
+                  <Route path="/espace" element={<ProtectedRoute learnerArea><Espace /></ProtectedRoute>} />
+                  <Route path="/espace/formations" element={<ProtectedRoute learnerArea><MesFormations /></ProtectedRoute>} />
+                  <Route path="/espace/formations/:id" element={<ProtectedRoute learnerArea><CoursePlayer /></ProtectedRoute>} />
+                  <Route path="/espace/formations/:id/lecons/:lessonId" element={<ProtectedRoute learnerArea><CoursePlayer /></ProtectedRoute>} />
                   {/* Lot 6 — évaluations (quiz, projet final, conditions du certificat) */}
-                  <Route path="/espace/calendrier" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCalendrier /></ProtectedRoute>} />
-                  <Route path="/espace/ressources" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceRessources /></ProtectedRoute>} />
-                  <Route path="/espace/hors-ligne" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceHorsLigne /></ProtectedRoute>} />
-                  <Route path="/espace/communaute" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCommunaute /></ProtectedRoute>} />
-                  <Route path="/espace/paiements" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspacePaiements /></ProtectedRoute>} />
-                  <Route path="/espace/profil" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceProfil /></ProtectedRoute>} />
-                  <Route path="/espace/certificats" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceCertificats /></ProtectedRoute>} />
-                  <Route path="/espace/evaluations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><EspaceEvaluations /></ProtectedRoute>} />
-                  <Route path="/espace/formations/:id/evaluations" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><Evaluations /></ProtectedRoute>} />
-                  <Route path="/espace/formations/:id/evaluations/:quizId" element={<ProtectedRoute roles={LEARNER_AREA_ROLES}><QuizRunner /></ProtectedRoute>} />
+                  <Route path="/espace/calendrier" element={<ProtectedRoute learnerArea><EspaceCalendrier /></ProtectedRoute>} />
+                  <Route path="/espace/ressources" element={<ProtectedRoute learnerArea><EspaceRessources /></ProtectedRoute>} />
+                  <Route path="/espace/hors-ligne" element={<ProtectedRoute learnerArea><EspaceHorsLigne /></ProtectedRoute>} />
+                  <Route path="/espace/communaute" element={<ProtectedRoute learnerArea><EspaceCommunaute /></ProtectedRoute>} />
+                  <Route path="/espace/paiements" element={<ProtectedRoute learnerArea><EspacePaiements /></ProtectedRoute>} />
+                  <Route path="/espace/profil" element={<ProtectedRoute learnerArea><EspaceProfil /></ProtectedRoute>} />
+                  <Route path="/espace/certificats" element={<ProtectedRoute learnerArea><EspaceCertificats /></ProtectedRoute>} />
+                  <Route path="/espace/evaluations" element={<ProtectedRoute learnerArea><EspaceEvaluations /></ProtectedRoute>} />
+                  <Route path="/espace/formations/:id/evaluations" element={<ProtectedRoute learnerArea><Evaluations /></ProtectedRoute>} />
+                  <Route path="/espace/formations/:id/evaluations/:quizId" element={<ProtectedRoute learnerArea><QuizRunner /></ProtectedRoute>} />
 
                   {/* ── Backoffice admin ─────────────────────────── */}
                   <Route path="/admin/login"          element={<Navigate to="/connexion" replace />} />
@@ -187,43 +187,44 @@ const App = () => (
                   <Route path="/reinitialiser-mot-de-passe" element={<AdminResetPassword />} />
                   <Route path="/admin/reset-password"  element={<AdminResetPassword />} />
 
-                  <Route path="/admin/espace" element={<ProtectedRoute roles={ROLE_GROUPS.BACKOFFICE}><AdminMonEspace /></ProtectedRoute>} />
-                  <Route path="/admin" element={<ProtectedRoute roles={ROLE_GROUPS.BACKOFFICE}><AdminDashboard /></ProtectedRoute>} />
+                  <Route path="/admin/espace" element={<ProtectedRoute permissions={ACCESS.ESPACE}><AdminMonEspace /></ProtectedRoute>} />
+                  <Route path="/admin" element={<ProtectedRoute permissions={ACCESS.DASHBOARD}><AdminDashboard /></ProtectedRoute>} />
 
                   {/* Bootcamps */}
-                  <Route path="/admin/bootcamps" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminBootcamps /></ProtectedRoute>} />
-                  <Route path="/admin/bootcamps/new" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminBootcampForm /></ProtectedRoute>} />
-                  <Route path="/admin/bootcamps/:id/edit" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminBootcampForm /></ProtectedRoute>} />
+                  <Route path="/admin/bootcamps" element={<ProtectedRoute permissions={ACCESS.CATALOG}><AdminBootcamps /></ProtectedRoute>} />
+                  <Route path="/admin/bootcamps/new" element={<ProtectedRoute permissions={ACCESS.CATALOG}><AdminBootcampForm /></ProtectedRoute>} />
+                  <Route path="/admin/bootcamps/:id/edit" element={<ProtectedRoute permissions={ACCESS.CATALOG}><AdminBootcampForm /></ProtectedRoute>} />
 
                   {/* Sessions bootcamp */}
-                  <Route path="/admin/bootcamp-sessions" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminAllSessions /></ProtectedRoute>} />
+                  <Route path="/admin/bootcamp-sessions" element={<ProtectedRoute permissions={ACCESS.CATALOG}><AdminAllSessions /></ProtectedRoute>} />
 
 
 
 
                   {/* Autres sections */}
-                  <Route path="/admin/lessons/:lessonId/quiz" element={<ProtectedRoute roles={ROLE_GROUPS.PROGRAM}><AdminQuizBank /></ProtectedRoute>} />
-                  <Route path="/admin/formations/:id" element={<ProtectedRoute roles={ROLE_GROUPS.PROGRAM}><AdminFormationEditor /></ProtectedRoute>} />
-                  <Route path="/admin/apprenants" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminApprenants /></ProtectedRoute>} />
-                  <Route path="/admin/newsletter" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminNewsletter /></ProtectedRoute>} />
-                  <Route path="/admin/contenus" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminContenus /></ProtectedRoute>} />
-                  <Route path="/admin/communaute" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminCommunaute /></ProtectedRoute>} />
-                  <Route path="/admin/factures" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminFactures /></ProtectedRoute>} />
-                  <Route path="/admin/certificats" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminCertificats /></ProtectedRoute>} />
-                  <Route path="/admin/emails" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminEmails /></ProtectedRoute>} />
-                  <Route path="/admin/comptes" element={<ProtectedRoute roles={ROLE_GROUPS.SUPER}><AdminComptes /></ProtectedRoute>} />
-                  <Route path="/admin/domaines" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminDomaines /></ProtectedRoute>} />
-                  <Route path="/admin/partenaires" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminPartenaires /></ProtectedRoute>} />
-                  <Route path="/admin/sessions/:id" element={<ProtectedRoute roles={ROLE_GROUPS.PEDAGOGY}><AdminSessionSuivi /></ProtectedRoute>} />
-                  <Route path="/admin/paiements" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminPaiements /></ProtectedRoute>} />
-                  <Route path="/admin/candidatures" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminCandidatures /></ProtectedRoute>} />
-                  <Route path="/admin/inscriptions" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminInscriptions /></ProtectedRoute>} />
-                  <Route path="/admin/promo-codes" element={<ProtectedRoute roles={ROLE_GROUPS.ADMINS}><AdminPromoCodes /></ProtectedRoute>} />
-                  <Route path="/admin/temoignages" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminTemoignages /></ProtectedRoute>} />
-                  <Route path="/admin/masterclass" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminMasterclassPage /></ProtectedRoute>} />
-                  <Route path="/admin/alumni" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminAlumni /></ProtectedRoute>} />
-                  <Route path="/admin/projets" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminProjects /></ProtectedRoute>} />
-                  <Route path="/admin/messages" element={<ProtectedRoute roles={ROLE_GROUPS.CONTENT}><AdminMessages /></ProtectedRoute>} />
+                  <Route path="/admin/lessons/:lessonId/quiz" element={<ProtectedRoute permissions={ACCESS.PROGRAM}><AdminQuizBank /></ProtectedRoute>} />
+                  <Route path="/admin/formations/:id" element={<ProtectedRoute permissions={ACCESS.PROGRAM}><AdminFormationEditor /></ProtectedRoute>} />
+                  <Route path="/admin/apprenants" element={<ProtectedRoute permissions={ACCESS.LEARNERS}><AdminApprenants /></ProtectedRoute>} />
+                  <Route path="/admin/newsletter" element={<ProtectedRoute permissions={ACCESS.NEWSLETTER}><AdminNewsletter /></ProtectedRoute>} />
+                  <Route path="/admin/contenus" element={<ProtectedRoute permissions={ACCESS.SITE_CONTENT}><AdminContenus /></ProtectedRoute>} />
+                  <Route path="/admin/communaute" element={<ProtectedRoute permissions={ACCESS.COMMUNITY}><AdminCommunaute /></ProtectedRoute>} />
+                  <Route path="/admin/factures" element={<ProtectedRoute permissions={ACCESS.INVOICES}><AdminFactures /></ProtectedRoute>} />
+                  <Route path="/admin/certificats" element={<ProtectedRoute permissions={ACCESS.CERTIFICATES}><AdminCertificats /></ProtectedRoute>} />
+                  <Route path="/admin/emails" element={<ProtectedRoute permissions={ACCESS.EMAILS}><AdminEmails /></ProtectedRoute>} />
+                  <Route path="/admin/comptes" element={<ProtectedRoute permissions={ACCESS.ACCOUNTS}><AdminComptes /></ProtectedRoute>} />
+                  <Route path="/admin/profils" element={<ProtectedRoute permissions={ACCESS.PROFILES}><AdminProfils /></ProtectedRoute>} />
+                  <Route path="/admin/domaines" element={<ProtectedRoute permissions={ACCESS.CATALOG}><AdminDomaines /></ProtectedRoute>} />
+                  <Route path="/admin/partenaires" element={<ProtectedRoute permissions={ACCESS.PARTNERS}><AdminPartenaires /></ProtectedRoute>} />
+                  <Route path="/admin/sessions/:id" element={<ProtectedRoute permissions={ACCESS.SESSION_FOLLOW}><AdminSessionSuivi /></ProtectedRoute>} />
+                  <Route path="/admin/paiements" element={<ProtectedRoute permissions={ACCESS.PAYMENTS}><AdminPaiements /></ProtectedRoute>} />
+                  <Route path="/admin/candidatures" element={<ProtectedRoute permissions={ACCESS.APPLICATIONS}><AdminCandidatures /></ProtectedRoute>} />
+                  <Route path="/admin/inscriptions" element={<ProtectedRoute permissions={ACCESS.APPLICATIONS}><AdminInscriptions /></ProtectedRoute>} />
+                  <Route path="/admin/promo-codes" element={<ProtectedRoute permissions={ACCESS.PROMO}><AdminPromoCodes /></ProtectedRoute>} />
+                  <Route path="/admin/temoignages" element={<ProtectedRoute permissions={ACCESS.SITE_CONTENT}><AdminTemoignages /></ProtectedRoute>} />
+                  <Route path="/admin/masterclass" element={<ProtectedRoute permissions={ACCESS.MASTERCLASS}><AdminMasterclassPage /></ProtectedRoute>} />
+                  <Route path="/admin/alumni" element={<ProtectedRoute permissions={ACCESS.SITE_CONTENT}><AdminAlumni /></ProtectedRoute>} />
+                  <Route path="/admin/projets" element={<ProtectedRoute permissions={ACCESS.SITE_CONTENT}><AdminProjects /></ProtectedRoute>} />
+                  <Route path="/admin/messages" element={<ProtectedRoute permissions={ACCESS.MESSAGES}><AdminMessages /></ProtectedRoute>} />
 
 
                   {import.meta.env.DEV && (

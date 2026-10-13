@@ -1,66 +1,24 @@
+import { backOfficeHomeFor } from "./permissions.ts";
+
 /**
- * Rôles applicatifs (docs/design/README.md §3) et redirection après connexion.
- * Le JWT expose `roles` (ex. "ADMIN" ou "ROLE_ADMIN") : on normalise le préfixe.
+ * Profils et redirection après connexion.
  *
- * Les groupes ci-dessous reprennent la matrice de sécurité du backend (SecurityConfig) :
- * ils servent à la fois aux routes (ProtectedRoute) et au menu du back-office, pour qu'un compte
- * ne voie que ce que l'API lui autorise (sinon : pages « vides » sur 403).
+ * Le back-office ne raisonne plus en « rôles » mais en droits (lib/permissions.ts) : un compte cumule les droits de ses
+ * profils, et la direction peut créer des profils sur mesure. Ici ne restent que le nom des profils à afficher et la
+ * page d'accueil de chaque compte.
  */
-export const STAFF_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR"] as const;
-export const LEARNER_ROLES = ["LEARNER"] as const;
 
-export const ROLE_GROUPS = {
-  /** Super administrateur uniquement (comptes back-office) */
-  SUPER: ["SUPER_ADMIN"],
-  /** Administration : candidatures, paiements, apprenants, statistiques… */
-  ADMINS: ["SUPER_ADMIN", "ADMIN"],
-  /** Contenus du site et catalogue */
-  CONTENT: ["SUPER_ADMIN", "ADMIN", "EDITOR"],
-  /** Éditeur de programme : le personnel et les partenaires (pour leurs formations) */
-  PROGRAM: ["SUPER_ADMIN", "ADMIN", "EDITOR", "PARTNER"],
-  /** Suivi de session : équipe pédagogique et formateurs (pour leurs sessions) */
-  PEDAGOGY: ["SUPER_ADMIN", "ADMIN", "TRAINER"],
-  /** Tout compte du back-office */
-  BACKOFFICE: ["SUPER_ADMIN", "ADMIN", "EDITOR", "TRAINER", "PARTNER"],
-} as const;
-
-export const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super administrateur",
-  ADMIN: "Administrateur",
-  EDITOR: "Éditeur",
-  TRAINER: "Formateur",
-  PARTNER: "Partenaire",
-  LEARNER: "Apprenant",
-};
-
-export function normalizeRoles(roles: string[] | undefined): string[] {
-  return (roles ?? []).map((r) => r.replace(/^ROLE_/, "").toUpperCase());
+/** Nom affichable du ou des profils d'un compte (« Finance · Admissions »). */
+export function profileTitle(user: { profileLabels: readonly string[]; userType?: string } | null | undefined): string {
+  if (!user) return "Utilisateur";
+  if (user.profileLabels.length > 0) return user.profileLabels.join(" · ");
+  return user.userType === "LEARNER" ? "Apprenant" : "Utilisateur";
 }
 
-export function hasAnyRole(userRoles: string[] | undefined, allowed: readonly string[]): boolean {
-  const normalized = normalizeRoles(userRoles);
-  // Jetons antérieurs à l'introduction des rôles : seuls des comptes admin existaient.
-  if (normalized.length === 0) return allowed.some((r) => (STAFF_ROLES as readonly string[]).includes(r));
-  return normalized.some((r) => allowed.includes(r));
-}
-
-/** Libellé du rôle principal (le plus élevé) pour l'affichage. */
-export function primaryRoleLabel(roles: string[] | undefined): string {
-  const normalized = normalizeRoles(roles);
-  const order = ["SUPER_ADMIN", "ADMIN", "EDITOR", "TRAINER", "PARTNER", "LEARNER"];
-  const main = order.find((r) => normalized.includes(r));
-  return main ? ROLE_LABELS[main] : "Utilisateur";
-}
-
-/** Première page utile du back-office selon les rôles (statistiques réservées à l'administration). */
-export function backOfficeHome(roles: string[] | undefined): string {
-  if (hasAnyRole(roles, ROLE_GROUPS.ADMINS)) return "/admin";
-  if (hasAnyRole(roles, ["EDITOR"])) return "/admin/bootcamps";
-  return "/admin/espace";
-}
-
-export function homePathForRoles(roles: string[] | undefined): string {
-  if (hasAnyRole(roles, ROLE_GROUPS.BACKOFFICE)) return backOfficeHome(roles);
-  if (hasAnyRole(roles, LEARNER_ROLES)) return "/espace";
+/** Où envoyer un compte : apprenant → son espace ; personnel → la première page que ses droits ouvrent ; sinon l'accueil. */
+export function homePathFor(user: { isStaff: boolean; userType?: string; permissions: readonly string[] } | null | undefined): string {
+  if (!user) return "/";
+  if (user.isStaff) return backOfficeHomeFor(user.permissions);
+  if (user.userType === "LEARNER") return "/espace";
   return "/";
 }

@@ -4,6 +4,7 @@
  * inviter un apprenant à la main (e-mail d'invitation valable 72 h), le désactiver (les jetons
  * déjà émis sont refusés) ou renvoyer l'invitation tant que le mot de passe n'est pas défini.
  */
+import { useAuth } from "@/hooks/useAuth";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -77,7 +78,9 @@ function InviteDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-function LearnersTab() {
+function LearnersTab() {  const { can } = useAuth();
+  const canManage = can("LEARNERS_MANAGE");
+
   const { toast } = useToast();
   const { data: learners = [], isLoading, isError } = useAdminLearners();
   const setActive = useSetLearnerActive();
@@ -116,7 +119,7 @@ function LearnersTab() {
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-secondary" />
           <input aria-label="Rechercher un apprenant" className={`${inputClass} pl-10`} placeholder="Nom ou e-mail…" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <Button type="button" shape="rounded" size="sm" onClick={() => setInviting(true)}><Plus />Inviter un apprenant</Button>
+        {canManage && <Button type="button" shape="rounded" size="sm" onClick={() => setInviting(true)}><Plus />Inviter un apprenant</Button>}
       </div>
 
       {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
@@ -140,14 +143,16 @@ function LearnersTab() {
             <span className="text-xs text-ink-secondary">Inscrit le {day(l.createdAt)} · dernière connexion : {day(l.lastLoginAt)}</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {!l.passwordSet && (
+            {canManage && !l.passwordSet && (
               <Button type="button" variant="outline" shape="rounded" size="sm" disabled={resend.isPending} onClick={() => void reinvite(l)}>
                 <MailPlus />Renvoyer l'invitation
               </Button>
             )}
-            <Button type="button" variant="outline" shape="rounded" size="sm" disabled={setActive.isPending} onClick={() => void toggle(l)}>
-              {l.active ? "Désactiver" : "Réactiver"}
-            </Button>
+            {canManage && (
+              <Button type="button" variant="outline" shape="rounded" size="sm" disabled={setActive.isPending} onClick={() => void toggle(l)}>
+                {l.active ? "Désactiver" : "Réactiver"}
+              </Button>
+            )}
           </div>
         </Card>
       ))}

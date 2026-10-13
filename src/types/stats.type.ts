@@ -1,5 +1,5 @@
 /**
- * stats.type.ts — tableau de bord d'administration (SUPER_ADMIN et ADMIN uniquement).
+ * stats.type.ts — tableau de bord d'administration (droits « Tableau de bord financier » et/ou « d'activité »).
  * Contrat : api-contract.md §3.D nonies, enveloppe ApiResponse<T>.
  *   GET /admin/stats/actions                         -> AdminActions (pastilles du menu, léger)
  *   GET /admin/stats/overview?from=&to= (YYYY-MM-DD) -> StatsOverview ; défaut 30 jours,
@@ -7,15 +7,16 @@
  * Montants en XOF, entiers non arrondis par le serveur ; taux en % ou null.
  */
 
+/** Un compteur absent = la personne ne traite pas cette file (le serveur ne le renvoie pas). */
 export interface AdminActions {
-  newApplications: number;
-  paymentsToConfirm: number;
-  overdueInstallments: number;
-  unreadMessages: number;
-  openQuestions: number;
-  projectsToReview: number;
-  upcomingLives: number;
-  failedEmails: number;
+  newApplications?: number;
+  paymentsToConfirm?: number;
+  overdueInstallments?: number;
+  unreadMessages?: number;
+  openQuestions?: number;
+  projectsToReview?: number;
+  upcomingLives?: number;
+  failedEmails?: number;
 }
 
 export interface StatsFunnel {
@@ -43,7 +44,8 @@ export interface MonthlyPoint {
   /** yyyy-MM */
   month: string;
   registrations: number;
-  collected: number;
+  /** Absent sans le droit « Tableau de bord financier ». */
+  collected?: number;
 }
 
 export interface SessionFill {
@@ -64,16 +66,19 @@ export interface FormationStat {
   title: string;
   registrations: number;
   paid: number;
-  collected: number;
+  /** Absent sans le droit « Tableau de bord financier ». */
+  collected?: number;
 }
 
 export interface StatsOverview {
+  /** Faux : tableau d'activité sans montants (revenue absent). */
+  financeVisible: boolean;
   from: string;
   to: string;
   currency: string;
   registrations: { total: number; byStatus: Record<string, number> };
   funnel: StatsFunnel;
-  revenue: StatsRevenue;
+  revenue?: StatsRevenue;
   monthly: MonthlyPoint[];
   sessions: SessionFill[];
   topFormations: FormationStat[];

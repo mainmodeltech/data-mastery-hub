@@ -16,23 +16,23 @@ import {
 } from "@/components/ui/dialog";
 import { useAdminUsers, useCreateUser, useResetMfa, useUpdateUser } from "@/hooks/useAccountsAdmin";
 import { useAdminPartners } from "@/hooks/useCatalogAdmin";
+import { useProfiles } from "@/hooks/useProfiles";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { hasAnyRole } from "@/lib/roles";
 import { ApiError } from "@/services/httpClient";
-import { plainRole, STAFF_ROLE_HINTS, STAFF_ROLE_LABELS, type AdminUserAccount, type StaffRole } from "@/types/accounts.type";
+import { PARTNER_PROFILE, plainRole, type AdminUserAccount, type StaffRole } from "@/types/accounts.type";
+import type { StaffProfile } from "@/types/profiles.type";
 
-const ROLES = Object.keys(STAFF_ROLE_LABELS) as StaffRole[];
 const day = (iso: string | null) => (iso ? format(new Date(iso), "d MMM yyyy", { locale: fr }) : "jamais");
 
-function UserDialog({ user, onClose }: { user: AdminUserAccount | null; onClose: () => void }) {
+function UserDialog({ user, profiles, onClose }: { user: AdminUserAccount | null; profiles: StaffProfile[]; onClose: () => void }) {
   const { toast } = useToast();
   const create = useCreateUser();
   const update = useUpdateUser();
   const { data: partners = [] } = useAdminPartners();
   const [email, setEmail] = useState(user?.email ?? "");
   const [fullName, setFullName] = useState(user?.fullName ?? "");
-  const [roles, setRoles] = useState<StaffRole[]>((user?.roles ?? []).map(plainRole).filter((r): r is StaffRole => ROLES.includes(r as StaffRole)));
+  const [roles, setRoles] = useState<StaffRole[]>((user?.roles ?? []).map(plainRole));
   const [partnerId, setPartnerId] = useState(user?.partnerId ?? "");
   const [active, setActive] = useState(user?.active ?? true);
   const [error, setError] = useState("");
@@ -43,9 +43,9 @@ function UserDialog({ user, onClose }: { user: AdminUserAccount | null; onClose:
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (roles.length === 0) return setError("Choisissez au moins un rôle.");
-    if (roles.includes("PARTNER") && !partnerId) return setError("Le rôle Partenaire exige un partenaire rattaché.");
-    const pid = roles.includes("PARTNER") ? partnerId : null;
+    if (roles.length === 0) return setError("Choisissez au moins un profil.");
+    if (roles.includes(PARTNER_PROFILE) && !partnerId) return setError("Le profil Partenaire exige un partenaire rattaché.");
+    const pid = roles.includes(PARTNER_PROFILE) ? partnerId : null;
     try {
       if (user) {
         await update.mutateAsync({ id: user.id, payload: { fullName: fullName.trim(), roles, partnerId: pid, active } });
@@ -74,18 +74,21 @@ function UserDialog({ user, onClose }: { user: AdminUserAccount | null; onClose:
           {!user && <Field label="E-mail *" htmlFor="us-mail"><input id="us-mail" type="email" required className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} /></Field>}
           <Field label="Nom complet *" htmlFor="us-name"><input id="us-name" required className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} /></Field>
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-sm font-semibold text-ink">Rôles *</legend>
-            {ROLES.map((r) => (
-              <label key={r} className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E7E0D4] bg-white px-3.5 py-2.5">
-                <input type="checkbox" checked={roles.includes(r)} onChange={() => toggleRole(r)} className="mt-1 h-4 w-4 accent-[#1A3A5B]" />
-                <span className="flex flex-col">
-                  <span className="text-sm font-semibold text-ink">{STAFF_ROLE_LABELS[r]}</span>
-                  <span className="text-xs text-ink-secondary">{STAFF_ROLE_HINTS[r]}</span>
-                </span>
-              </label>
-            ))}
+            <legend className="mb-1 text-sm font-semibold text-ink">Profils * <span className="font-normal text-ink-secondary">(on peut en cumuler plusieurs)</span></legend>
+            {profiles.map((p) => {
+              const r = plainRole(p.name);
+              return (
+                <label key={p.id} className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E7E0D4] bg-white px-3.5 py-2.5">
+                  <input type="checkbox" checked={roles.includes(r)} onChange={() => toggleRole(r)} className="mt-1 h-4 w-4 accent-[#1A3A5B]" />
+                  <span className="flex flex-col">
+                    <span className="text-sm font-semibold text-ink">{p.label}</span>
+                    <span className="text-xs text-ink-secondary">{p.description ?? ""}</span>
+                  </span>
+                </label>
+              );
+            })}
           </fieldset>
-          {roles.includes("PARTNER") && (
+          {roles.includes(PARTNER_PROFILE) && (
             <Field label="Partenaire rattaché *" htmlFor="us-partner">
               <select id="us-partner" className={inputClass} value={partnerId} onChange={(e) => setPartnerId(e.target.value)}>
                 <option value="">— Choisir —</option>
@@ -105,9 +108,11 @@ function UserDialog({ user, onClose }: { user: AdminUserAccount | null; onClose:
 }
 
 export default function AdminComptes() {
-  const { user: me } = useAuth();
-  const isSuper = hasAnyRole(me?.roles, ["SUPER_ADMIN"]);
+  const { user: me, can } = useAuth();
+  const isSuper = can("ACCOUNTS_MANAGE");
   const { data: users = [], isLoading, error } = useAdminUsers();
+  const { data: profiles = [] } = useProfiles();
+  const labelOf = (role: string) => profiles.find((p) => p.name === role || plainRole(p.name) === plainRole(role))?.label ?? plainRole(role);
   const [editing, setEditing] = useState<AdminUserAccount | null>(null);
   const [creating, setCreating] = useState(false);
   const resetMfa = useResetMfa();
@@ -117,11 +122,11 @@ export default function AdminComptes() {
   return (
     <AdminLayout
       title="Comptes"
-      description="Équipe, formateurs et partenaires du back-office"
+      description="Équipe, formateurs et partenaires du back-office : chaque personne reçoit un ou plusieurs profils"
       actions={isSuper ? <Button type="button" size="sm" shape="rounded" onClick={() => setCreating(true)}><Plus />Nouveau compte</Button> : undefined}
     >
       <div className="flex flex-col gap-4">
-        {!isSuper && <ErrorNotice>Seul un super administrateur peut gérer les comptes.</ErrorNotice>}
+        {!isSuper && <ErrorNotice>Vous n'avez pas le droit de gérer les comptes.</ErrorNotice>}
         {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
         {error && !forbidden && <ErrorNotice>Impossible de charger les comptes.</ErrorNotice>}
         {!isLoading && !error && users.length === 0 && <EmptyState title="Aucun compte" />}
@@ -141,7 +146,7 @@ export default function AdminComptes() {
               </div>
               <span className="truncate text-sm text-ink-secondary">{u.email}</span>
               <div className="flex flex-wrap gap-1.5">
-                {u.roles.map((r) => <Pill key={r} variant="info">{STAFF_ROLE_LABELS[plainRole(r) as StaffRole] ?? plainRole(r)}</Pill>)}
+                {u.roles.map((r) => <Pill key={r} variant="info">{labelOf(r)}</Pill>)}
               </div>
               <span className="text-xs text-ink-secondary">Dernière connexion : {day(u.lastLoginAt)}</span>
             </div>
@@ -171,8 +176,8 @@ export default function AdminComptes() {
           </Card>
         ))}
       </div>
-      {creating && <UserDialog user={null} onClose={() => setCreating(false)} />}
-      {editing && <UserDialog key={editing.id} user={editing} onClose={() => setEditing(null)} />}
+      {creating && <UserDialog user={null} profiles={profiles} onClose={() => setCreating(false)} />}
+      {editing && <UserDialog key={editing.id} user={editing} profiles={profiles} onClose={() => setEditing(null)} />}
     </AdminLayout>
   );
 }

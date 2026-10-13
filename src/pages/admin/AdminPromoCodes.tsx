@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -138,6 +139,8 @@ function validateForm(form: FormState): { isValid: boolean; errors: Record<strin
 }
 
 export default function AdminPromoCodes() {
+  const { can } = useAuth();
+  const canManage = can("PROMO_MANAGE");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -355,10 +358,12 @@ export default function AdminPromoCodes() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-2xl font-bold">Gestion des codes promo</CardTitle>
-              <Button onClick={openCreate}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nouveau code
-              </Button>
+              {canManage && (
+                <Button onClick={openCreate}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouveau code
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
@@ -549,6 +554,7 @@ export default function AdminPromoCodes() {
 
                               {/* Actions */}
                               <TableCell className="text-right">
+                                {canManage && (
                                 <div className="flex items-center justify-end gap-1">
                                   <Button
                                       variant="ghost"
@@ -600,6 +606,7 @@ export default function AdminPromoCodes() {
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                   </Button>
                                 </div>
+                                )}
                               </TableCell>
                             </TableRow>
                         );

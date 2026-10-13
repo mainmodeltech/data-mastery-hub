@@ -7,6 +7,7 @@
  * profils, outils, programme, résultats et certification. Les sessions (dates, places,
  * prix) se gèrent à part, depuis « Sessions ».
  */
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, BookOpenCheck, CalendarDays, ExternalLink, Loader2, Plus, Save, X } from "lucide-react";
@@ -192,6 +193,9 @@ function RowShell({ children, onRemove, label }: { children: React.ReactNode; on
 }
 
 export default function BootcampForm() {
+  const { can } = useAuth();
+  const canCatalog = can("CATALOG_MANAGE");
+  const canPrice = can("PRICING_MANAGE");   // les prix sont un droit à part : la pédagogie édite la fiche, la finance les tarifs
   const { id } = useParams<{ id?: string }>();
   const isEdit = !!id;
   const navigate = useNavigate();
@@ -281,6 +285,8 @@ export default function BootcampForm() {
       }
     >
       <form onSubmit={submit} className="mx-auto flex max-w-4xl flex-col gap-5">
+        {!canCatalog && <p role="status" className="rounded-xl bg-info-bg px-4 py-3 text-sm text-navy">Avec votre profil, seuls les tarifs de cette formation sont enregistrés ; les autres champs sont en lecture seule côté serveur.</p>}
+        {canCatalog && !canPrice && <p role="status" className="rounded-xl bg-info-bg px-4 py-3 text-sm text-navy">Les tarifs sont gérés par la finance : les champs prix sont en lecture seule pour votre profil.</p>}
         <Link to="/admin/bootcamps" className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-navy">
           <ArrowLeft className="h-4 w-4" />Toutes les formations
         </Link>
@@ -381,8 +387,8 @@ export default function BootcampForm() {
         <Section title="Durée, tarif et public" description="Le montant en FCFA sert aux paiements et aux échéances ; le texte est ce que voit le visiteur.">
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Durée" htmlFor="f-dur"><input id="f-dur" className={inputClass} value={form.duration} onChange={(e) => set("duration", e.target.value)} placeholder="8 semaines" /></Field>
-            <Field label="Prix affiché" htmlFor="f-price"><input id="f-price" className={inputClass} value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="450 000 FCFA" /></Field>
-            <Field label="Montant (FCFA)" htmlFor="f-amount"><input id="f-amount" type="number" min={0} step={1000} className={inputClass} value={form.priceAmount} onChange={(e) => set("priceAmount", e.target.value)} placeholder="450000" /></Field>
+            <Field label="Prix affiché" htmlFor="f-price"><input id="f-price" className={inputClass} disabled={!canPrice} value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="450 000 FCFA" /></Field>
+            <Field label="Montant (FCFA)" htmlFor="f-amount"><input id="f-amount" type="number" min={0} step={1000} className={inputClass} disabled={!canPrice} value={form.priceAmount} onChange={(e) => set("priceAmount", e.target.value)} placeholder="450000" /></Field>
           </div>
           <Field label="Public visé" htmlFor="f-aud"><input id="f-aud" className={inputClass} value={form.audience} onChange={(e) => set("audience", e.target.value)} /></Field>
           <Field label="Prérequis" htmlFor="f-pre"><input id="f-pre" className={inputClass} value={form.prerequisites} onChange={(e) => set("prerequisites", e.target.value)} /></Field>

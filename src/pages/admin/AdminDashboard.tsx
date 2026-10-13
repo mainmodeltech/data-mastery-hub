@@ -17,7 +17,7 @@ import { ErrorNotice, errorMessage } from "@/components/admin/AdminKit";
 import { Button, Card, Pill } from "@/components/shared";
 import { useAdminActions, useCanSeeStats, useStatsOverview } from "@/hooks/useAdminStats";
 import { useAuth } from "@/hooks/useAuth";
-import { backOfficeHome } from "@/lib/roles";
+import { homePathFor } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/services/httpClient";
 import { formatAmount, PAYMENT_METHOD_LABELS, type PaymentMethod } from "@/types/payment.type";
@@ -118,7 +118,7 @@ function Breakdown({ title, data, label }: { title: string; data: Record<string,
   );
 }
 
-function MonthlyChart({ monthly }: { monthly: StatsOverview["monthly"] }) {
+function MonthlyChart({ monthly, showMoney }: { monthly: StatsOverview["monthly"]; showMoney: boolean }) {
   const data = monthly.map((m) => ({
     ...m,
     label: format(parseISO(`${m.month}-01`), "MMM yy", { locale: fr }),
@@ -126,32 +126,34 @@ function MonthlyChart({ monthly }: { monthly: StatsOverview["monthly"] }) {
   if (data.length === 0) return <Empty>Aucune donnée sur la période.</Empty>;
   return (
     <>
-      <div className="h-64 w-full" role="img" aria-label="Encaissé et candidatures par mois">
+      <div className="h-64 w-full" role="img" aria-label={showMoney ? "Encaissé et candidatures par mois" : "Candidatures par mois"}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E7E0D4" vertical={false} />
             <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#4A5566" }} tickLine={false} axisLine={false} />
-            <YAxis yAxisId="amount" tick={{ fontSize: 12, fill: "#4A5566" }} tickLine={false} axisLine={false} width={56}
-              tickFormatter={(v: number) => (v >= 1_000_000 ? `${(v / 1_000_000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M` : v >= 1000 ? `${Math.round(v / 1000)} k` : String(v))} />
+            {showMoney && (
+              <YAxis yAxisId="amount" tick={{ fontSize: 12, fill: "#4A5566" }} tickLine={false} axisLine={false} width={56}
+                tickFormatter={(v: number) => (v >= 1_000_000 ? `${(v / 1_000_000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M` : v >= 1000 ? `${Math.round(v / 1000)} k` : String(v))} />
+            )}
             <YAxis yAxisId="count" orientation="right" allowDecimals={false} tick={{ fontSize: 12, fill: "#4A5566" }} tickLine={false} axisLine={false} width={32} />
             <Tooltip
               formatter={(value: number, name: string) => (name === "Encaissé" ? formatAmount(value) : count(value))}
               contentStyle={{ borderRadius: 12, border: "1px solid #E7E0D4", fontSize: 13 }}
             />
-            <Bar yAxisId="amount" dataKey="collected" name="Encaissé" fill="#1A3A5B" radius={[6, 6, 0, 0]} maxBarSize={36} />
+            {showMoney && <Bar yAxisId="amount" dataKey="collected" name="Encaissé" fill="#1A3A5B" radius={[6, 6, 0, 0]} maxBarSize={36} />}
             <Line yAxisId="count" dataKey="registrations" name="Candidatures" stroke="#C73A08" strokeWidth={2.5} dot={{ r: 3 }} type="monotone" />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
       <div className="flex flex-wrap gap-4 text-xs text-ink-secondary">
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-navy" />Encaissé (FCFA, axe gauche)</span>
+        {showMoney && <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-navy" />Encaissé (FCFA, axe gauche)</span>}
         <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-cta" />Candidatures (axe droit)</span>
       </div>
       {/* Équivalent texte du graphique pour les lecteurs d'écran */}
       <table className="sr-only">
-        <caption>Encaissé et candidatures par mois</caption>
-        <thead><tr><th>Mois</th><th>Encaissé</th><th>Candidatures</th></tr></thead>
-        <tbody>{data.map((m) => <tr key={m.month}><td>{m.label}</td><td>{formatAmount(m.collected)}</td><td>{m.registrations}</td></tr>)}</tbody>
+        <caption>{showMoney ? "Encaissé et candidatures par mois" : "Candidatures par mois"}</caption>
+        <thead><tr><th>Mois</th>{showMoney && <th>Encaissé</th>}<th>Candidatures</th></tr></thead>
+        <tbody>{data.map((m) => <tr key={m.month}><td>{m.label}</td>{showMoney && <td>{formatAmount(m.collected ?? 0)}</td>}<td>{m.registrations}</td></tr>)}</tbody>
       </table>
     </>
   );
@@ -178,9 +180,9 @@ export default function AdminDashboard() {
   const overview = useStatsOverview(range.from, range.to, canSeeStats);
   const todo = useAdminActions();
 
-  // Le tableau de bord est masqué aux autres rôles : on les envoie vers leur première page utile
+  // Le tableau de bord est masqué aux comptes sans droit de tableau de bord : on les envoie vers leur première page utile
   if (!canSeeStats) {
-    return <Navigate to={backOfficeHome(user?.roles)} replace />;
+    return <Navigate to={homePathFor(user)} replace />;
   }
 
   const choosePreset = (key: string, days: number) => {
@@ -209,7 +211,7 @@ export default function AdminDashboard() {
         { n: a.projectsToReview, title: "Projets à corriger", to: "/admin/bootcamp-sessions" },
         { n: a.upcomingLives, title: "Lives dans les 7 jours", to: "/admin/bootcamp-sessions" },
         { n: a.failedEmails, title: "E-mails en échec (7 jours)", to: "/admin/emails", urgent: true },
-      ].filter((q) => q.n > 0)
+      ].filter((q): q is typeof q & { n: number } => (q.n ?? 0) > 0)
     : [];
 
   const periodError =
@@ -285,10 +287,21 @@ export default function AdminDashboard() {
         {o && (
           <>
             <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-              <Kpi label="Encaissé" value={formatAmount(o.revenue.collected, o.currency)} hint={o.revenue.averagePayment != null ? `Paiement moyen ${formatAmount(o.revenue.averagePayment, o.currency)}` : "Paiements confirmés"} />
-              <Kpi label="Net" value={formatAmount(o.revenue.net, o.currency)} hint={`Remboursé ${formatAmount(o.revenue.refunded, o.currency)}`} />
-              <Kpi label="Reste à encaisser" value={formatAmount(o.revenue.outstanding, o.currency)} hint="Toutes périodes" />
-              <Kpi label="En retard" value={formatAmount(o.revenue.overdue, o.currency)} hint="Échéances dépassées, toutes périodes" tone={o.revenue.overdue > 0 ? "error" : undefined} />
+              {o.revenue ? (
+                <>
+                  <Kpi label="Encaissé" value={formatAmount(o.revenue.collected, o.currency)} hint={o.revenue.averagePayment != null ? `Paiement moyen ${formatAmount(o.revenue.averagePayment, o.currency)}` : "Paiements confirmés"} />
+                  <Kpi label="Net" value={formatAmount(o.revenue.net, o.currency)} hint={`Remboursé ${formatAmount(o.revenue.refunded, o.currency)}`} />
+                  <Kpi label="Reste à encaisser" value={formatAmount(o.revenue.outstanding, o.currency)} hint="Toutes périodes" />
+                  <Kpi label="En retard" value={formatAmount(o.revenue.overdue, o.currency)} hint="Échéances dépassées, toutes périodes" tone={o.revenue.overdue > 0 ? "error" : undefined} />
+                </>
+              ) : (
+                <>
+                  <Kpi label="Candidatures" value={count(o.funnel.submitted)} hint="Déposées sur la période" />
+                  <Kpi label="Acceptées" value={count(o.funnel.accepted)} hint={`Taux d'acceptation ${formatRate(o.funnel.acceptanceRate)}`} />
+                  <Kpi label="Inscriptions payées" value={count(o.funnel.paid)} hint={`Conversion ${formatRate(o.funnel.conversionRate)}`} />
+                  <Kpi label="Apprenants actifs" value={count(o.learners.activeEnrollments)} hint="Accès en cours" />
+                </>
+              )}
             </div>
 
             <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
@@ -306,7 +319,7 @@ export default function AdminDashboard() {
               </Section>
 
               <Section title="Évolution mensuelle">
-                <MonthlyChart monthly={o.monthly} />
+                <MonthlyChart monthly={o.monthly} showMoney={o.financeVisible} />
               </Section>
             </div>
 
@@ -355,7 +368,7 @@ export default function AdminDashboard() {
                           <th scope="col" className="pb-2 font-semibold">Formation</th>
                           <th scope="col" className="pb-2 text-right font-semibold">Candidatures</th>
                           <th scope="col" className="pb-2 text-right font-semibold">Payées</th>
-                          <th scope="col" className="pb-2 text-right font-semibold">Encaissé</th>
+                          {o.financeVisible && <th scope="col" className="pb-2 text-right font-semibold">Encaissé</th>}
                         </tr>
                       </thead>
                       <tbody>
@@ -364,7 +377,7 @@ export default function AdminDashboard() {
                             <td className="max-w-[220px] truncate py-2.5 pr-3 font-semibold text-ink" title={f.title}>{f.title}</td>
                             <td className="py-2.5 text-right">{count(f.registrations)}</td>
                             <td className="py-2.5 text-right">{count(f.paid)}</td>
-                            <td className="py-2.5 text-right font-semibold text-navy">{formatAmount(f.collected, o.currency)}</td>
+                            {o.financeVisible && <td className="py-2.5 text-right font-semibold text-navy">{formatAmount(f.collected ?? 0, o.currency)}</td>}
                           </tr>
                         ))}
                       </tbody>
@@ -381,7 +394,7 @@ export default function AdminDashboard() {
                 <Breakdown title="Pays" data={o.breakdowns.byCountry} label={countryName} />
                 <Breakdown title="Code promo" data={o.breakdowns.byPromoCode} />
               </div>
-              {Object.keys(o.revenue.collectedByMethod ?? {}).length > 0 && (
+              {o.revenue && Object.keys(o.revenue.collectedByMethod ?? {}).length > 0 && (
                 <div className="flex flex-wrap gap-2 border-t border-[#E7E0D4] pt-4">
                   <span className="mr-1 text-sm font-bold text-navy">Encaissé par moyen :</span>
                   {Object.entries(o.revenue.collectedByMethod).map(([m, v]) => (

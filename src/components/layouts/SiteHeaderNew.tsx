@@ -12,7 +12,7 @@ import { Button } from "@/components/shared/Button";
 import { Logo } from "@/components/shared/Logo";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { useAuth } from "@/hooks/useAuth";
-import { homePathForRoles } from "@/lib/roles";
+import { homePathFor } from "@/lib/roles";
 
 export function SiteHeaderNew() {
   const [open, setOpen] = useState(false);
@@ -22,7 +22,7 @@ export function SiteHeaderNew() {
   const items = header?.links ?? [];
   // Connecté : le lien de connexion devient « Mon espace » (espace apprenant ou back-office selon le rôle).
   const { user } = useAuth();
-  const accountHref = user ? homePathForRoles(user.roles) : "/connexion";
+  const accountHref = user ? homePathFor(user) : "/connexion";
   const accountLabel = user ? (header?.accountLabel ?? header?.loginLabel) : header?.loginLabel;
 
   return (

@@ -29,6 +29,7 @@ import {
   useAcceptRegistration, useCancelRegistration, useConfirmPayment, useOpenPayments, useRecordManualPayment,
   useRejectPayment, useRejectRegistration, useRemindPayment,
 } from "@/hooks/usePayments";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import type { Registration } from "@/types";
 import {
@@ -60,6 +61,8 @@ function inDays(n: number): string {
 
 function AcceptDialog({ registration, onClose }: { registration: Registration; onClose: () => void }) {
   const { toast } = useToast();
+  const { can } = useAuth();
+  const canOverridePrice = can("PRICE_OVERRIDE");   // montant différent du tarif : droit « Déroger au prix »
   const accept = useAcceptRegistration();
   const [payerType, setPayerType] = useState<PayerType>("INDIVIDUAL");
   const [total, setTotal] = useState("");
@@ -128,8 +131,14 @@ function AcceptDialog({ registration, onClose }: { registration: Registration; o
                 <option value="COMPANY">Entreprise (facture / bon de commande)</option>
               </select>
             </Field>
-            <Field label="Montant total (FCFA)" htmlFor="ac-total" hint="Vide : calculé depuis le prix de la session, l'early-bird et le code promo.">
-              <input id="ac-total" type="number" min={0} step={1000} className={inputClass} value={total} onChange={(e) => setTotal(e.target.value)} />
+            <Field
+              label="Montant total (FCFA)"
+              htmlFor="ac-total"
+              hint={canOverridePrice
+                ? "Vide : calculé depuis le prix de la session, l'early-bird et le code promo."
+                : "Calculé depuis le prix de la session, l'early-bird et le code promo. Un autre montant demande le droit « Déroger au prix »."}
+            >
+              <input id="ac-total" type="number" min={0} step={1000} className={inputClass} value={total} disabled={!canOverridePrice} onChange={(e) => setTotal(e.target.value)} />
             </Field>
           </div>
           {payerType === "COMPANY" && (
@@ -146,7 +155,7 @@ function AcceptDialog({ registration, onClose }: { registration: Registration; o
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </Field>
-              {rows.length > 1 && (
+              {rows.length > 1 && canOverridePrice && (
                 <label className="flex cursor-pointer items-center gap-2 text-sm">
                   <input type="checkbox" checked={customAmounts} onChange={(e) => setCustomAmounts(e.target.checked)} className="h-4 w-4 accent-[#1A3A5B]" />
                   Montants personnalisés
@@ -307,6 +316,11 @@ type Dialogs =
 
 export default function AdminCandidatures() {
   const { toast } = useToast();
+  const { can } = useAuth();
+  const canDecide = can("APPLICATIONS_DECIDE");
+  const canManagePayments = can("PAYMENTS_MANAGE");
+  const canInvoice = can("INVOICES_MANAGE");
+  const canEnroll = can("ENROLLMENTS_MANAGE");
   const { data, isLoading, isError } = useRegistrations(0, PAGE_SIZE);
   const { data: openPayments = [] } = useOpenPayments();
   const updateStatus = useUpdateRegistrationStatus();
@@ -387,14 +401,18 @@ export default function AdminCandidatures() {
         </div>
         <div className="flex flex-wrap gap-1.5">
           <Button type="button" variant="outline" shape="rounded" size="sm" disabled={!pending} onClick={() => void copyLink(pending?.paymentLink ?? null)}><Copy />Lien</Button>
-          <Button
-            type="button" variant="outline" shape="rounded" size="sm"
-            disabled={!pending || remind.isPending}
-            onClick={() => pending && void run(() => remind.mutateAsync(pending.id), "Relance envoyée", "Relance impossible")}
-          >
-            Relancer
-          </Button>
-          <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => setDialog({ kind: "manual", r })}>Paiement reçu</Button>
+          {canManagePayments && (
+            <>
+              <Button
+                type="button" variant="outline" shape="rounded" size="sm"
+                disabled={!pending || remind.isPending}
+                onClick={() => pending && void run(() => remind.mutateAsync(pending.id), "Relance envoyée", "Relance impossible")}
+              >
+                Relancer
+              </Button>
+              <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => setDialog({ kind: "manual", r })}>Paiement reçu</Button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -418,9 +436,11 @@ export default function AdminCandidatures() {
           </div>
           <span className="flex-1" />
           <Button asChild variant="outline" shape="rounded" size="sm"><Link to="/admin/promo-codes">Codes promo</Link></Button>
-          <Button type="button" variant="navy" shape="rounded" size="sm" onClick={() => setDialog({ kind: "newManual" })}>
-            <Plus className="h-4 w-4" /> Inscription manuelle
-          </Button>
+          {canEnroll && (
+            <Button type="button" variant="navy" shape="rounded" size="sm" onClick={() => setDialog({ kind: "newManual" })}>
+              <Plus className="h-4 w-4" /> Inscription manuelle
+            </Button>
+          )}
         </div>
 
         {isLoading ? (
@@ -432,10 +452,12 @@ export default function AdminCandidatures() {
             <Column title="Nouvelles candidatures" count={newOnes.length} empty="Aucune nouvelle candidature.">
               {newOnes.map((r) => (
                 <CandidateCard key={r.id} r={r}>
-                  <div className="flex gap-2">
-                    <Button shape="rounded" variant="navy" size="sm" onClick={() => setDialog({ kind: "accept", r })}>Accepter</Button>
-                    <Button shape="rounded" variant="outline" size="sm" className="border-transparent" onClick={() => setDialog({ kind: "reject", r })}>Refuser</Button>
-                  </div>
+                  {canDecide && (
+                    <div className="flex gap-2">
+                      <Button shape="rounded" variant="navy" size="sm" onClick={() => setDialog({ kind: "accept", r })}>Accepter</Button>
+                      <Button shape="rounded" variant="outline" size="sm" className="border-transparent" onClick={() => setDialog({ kind: "reject", r })}>Refuser</Button>
+                    </div>
+                  )}
                 </CandidateCard>
               ))}
             </Column>
@@ -444,13 +466,15 @@ export default function AdminCandidatures() {
               {awaiting.map((r) => (
                 <CandidateCard key={r.id} r={r}>
                   {duePaymentActions(r)}
-                  <button
-                    type="button"
-                    className="w-fit text-xs font-semibold text-ink-secondary hover:text-error"
-                    onClick={() => setDialog({ kind: "cancel", r })}
-                  >
-                    Annuler l'inscription
-                  </button>
+                  {canDecide && (
+                    <button
+                      type="button"
+                      className="w-fit text-xs font-semibold text-ink-secondary hover:text-error"
+                      onClick={() => setDialog({ kind: "cancel", r })}
+                    >
+                      Annuler l'inscription
+                    </button>
+                  )}
                 </CandidateCard>
               ))}
             </Column>
@@ -477,28 +501,34 @@ export default function AdminCandidatures() {
                       ) : (
                         <Pill variant="neutral">Pas de preuve</Pill>
                       )}
-                      <Button
-                        type="button" variant="navy" shape="rounded" size="sm"
-                        disabled={!declared || confirmPayment.isPending}
-                        onClick={() => declared && void run(() => confirmPayment.mutateAsync(declared.id), "Paiement confirmé", "Confirmation impossible")}
-                      >
-                        Confirmer
-                      </Button>
-                      <Button
-                        type="button" variant="outline" shape="rounded" size="sm" className="border-transparent"
-                        disabled={!declared}
-                        onClick={() => declared && setDialog({ kind: "rejectPayment", payment: declared })}
-                      >
-                        <X />Rejeter
-                      </Button>
+                      {canManagePayments && (
+                        <>
+                          <Button
+                            type="button" variant="navy" shape="rounded" size="sm"
+                            disabled={!declared || confirmPayment.isPending}
+                            onClick={() => declared && void run(() => confirmPayment.mutateAsync(declared.id), "Paiement confirmé", "Confirmation impossible")}
+                          >
+                            Confirmer
+                          </Button>
+                          <Button
+                            type="button" variant="outline" shape="rounded" size="sm" className="border-transparent"
+                            disabled={!declared}
+                            onClick={() => declared && setDialog({ kind: "rejectPayment", payment: declared })}
+                          >
+                            <X />Rejeter
+                          </Button>
+                        </>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      className="w-fit text-xs font-semibold text-ink-secondary hover:text-error"
-                      onClick={() => setDialog({ kind: "cancel", r })}
-                    >
-                      Annuler l'inscription
-                    </button>
+                    {canDecide && (
+                      <button
+                        type="button"
+                        className="w-fit text-xs font-semibold text-ink-secondary hover:text-error"
+                        onClick={() => setDialog({ kind: "cancel", r })}
+                      >
+                        Annuler l'inscription
+                      </button>
+                    )}
                   </CandidateCard>
                 );
               })}
@@ -519,7 +549,7 @@ export default function AdminCandidatures() {
                       )}
                     </div>
                     {hasRemaining && duePaymentActions(r)}
-                    {r.status === "CONFIRMED" && (
+                    {r.status === "CONFIRMED" && canDecide && (
                       <Button
                         shape="rounded" variant="outline" size="sm" className="w-fit border-transparent"
                         disabled={updateStatus.isPending}
@@ -528,10 +558,12 @@ export default function AdminCandidatures() {
                         Marquer terminé
                       </Button>
                     )}
-                    <Button shape="rounded" variant="outline" size="sm" className="w-fit border-transparent" onClick={() => setDialog({ kind: "invoice", r })}>
-                      Facture
-                    </Button>
-                    {r.status === "CONFIRMED" && (
+                    {canInvoice && (
+                      <Button shape="rounded" variant="outline" size="sm" className="w-fit border-transparent" onClick={() => setDialog({ kind: "invoice", r })}>
+                        Facture
+                      </Button>
+                    )}
+                    {r.status === "CONFIRMED" && canDecide && (
                       <button
                         type="button"
                         className="w-fit text-xs font-semibold text-ink-secondary hover:text-error"

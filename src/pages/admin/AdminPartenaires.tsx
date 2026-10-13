@@ -3,6 +3,7 @@
  * Logo téléversé vers le stockage objet par le backend ; la part de revenu sert au
  * reversement partenaire (information interne, jamais affichée sur le site).
  */
+import { useAuth } from "@/hooks/useAuth";
 import { useRef, useState } from "react";
 import { ExternalLink, Loader2, Pencil, Plus, Trash2, Upload } from "lucide-react";
 
@@ -21,6 +22,8 @@ const MAX_LOGO_MB = 2;
 function PartnerDialog({ partner, open, onOpenChange }: {
   partner: AdminPartner | null; open: boolean; onOpenChange: (o: boolean) => void;
 }) {
+  const { can } = useAuth();
+  const canRevenue = can("PARTNERS_REVENUE");
   const { toast } = useToast();
   const save = useSavePartner();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -116,9 +119,9 @@ function PartnerDialog({ partner, open, onOpenChange }: {
             <Field label="E-mail" htmlFor="pt-ce"><input id="pt-ce" type="email" className={inputClass} value={form.contactEmail ?? ""} onChange={(e) => set("contactEmail", e.target.value)} /></Field>
             <Field label="Téléphone" htmlFor="pt-cp"><input id="pt-cp" className={inputClass} value={form.contactPhone ?? ""} onChange={(e) => set("contactPhone", e.target.value)} /></Field>
           </div>
-          <Field label="Part de revenu du partenaire (%)" htmlFor="pt-rev" hint="Interne — entre 0 et 100.">
+          <Field label="Part de revenu du partenaire (%)" htmlFor="pt-rev" hint={canRevenue ? "Interne — entre 0 et 100." : "Réservé au droit « Parts de revenu des partenaires »."}>
             <input
-              id="pt-rev" type="number" min={0} max={100} step={0.5} className={inputClass}
+              id="pt-rev" type="number" min={0} max={100} step={0.5} className={inputClass} disabled={!canRevenue}
               value={form.revenueSharePercent ?? ""}
               onChange={(e) => set("revenueSharePercent", e.target.value === "" ? null : Number(e.target.value))}
             />
@@ -135,6 +138,8 @@ function PartnerDialog({ partner, open, onOpenChange }: {
 }
 
 export default function AdminPartenaires() {
+  const { can } = useAuth();
+  const canManage = can("PARTNERS_MANAGE", "PARTNERS_REVENUE");
   const { data: partners = [], isLoading, isError } = useAdminPartners();
   const remove = useDeletePartner();
   const { toast } = useToast();
@@ -146,7 +151,7 @@ export default function AdminPartenaires() {
     <AdminLayout
       title="Partenaires"
       description="Organismes qui dispensent des formations en partenariat"
-      actions={<Button type="button" size="sm" shape="rounded" onClick={() => setCreating(true)}><Plus />Nouveau partenaire</Button>}
+      actions={canManage ? <Button type="button" size="sm" shape="rounded" onClick={() => setCreating(true)}><Plus />Nouveau partenaire</Button> : undefined}
     >
       <div className="flex flex-col gap-4">
         {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
@@ -155,7 +160,7 @@ export default function AdminPartenaires() {
           <EmptyState
             title="Aucun partenaire"
             text="Ajoutez un partenaire pour pouvoir lui attribuer des formations."
-            action={<Button type="button" shape="rounded" onClick={() => setCreating(true)}><Plus />Nouveau partenaire</Button>}
+            action={canManage ? <Button type="button" shape="rounded" onClick={() => setCreating(true)}><Plus />Nouveau partenaire</Button> : undefined}
           />
         )}
         {partners.map((p) => (

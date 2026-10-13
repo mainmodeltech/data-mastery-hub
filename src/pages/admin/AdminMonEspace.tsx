@@ -15,7 +15,7 @@ import { EmptyState, ErrorNotice, errorMessage } from "@/components/admin/AdminK
 import { Button, Card, Pill } from "@/components/shared";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyFormations, useMySessions } from "@/hooks/useAdminMe";
-import { hasAnyRole, primaryRoleLabel } from "@/lib/roles";
+import { profileTitle } from "@/lib/roles";
 
 const day = (iso: string | null) => (iso ? format(parseISO(iso), "d MMM yyyy", { locale: fr }) : "—");
 
@@ -25,18 +25,18 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function AdminMonEspace() {
-  const { user } = useAuth();
-  const trainer = hasAnyRole(user?.roles, ["TRAINER"]);
-  const partner = hasAnyRole(user?.roles, ["PARTNER"]);
+  const { user, can } = useAuth();
+  const trainer = can("SESSIONS_TRACK") && !can("SCOPE_ALL_SESSIONS");   // anime « ses » sessions (celles qui lui sont confiées)
+  const partner = can("PROGRAM_MANAGE") && !can("SCOPE_ALL_FORMATIONS");  // ne gère que « ses » formations
   const sessions = useMySessions();
   const formations = useMyFormations();
 
-  const showSessions = trainer || hasAnyRole(user?.roles, ["SUPER_ADMIN", "ADMIN"]);
-  const showFormations = partner || trainer || hasAnyRole(user?.roles, ["SUPER_ADMIN", "ADMIN", "EDITOR"]);
-  const canEditProgram = hasAnyRole(user?.roles, ["SUPER_ADMIN", "ADMIN", "EDITOR", "PARTNER"]);
+  const showSessions = can("SESSIONS_VIEW");
+  const showFormations = can("PROGRAM_MANAGE", "CATALOG_VIEW") || trainer;
+  const canEditProgram = can("PROGRAM_MANAGE");
 
   return (
-    <AdminLayout title="Mon espace" description={primaryRoleLabel(user?.roles)}>
+    <AdminLayout title="Mon espace" description={profileTitle(user)}>
       <div className="flex flex-col gap-6">
         {showSessions && (
           <Card radius="stat" className="flex flex-col gap-4 border border-[#E7E0D4] p-5 lg:p-6">

@@ -1,23 +1,29 @@
 /**
  * ProtectedRoute.tsx
  *
- * Guard de route : authentification JWT + rôle. Par défaut réservé au personnel
- * (SUPER_ADMIN/ADMIN/EDITOR) pour les routes /admin ; passer `roles` pour d'autres
- * espaces (ex. LEARNER). Non connecté → /connexion ; mauvais rôle → son espace.
+ * Guard de route : session + droits.
+ *  - par défaut : réservé au personnel (n'importe quel profil du back-office) ;
+ *  - `permissions` : il faut au moins un de ces droits (cumul des profils du compte) ;
+ *  - `learnerArea` : espace apprenant (apprenants, et personnel pour prévisualiser).
+ * Non connecté → /connexion ; droits insuffisants → la première page utile du compte.
+ * Le serveur reste la vraie protection : ce garde évite surtout des pages « vides » sur 403.
  */
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
-import { STAFF_ROLES, hasAnyRole, homePathForRoles } from "@/lib/roles";
+import { homePathFor } from "@/lib/roles";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  roles?: readonly string[];
+  /** Au moins un de ces droits (voir lib/permissions.ts → ACCESS). */
+  permissions?: readonly string[];
+  /** Espace apprenant : ouvert aux apprenants et au personnel. */
+  learnerArea?: boolean;
 }
 
-const ProtectedRoute = ({ children, roles = STAFF_ROLES }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute = ({ children, permissions, learnerArea = false }: ProtectedRouteProps) => {
+  const { user, loading, can } = useAuth();
   const location          = useLocation();
 
   if (loading) {
@@ -34,8 +40,12 @@ const ProtectedRoute = ({ children, roles = STAFF_ROLES }: ProtectedRouteProps) 
     );
   }
 
-  if (!hasAnyRole(user.roles, roles)) {
-    return <Navigate to={homePathForRoles(user.roles)} replace />;
+  const allowed = learnerArea
+    ? user.isStaff || user.userType === "LEARNER"
+    : user.isStaff && (!permissions || can(...permissions));
+
+  if (!allowed) {
+    return <Navigate to={homePathFor(user)} replace />;
   }
 
   return <>{children}</>;
