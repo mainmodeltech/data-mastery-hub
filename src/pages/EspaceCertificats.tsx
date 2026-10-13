@@ -92,7 +92,7 @@ export default function EspaceCertificats() {
             <Award className="h-8 w-8 text-navy" aria-hidden="true" />
             <p className="font-heading text-lg font-bold text-navy">Pas encore de certificat</p>
             <p className="text-sm text-ink-secondary">
-              Votre certificat est généré dès que toutes les conditions de la formation sont remplies.
+              Votre certificat est préparé dès que toutes les conditions de la formation sont remplies, puis validé par notre équipe avant de vous être envoyé.
             </p>
             <Button asChild variant="navy" shape="rounded" size="sm">
               <Link to="/espace/evaluations">Voir les conditions</Link>

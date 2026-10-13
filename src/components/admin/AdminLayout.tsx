@@ -89,6 +89,7 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
         "/admin/candidatures": todo.newApplications ?? 0,
         "/admin/paiements": (todo.paymentsToConfirm ?? 0) + (todo.overdueInstallments ?? 0),
         "/admin/messages": todo.unreadMessages ?? 0,
+        "/admin/certificats": todo.certificatesToValidate ?? 0,
         "/admin/bootcamp-sessions": (todo.openQuestions ?? 0) + (todo.projectsToReview ?? 0),
       }
     : {};

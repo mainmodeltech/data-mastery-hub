@@ -49,8 +49,9 @@ const PROJECT_PILL: Record<ProjectStatus, "success" | "warning" | "error"> = {
   NOT_STARTED: "error",
 };
 
-const CERT_PILL: Record<CertificateTrackingStatus, "success" | "neutral" | "error" | "info"> = {
+const CERT_PILL: Record<CertificateTrackingStatus, "success" | "neutral" | "error" | "info" | "warning"> = {
   READY: "success",
+  TO_VALIDATE: "warning",
   PENDING: "neutral",
   AT_RISK: "error",
   ISSUED: "info",
@@ -257,6 +258,7 @@ export default function AdminSessionSuivi() {
       { label: "Progression moyenne", value: `${avg} %` },
       { label: "Projets à corriger", value: String(tracking.learners.filter((l) => l.project === "SUBMITTED").length) },
       { label: "Certificats délivrés", value: String(tracking.learners.filter((l) => l.certificate === "ISSUED").length) },
+      { label: "Certificats à valider", value: String(tracking.learners.filter((l) => l.certificate === "TO_VALIDATE").length) },
     ];
   }, [tracking]);
 

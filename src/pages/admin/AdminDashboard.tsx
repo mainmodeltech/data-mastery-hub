@@ -206,6 +206,7 @@ export default function AdminDashboard() {
         { n: a.newApplications, title: "Candidatures à examiner", to: "/admin/candidatures" },
         { n: a.paymentsToConfirm, title: "Paiements à confirmer", to: "/admin/candidatures" },
         { n: a.overdueInstallments, title: "Échéances en retard", to: "/admin/candidatures", urgent: true },
+        { n: a.certificatesToValidate, title: "Certificats à valider", to: "/admin/certificats" },
         { n: a.unreadMessages, title: "Messages non lus", to: "/admin/messages" },
         { n: a.openQuestions, title: "Questions sans réponse", to: "/admin/bootcamp-sessions" },
         { n: a.projectsToReview, title: "Projets à corriger", to: "/admin/bootcamp-sessions" },

@@ -90,10 +90,13 @@ export interface AdminCertificate {
   sessionId: string;
   sessionName: string | null;
   issuedAt: string;
+  /** Date à laquelle l'apprenant est devenu éligible (certificat « à valider »). */
+  eligibleAt?: string | null;
   issuedBy: string | null;
   forced: boolean;
   forceReason: string | null;
-  status: "VALID" | "REVOKED" | string;
+  /** PENDING : prêt, en attente de validation (invisible de l'apprenant, aucun e-mail) ; VALID : délivré ; REVOKED. */
+  status: "PENDING" | "VALID" | "REVOKED" | string;
   revokedAt: string | null;
   revokedReason: string | null;
   verifyUrl: string;
@@ -113,6 +116,18 @@ export const certificateAdminService = {
   resend: async (publicId: string): Promise<void> => {
     await httpClient.post<ApiResponse<null>>(`/admin/certificates/${encodeURIComponent(publicId)}/resend`);
   },
+
+  /** Valide un certificat « à valider » : il devient visible pour l'apprenant et lui est envoyé par e-mail. */
+  validate: async (publicId: string): Promise<AdminCertificate> =>
+    (await httpClient.post<ApiResponse<AdminCertificate>>(`/admin/certificates/${encodeURIComponent(publicId)}/validate`, {})).data,
+
+  /** Valide plusieurs certificats ; ceux qui échouent sont listés dans `failed`. */
+  validateMany: async (publicIds: string[]): Promise<{ validated: number; failed: string[] }> =>
+    (await httpClient.post<ApiResponse<{ validated: number; failed: string[] }>>("/admin/certificates/validate", { publicIds })).data,
+
+  /** PDF d'aperçu (filigrane), réservé à l'équipe. */
+  preview: (publicId: string): Promise<Blob> =>
+    httpClient.getBlob(`/admin/certificates/${encodeURIComponent(publicId)}/preview`),
 };
 
 // ─── Journal d'e-mails ────────────────────────────────────────────────────────

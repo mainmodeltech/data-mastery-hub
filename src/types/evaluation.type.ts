@@ -140,7 +140,8 @@ export interface EvaluationsOverview {
 
 // ─── Suivi de session (admin) ────────────────────────────────────────────────
 
-export type CertificateTrackingStatus = "READY" | "PENDING" | "AT_RISK" | "ISSUED";
+/** TO_VALIDATE : certificat prêt, en attente de validation par l'équipe (pas encore visible de l'apprenant). */
+export type CertificateTrackingStatus = "READY" | "TO_VALIDATE" | "PENDING" | "AT_RISK" | "ISSUED";
 
 export interface TrackedLearner {
   learnerId: string;
@@ -194,6 +195,7 @@ export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
 
 export const CERTIFICATE_STATUS_LABELS: Record<CertificateTrackingStatus, string> = {
   READY: "Prêt",
+  TO_VALIDATE: "À valider",
   PENDING: "En attente",
   AT_RISK: "À risque",
   ISSUED: "Délivré",
