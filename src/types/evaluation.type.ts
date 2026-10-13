@@ -26,6 +26,14 @@
 
 export type QuizStatus = "PASSED" | "TO_DO" | "AVAILABLE" | "LOCKED" | "FAILED";
 
+export const QUIZ_STATUS_LABELS: Record<QuizStatus, string> = {
+  PASSED: "Réussi",
+  FAILED: "Tentatives épuisées",
+  AVAILABLE: "À retenter",
+  TO_DO: "Pas commencé",
+  LOCKED: "Verrouillé",
+};
+
 export interface QuizSummary {
   id: string;
   /** Leçon QUIZ correspondante dans le programme (Lot 5) */
@@ -34,8 +42,10 @@ export interface QuizSummary {
   questionCount: number;
   timeLimitMinutes: number | null;
   passThreshold: number;
-  /** null = tentatives illimitées */
+  /** Limite effective pour l'apprenant (limite du quiz + tentatives accordées) ; null = illimitées */
   maxAttempts: number | null;
+  /** Tentatives supplémentaires accordées par l'équipe */
+  extraAttempts?: number;
   attemptsUsed: number;
   bestScore: number | null;
   status: QuizStatus;

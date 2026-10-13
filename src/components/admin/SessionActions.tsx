@@ -12,8 +12,9 @@ import { ErrorNotice, errorMessage, Field, inputClass } from "@/components/admin
 import { Button, Card, Pill } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useIssueCertificate } from "@/hooks/useAdminOps";
+import { QUIZ_STATUS_LABELS, attemptsLabel, type QuizSummary } from "@/types/evaluation.type";
 import {
-  useAnswerQuestion, useAssignTrainer, useProjectFiles, useReviewProject, useSendSessionMessage,
+  useAnswerQuestion, useAssignTrainer, useGrantAttempts, useLearnerQuizzes, useProjectFiles, useReviewProject, useSendSessionMessage,
   useSessionMessages, useSessionQuestions, useTrainers,
 } from "@/hooks/useSessionOps";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +73,101 @@ export function SessionMessageDialog({
             </Button>
           </div>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Quiz d'un apprenant : tentatives ─────────────────────────────────────────
+
+const QUIZ_PILL: Record<string, "success" | "warning" | "error" | "neutral" | "info"> = {
+  PASSED: "success", FAILED: "error", AVAILABLE: "warning", TO_DO: "neutral", LOCKED: "neutral",
+};
+
+function GrantForm({ quiz, onGrant, onCancel, pending }: {
+  quiz: QuizSummary; pending: boolean; onCancel: () => void;
+  onGrant: (extra: number, reason: string) => Promise<void>;
+}) {
+  const [extra, setExtra] = useState("1");
+  const [reason, setReason] = useState("");
+  return (
+    <form
+      className="mt-3 flex flex-col gap-3 rounded-xl bg-app-bg p-3"
+      onSubmit={async (e) => { e.preventDefault(); await onGrant(Number(extra), reason.trim()); }}
+    >
+      <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
+        <Field label="Tentatives" htmlFor={`gx-${quiz.id}`}>
+          <input id={`gx-${quiz.id}`} type="number" min={1} max={10} required className={inputClass} value={extra} onChange={(e) => setExtra(e.target.value)} />
+        </Field>
+        <Field label="Motif *" htmlFor={`gr-${quiz.id}`} hint="Conservé avec l'octroi (ex. limite réglée à 1 par erreur).">
+          <input id={`gr-${quiz.id}`} required maxLength={1000} className={inputClass} value={reason} onChange={(e) => setReason(e.target.value)} />
+        </Field>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" shape="rounded" size="sm" disabled={pending} onClick={onCancel}>Annuler</Button>
+        <Button type="submit" shape="rounded" size="sm" disabled={pending || !reason.trim()}>{pending ? <Loader2 className="animate-spin" /> : "Accorder"}</Button>
+      </div>
+    </form>
+  );
+}
+
+export function LearnerQuizzesDialog({ sessionId, learner, onClose }: { sessionId: string; learner: TrackedLearner; onClose: () => void }) {
+  const { toast } = useToast();
+  const { data: quizzes = [], isLoading, isError } = useLearnerQuizzes(sessionId, learner.learnerId);
+  const grant = useGrantAttempts(sessionId, learner.learnerId);
+  const [granting, setGranting] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto rounded-callout">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-xl font-bold text-navy">Quiz de {learner.name}</DialogTitle>
+          <DialogDescription className="text-ink-secondary">
+            Tentatives utilisées et limite. Vous pouvez accorder des tentatives supplémentaires à cet apprenant seulement (la limite du quiz, pour tous, se règle dans le programme).
+          </DialogDescription>
+        </DialogHeader>
+        {error && <ErrorNotice>{error}</ErrorNotice>}
+        {isLoading && <Loader2 className="mx-auto h-5 w-5 animate-spin text-ink-secondary" />}
+        {isError && <ErrorNotice>Impossible de charger les quiz de cet apprenant.</ErrorNotice>}
+        {!isLoading && !isError && quizzes.length === 0 && <p className="text-sm text-ink-secondary">Cette formation n'a pas de quiz.</p>}
+        <ul className="flex flex-col gap-3">
+          {quizzes.map((q) => (
+            <li key={q.id} className="rounded-card border border-[#E7E0D4] bg-white p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="min-w-0 flex-1 font-semibold text-ink">{q.title}</span>
+                <Pill variant={QUIZ_PILL[q.status] ?? "neutral"}>{QUIZ_STATUS_LABELS[q.status]}</Pill>
+              </div>
+              <p className="mt-1 text-xs text-ink-secondary">
+                Tentatives {attemptsLabel(q.attemptsUsed, q.maxAttempts)}
+                {(q.extraAttempts ?? 0) > 0 && <> · dont {q.extraAttempts} accordée{(q.extraAttempts ?? 0) > 1 ? "s" : ""}</>}
+                {q.bestScore != null && <> · meilleur score {q.bestScore} % (seuil {q.passThreshold} %)</>}
+              </p>
+              {q.maxAttempts != null && q.status !== "PASSED" && granting !== q.id && (
+                <Button type="button" variant="outline" shape="rounded" size="sm" className="mt-3" onClick={() => { setError(""); setGranting(q.id); }}>
+                  Accorder des tentatives
+                </Button>
+              )}
+              {granting === q.id && (
+                <GrantForm
+                  quiz={q}
+                  pending={grant.isPending}
+                  onCancel={() => setGranting(null)}
+                  onGrant={async (extra, reason) => {
+                    try {
+                      await grant.mutateAsync({ quizId: q.id, extraAttempts: extra, reason });
+                      toast({ title: "Tentatives accordées", description: `${extra} pour ${learner.name} sur « ${q.title} »` });
+                      setGranting(null);
+                    } catch (err) {
+                      setError(errorMessage(err, "L'octroi a échoué."));
+                    }
+                  }}
+                />
+              )}
+            </li>
+          ))}
+        </ul>
+        <div className="flex justify-end"><Button type="button" variant="outline" shape="rounded" onClick={onClose}>Fermer</Button></div>
       </DialogContent>
     </Dialog>
   );

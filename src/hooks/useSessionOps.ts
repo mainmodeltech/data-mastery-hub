@@ -42,6 +42,27 @@ export function useAnswerQuestion(sessionId: string) {
   });
 }
 
+export function useLearnerQuizzes(sessionId: string, learnerId: string | undefined) {
+  return useQuery({
+    queryKey: ["admin", "session-learner-quizzes", sessionId, learnerId ?? ""],
+    queryFn: () => sessionOpsService.learnerQuizzes(sessionId, learnerId as string),
+    enabled: !!learnerId,
+    staleTime: 0,
+  });
+}
+
+export function useGrantAttempts(sessionId: string, learnerId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ quizId, extraAttempts, reason }: { quizId: string; extraAttempts: number; reason: string }) =>
+      sessionOpsService.grantAttempts(sessionId, learnerId, quizId, extraAttempts, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "session-learner-quizzes", sessionId, learnerId] });
+      qc.invalidateQueries({ queryKey: ["admin", "session-tracking", sessionId] });
+    },
+  });
+}
+
 export function useProjectFiles(sessionId: string, learnerId: string | undefined) {
   return useQuery({
     queryKey: KEYS.projectFiles(sessionId, learnerId ?? ""),

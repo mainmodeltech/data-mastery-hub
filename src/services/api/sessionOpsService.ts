@@ -5,6 +5,7 @@
  * AdminTrainerController. Messagerie/formateurs : ApiResponse<T> ; correction du projet : JSON brut.
  */
 import { httpClient } from "@/services/httpClient";
+import type { QuizSummary } from "@/types/evaluation.type";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -53,6 +54,14 @@ export interface Trainer {
 }
 
 export const sessionOpsService = {
+  /** Les quiz d'un apprenant : tentatives utilisées, limite effective, tentatives accordées. */
+  learnerQuizzes: (sessionId: string, learnerId: string) =>
+    httpClient.get<QuizSummary[]>(`/admin/sessions/${sessionId}/learners/${learnerId}/quizzes`),
+
+  /** Accorde des tentatives supplémentaires à un apprenant sur un quiz (motif obligatoire). */
+  grantAttempts: (sessionId: string, learnerId: string, quizId: string, extraAttempts: number, reason: string) =>
+    httpClient.post<QuizSummary>(`/admin/sessions/${sessionId}/learners/${learnerId}/quizzes/${quizId}/attempts`, { extraAttempts, reason }),
+
   sendMessage: async (sessionId: string, payload: { subject: string; body: string; learnerIds?: string[] }): Promise<SessionMessage> =>
     (await httpClient.post<ApiResponse<SessionMessage>>(`/admin/sessions/${sessionId}/messages`, payload)).data,
 
