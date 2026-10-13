@@ -9,10 +9,13 @@ Remplacez `<STAGING>` par l'adresse du site de staging que vous communique l'éq
 
 **Ce qui n'est PAS encore dans cette version** (ne le signalez pas comme anomalie) :
 - les profils **Financier** et **Manager** : ils sont spécifiés mais pas encore développés ; pour l'instant le rôle **Admin** cumule leurs droits ;
-- l'**authentification à deux facteurs** (obligatoire à la mise en production) : pas encore active ;
 - l'installation du site en application (PWA) ne se teste que sur le site en HTTPS ;
 - la lecture **hors ligne** ne fonctionne que pour les vidéos hébergées sur la plateforme (pas YouTube ni Vimeo) ;
 - la CGU / contrat de formation, les pages légales, la recherche globale, les notifications WhatsApp.
+
+**Double authentification (personnel).** Tout compte du back-office (Super Admin, Admin, Éditeur, Formateur, Partenaire) doit configurer une application d'authentification (Google Authenticator, Microsoft Authenticator, Authy, 1Password…) à sa **première connexion**, puis saisir un code à 6 chiffres à chaque connexion. Prévoyez votre téléphone et **notez les 10 codes de secours** affichés à la fin de la configuration (ils ne s'affichent qu'une fois). Les apprenants ne sont pas concernés.
+
+**Session.** Elle se renouvelle toute seule pendant que vous travaillez ; fermer l'onglet puis revenir dans la journée ne demande pas de se reconnecter. Changer son mot de passe ferme toutes les sessions : reconnectez-vous ensuite.
 
 **E-mails.** Les e-mails partent réellement (invitations, liens de paiement, certificats). Utilisez **votre propre adresse** pour les comptes de test. Les messages envoyés aux candidats fictifs d'autres personnes n'arriveront nulle part : utilisez des adresses que vous contrôlez (`prenom+test1@gmail.com` fonctionne avec Gmail).
 
@@ -108,6 +111,21 @@ Cochez la colonne **OK / KO**. Un parcours se déroule dans l'ordre. Le **parcou
 | 24 | Dans l'adresse d'une session, utiliser l'identifiant d'une **session d'un autre formateur** (deux formateurs requis) | Accès refusé | ☐ |
 | 25 | Coller dans la barre d'adresse l'ancienne adresse publique d'une capture de paiement (si connue) | Accès refusé (le dossier est privé) | ☐ |
 
+### Double authentification et sessions (personnel)
+
+| # | Profil | Étapes | Résultat attendu | OK / KO |
+|---|---|---|---|:-:|
+| S1 | Tout le personnel | Première connexion : mot de passe puis écran « Sécurisez votre compte » ; ajouter le compte dans l'application (clé à saisir ou bouton « Ouvrir mon application ») ; saisir le code | Les **10 codes de secours** s'affichent ; le bouton « Accéder au back-office » reste grisé tant que la case « J'ai conservé ces codes » n'est pas cochée | ☐ |
+| S2 | Tout le personnel | Se déconnecter, se reconnecter | Après le mot de passe, le code à 6 chiffres est demandé ; un code faux est refusé ; 5 codes faux verrouillent quelques minutes | ☐ |
+| S3 | Tout le personnel | Se connecter avec **un code de secours** (lien « Je n'ai plus accès à mon application ») | Connexion réussie ; le même code ne marche pas une seconde fois | ☐ |
+| S4 | Tout le personnel | Connexion par **lien/code e-mail** (ou Google) | Le code de l'application d'authentification est demandé ensuite : l'e-mail seul ne suffit plus | ☐ |
+| S5 | Tout le personnel | Travailler 20 minutes sans se reconnecter ; recharger la page | La session continue (renouvelée en silence) ; après un rechargement on reste connecté | ☐ |
+| S6 | Tout le personnel | Ouvrir le même compte sur un second navigateur, puis changer le mot de passe sur le premier | Le second navigateur est déconnecté à sa prochaine action | ☐ |
+| S7 | Super Admin | *Comptes* : repérer l'état « Double authentification » / « À configurer » de chaque compte | État exact pour chacun | ☐ |
+| S8 | Super Admin | Réinitialiser le MFA d'un collaborateur (« Réinitialiser le MFA ») ; **essayer sur son propre compte** | Le collaborateur est prévenu par e-mail, ses sessions sont fermées, il reconfigure un appareil ; le bouton n'existe pas pour son propre compte | ☐ |
+| S9 | Tout le personnel | Choisir un mot de passe faible (« Password123456 », « motdepasse2026 », son adresse e-mail) lors d'une réinitialisation | Refus avec une explication ; le lien reste utilisable ; 12 caractères minimum | ☐ |
+| S10 | Apprenant | Se connecter | **Aucun** code supplémentaire demandé (la double authentification ne concerne pas les apprenants) ; 10 caractères minimum pour son mot de passe | ☐ |
+
 ### Administration (Admin / Super Admin)
 
 | # | Profil | Étapes | Résultat attendu | OK / KO |
@@ -155,4 +173,4 @@ Cochez la colonne **OK / KO**. Un parcours se déroule dans l'ordre. Le **parcou
 
 ## 4. Avant d'ouvrir à d'autres testeurs
 
-Rappel (équipe technique) : le staging est joignable depuis Internet et ne dispose pas encore de la double authentification. Limiter l'accès (liste d'adresses autorisées ou authentification de base devant le site) tant que des comptes Admin existent, et ne pas y charger de données réelles.
+Rappel (équipe technique) : le staging est joignable depuis Internet. La double authentification protège le back-office, mais l'accès au site peut encore être limité (liste d'adresses autorisées ou authentification de base) tant que la recette dure ; ne pas y charger de données réelles.

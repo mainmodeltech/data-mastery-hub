@@ -32,4 +32,7 @@ export const userAdminService = {
     (await httpClient.post<ApiResponse<AdminUserAccount>>("/admin/users", payload)).data,
   update: async (id: string, payload: UserUpdatePayload): Promise<AdminUserAccount> =>
     (await httpClient.put<ApiResponse<AdminUserAccount>>(`/admin/users/${id}`, payload)).data,
+  /** Retire la double authentification d'un compte (téléphone perdu) ; le titulaire est prévenu et devra la reconfigurer. */
+  resetMfa: async (id: string): Promise<AdminUserAccount> =>
+    (await httpClient.post<ApiResponse<AdminUserAccount>>(`/admin/users/${id}/mfa/reset`, {})).data,
 };

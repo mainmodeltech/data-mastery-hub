@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { Loader2, Pencil, Plus, ShieldCheck, ShieldOff } from "lucide-react";
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { EmptyState, ErrorNotice, errorMessage, Field, inputClass, SwitchRow } from "@/components/admin/AdminKit";
@@ -14,7 +14,7 @@ import { Button, Card, Pill } from "@/components/shared";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { useAdminUsers, useCreateUser, useUpdateUser } from "@/hooks/useAccountsAdmin";
+import { useAdminUsers, useCreateUser, useResetMfa, useUpdateUser } from "@/hooks/useAccountsAdmin";
 import { useAdminPartners } from "@/hooks/useCatalogAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -110,6 +110,8 @@ export default function AdminComptes() {
   const { data: users = [], isLoading, error } = useAdminUsers();
   const [editing, setEditing] = useState<AdminUserAccount | null>(null);
   const [creating, setCreating] = useState(false);
+  const resetMfa = useResetMfa();
+  const { toast } = useToast();
   const forbidden = error instanceof ApiError && error.status === 403;
 
   return (
@@ -133,6 +135,9 @@ export default function AdminComptes() {
                 <span className="font-bold text-ink">{u.fullName}</span>
                 {!u.active && <Pill variant="neutral">Désactivé</Pill>}
                 {u.email === me?.email && <Pill variant="info">Vous</Pill>}
+                {u.mfaEnabled
+                  ? <Pill variant="success"><ShieldCheck className="mr-1 inline h-3.5 w-3.5" />Double authentification</Pill>
+                  : <Pill variant="warning"><ShieldOff className="mr-1 inline h-3.5 w-3.5" />À configurer</Pill>}
               </div>
               <span className="truncate text-sm text-ink-secondary">{u.email}</span>
               <div className="flex flex-wrap gap-1.5">
@@ -141,7 +146,27 @@ export default function AdminComptes() {
               <span className="text-xs text-ink-secondary">Dernière connexion : {day(u.lastLoginAt)}</span>
             </div>
             {isSuper && (
-              <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => setEditing(u)}><Pencil />Modifier</Button>
+              <div className="flex flex-wrap gap-2">
+                {u.mfaEnabled && u.email !== me?.email && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    shape="rounded"
+                    size="sm"
+                    disabled={resetMfa.isPending}
+                    onClick={() => {
+                      if (!window.confirm(`Réinitialiser la double authentification de ${u.fullName} ?\nSes sessions seront fermées et il devra configurer un nouvel appareil à sa prochaine connexion. Il sera prévenu par e-mail.`)) return;
+                      resetMfa.mutate(u.id, {
+                        onSuccess: () => toast({ title: "Double authentification réinitialisée", description: `${u.fullName} en a été informé par e-mail.` }),
+                        onError: (err) => toast({ title: "Réinitialisation impossible", description: errorMessage(err), variant: "destructive" }),
+                      });
+                    }}
+                  >
+                    <ShieldOff />Réinitialiser le MFA
+                  </Button>
+                )}
+                <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => setEditing(u)}><Pencil />Modifier</Button>
+              </div>
             )}
           </Card>
         ))}

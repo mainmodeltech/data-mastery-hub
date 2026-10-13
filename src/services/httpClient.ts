@@ -1,12 +1,17 @@
-
-
 /**
  * httpClient.ts
  *
  * Client HTTP centralisé pour les appels vers le backend Spring Boot.
  *
+ * Session :
+ *   - le jeton d'accès (15 minutes) vit UNIQUEMENT en mémoire de la page : jamais dans localStorage, donc illisible
+ *     par un script injecté qui fouillerait le stockage du navigateur ;
+ *   - la session se prolonge par un cookie HttpOnly (jeton de rafraîchissement) que seul le navigateur envoie, vers
+ *     /api/v1/auth/refresh ; un 401 déclenche un rafraîchissement silencieux (un seul à la fois), puis la requête est rejouée ;
+ *   - si le rafraîchissement échoue, la session est terminée (événement 'unauthorized').
+ *
  * Fonctionnalités :
- *   - Base URL configurée via VITE_API_URL (build-time)
+ *   - Base URL configurée via VITE_API_BASE_URL (build-time)
  *   - Injection automatique du header Authorization: Bearer <token>
  *   - skipAuth: true pour les routes publiques (inscription, login, reCAPTCHA…)
  *   - Support des query params via l'option { params }
@@ -19,16 +24,21 @@ import { authEvents } from "@/services/api/authEvents";
 const BASE_URL   = import.meta.env.VITE_API_BASE_URL ?? "";
 const API_PREFIX = "/api/v1";
 
-// ─── Clé de stockage ──────────────────────────────────────────────────────────
-export const TOKEN_KEY = "access_token";
 /** Drapeau (sessionStorage) lu par la page de connexion pour expliquer la déconnexion. */
 export const SESSION_EXPIRED_KEY = "session_expired";
 
+/** Ancienne clé de stockage du jeton (avant le cookie de session) : retirée à chaque chargement. */
+const LEGACY_TOKEN_KEY = "access_token";
+try { localStorage.removeItem(LEGACY_TOKEN_KEY); } catch { /* stockage indisponible */ }
+
+// ─── Jeton d'accès en mémoire ─────────────────────────────────────────────────
+
+let accessToken: string | null = null;
 
 export const tokenStorage = {
-  getAccessToken: (): string | null => localStorage.getItem(TOKEN_KEY),
-  setAccessToken: (token: string): void => localStorage.setItem(TOKEN_KEY, token),
-  clearTokens: (): void => localStorage.removeItem(TOKEN_KEY),
+  getAccessToken: (): string | null => accessToken,
+  setAccessToken: (token: string): void => { accessToken = token; },
+  clearTokens: (): void => { accessToken = null; },
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -66,15 +76,52 @@ function buildUrl(path: string, params?: RequestOptions["params"]): string {
   return qs ? `${url}?${qs}` : url;
 }
 
-function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+// ─── Rafraîchissement silencieux (un seul à la fois) ──────────────────────────
+
+let refreshing: Promise<string | null> | null = null;
+
+/**
+ * Échange le cookie de session contre un nouveau jeton d'accès. Renvoie le jeton, ou null si la session est
+ * terminée. Appels simultanés (plusieurs requêtes en 401 en même temps) : un seul aller-retour réseau.
+ */
+export function refreshAccessToken(): Promise<string | null> {
+  if (!refreshing) {
+    refreshing = (async () => {
+      try {
+        const response = await fetch(`${BASE_URL}${API_PREFIX}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) return null;
+        const data = (await response.json()) as { accessToken?: string };
+        if (!data.accessToken) return null;
+        accessToken = data.accessToken;
+        authEvents.emit("token", data.accessToken);
+        return data.accessToken;
+      } catch {
+        return null;   // réseau indisponible : la session n'est pas pour autant terminée, l'appelant échouera normalement
+      } finally {
+        refreshing = null;
+      }
+    })();
+  }
+  return refreshing;
+}
+
+/** Session terminée : jeton oublié, page de connexion informée (AuthProvider déconnecte et redirige). */
+function endSession(): void {
+  accessToken = null;
+  try { sessionStorage.setItem(SESSION_EXPIRED_KEY, "1"); } catch { /* stockage indisponible */ }
+  authEvents.emit("unauthorized");
 }
 
 async function request<T>(
     method: string,
     path: string,
     body?: unknown,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
+    retried = false
 ): Promise<T> {
   const { skipAuth = false, params, headers: extraHeaders = {} } = options;
 
@@ -89,24 +136,27 @@ async function request<T>(
     ...extraHeaders,
   };
 
-  if (!skipAuth) {
-    const token = getToken();
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-  }
+  const sentToken = skipAuth ? null : accessToken;
+  if (sentToken) headers["Authorization"] = `Bearer ${sentToken}`;
 
-  const url = buildUrl(path, params);
-
-  const response = await fetch(url, {
+  const response = await fetch(buildUrl(path, params), {
     method,
     headers,
+    credentials: "include",              // cookie de session pour /auth/* (ignoré ailleurs : limité à ce chemin)
     body: isFormData
         ? body                              // FormData passé tel quel
         : body !== undefined
             ? JSON.stringify(body)          // JSON sérialisé
             : undefined,
   });
+
+  // Jeton d'accès expiré : rafraîchissement silencieux puis une seule nouvelle tentative
+  if (response.status === 401 && sentToken && !retried) {
+    const fresh = await refreshAccessToken();
+    if (fresh) return request<T>(method, path, body, options, true);
+    endSession();
+    throw new ApiError(401, "Session expirée.");
+  }
 
   // Pas de contenu (ex: DELETE 204)
   if (response.status === 204) {
@@ -124,13 +174,6 @@ async function request<T>(
     const message =
         (data as { message?: string })?.message ??
         `Erreur ${response.status}`;
-    // Jeton expiré ou révoqué : on le retire et on prévient AuthProvider (qui déconnecte et renvoie à /connexion).
-    // Les routes publiques (skipAuth) et les échecs de connexion n'ont pas de jeton à retirer.
-    if (response.status === 401 && !skipAuth && getToken()) {
-      localStorage.removeItem(TOKEN_KEY);
-      try { sessionStorage.setItem(SESSION_EXPIRED_KEY, "1"); } catch { /* stockage indisponible */ }
-      authEvents.emit("unauthorized");
-    }
     throw new ApiError(response.status, message, data);
   }
 
@@ -141,14 +184,18 @@ async function request<T>(
  * Télécharge un fichier binaire (PDF…). Les erreurs JSON du serveur (404, 410…) sont converties
  * en ApiError avec leur message, comme pour `request`.
  */
-async function requestBlob(path: string, options: RequestOptions = {}): Promise<Blob> {
+async function requestBlob(path: string, options: RequestOptions = {}, retried = false): Promise<Blob> {
   const { skipAuth = false, params } = options;
   const headers: Record<string, string> = {};
-  if (!skipAuth) {
-    const token = getToken();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-  }
+  const sentToken = skipAuth ? null : accessToken;
+  if (sentToken) headers["Authorization"] = `Bearer ${sentToken}`;
   const response = await fetch(buildUrl(path, params), { method: "GET", headers });
+  if (response.status === 401 && sentToken && !retried) {
+    const fresh = await refreshAccessToken();
+    if (fresh) return requestBlob(path, options, true);
+    endSession();
+    throw new ApiError(401, "Session expirée.");
+  }
   if (!response.ok) {
     let message = `Erreur ${response.status}`;
     try {

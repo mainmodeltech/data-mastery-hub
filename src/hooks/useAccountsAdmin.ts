@@ -52,3 +52,11 @@ export function useUpdateUser() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ACCOUNT_KEYS.users }),
   });
 }
+
+export function useResetMfa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => userAdminService.resetMfa(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ACCOUNT_KEYS.users }),
+  });
+}
