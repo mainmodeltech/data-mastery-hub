@@ -14,6 +14,11 @@ services:
         # Cle de SITE reCAPTCHA v3 (publique). Le domaine du staging doit etre declare dans la console Google.
         VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY:?VITE_RECAPTCHA_SITE_KEY est obligatoire}
     container_name: model-tech-staging-frontend
+    environment:
+      # En-tetes de securite (lus au demarrage du conteneur, pas au build)
+      CSP_HEADER_NAME: ${CSP_HEADER_NAME:-Content-Security-Policy-Report-Only}
+      API_ORIGIN: ${VITE_API_BASE_URL}
+      MEDIA_ORIGIN: ${MEDIA_ORIGIN:-}
     networks:
       - dokploy-network
     restart: unless-stopped

@@ -15,6 +15,7 @@ import { Button, Card, Pill } from "@/components/shared";
 import { httpClient } from "@/services/httpClient";
 import { QUERY_CONFIG } from "@/config/constants";
 import { cn } from "@/lib/utils";
+import { csvRow, downloadCsv } from "@/lib/csv";
 
 type NewsletterStatus = "PENDING" | "CONFIRMED" | "UNSUBSCRIBED";
 
@@ -49,13 +50,10 @@ function useSubscribers() {
 
 function exportConfirmed(list: Subscriber[]) {
   const rows = list.filter((s) => s.status === "CONFIRMED");
-  const csv = ["E-mail;Source;Confirmé le", ...rows.map((s) => `${s.email};${s.source ?? ""};${day(s.confirmedAt)}`)].join("\r\n");
-  const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "newsletter-abonnes.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadCsv("newsletter-abonnes.csv", [
+    csvRow(["E-mail", "Source", "Confirmé le"]),
+    ...rows.map((s) => csvRow([s.email, s.source, day(s.confirmedAt)])),
+  ]);
 }
 
 export default function AdminNewsletter() {

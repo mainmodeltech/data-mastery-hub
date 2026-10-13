@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { hasAnyRole, ROLE_GROUPS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
+import { csvRow, downloadCsv } from "@/lib/csv";
 import {
   CERTIFICATE_STATUS_LABELS,
   PROJECT_STATUS_LABELS,
@@ -68,25 +69,16 @@ function formatDate(iso: string | null): string {
   return iso ? format(new Date(iso), "d MMM yyyy", { locale: fr }) : "—";
 }
 
-function csvCell(value: string | number): string {
-  const s = String(value);
-  return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
-
 function exportCsv(tracking: SessionTracking) {
   const header = ["Apprenant", "Profil", "Progression (%)", "Quiz réussis", "Quiz total", "Projet final", "Certificat"];
   const rows = tracking.learners.map((l) => [
     l.name, l.subtitle ?? "", l.progressPercent, l.quizPassed, l.quizTotal,
     PROJECT_STATUS_LABELS[l.project], CERTIFICATE_STATUS_LABELS[l.certificate],
   ]);
-  const csv = [header, ...rows].map((r) => r.map(csvCell).join(";")).join("\r\n");
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `suivi-${tracking.sessionName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadCsv(
+    `suivi-${tracking.sessionName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`,
+    [header, ...rows].map(csvRow),
+  );
 }
 
 function progressColor(p: number): string {

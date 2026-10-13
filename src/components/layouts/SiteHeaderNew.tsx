@@ -42,9 +42,11 @@ export function SiteHeaderNew() {
 
         {header && (
           <div className="ml-auto hidden items-center gap-5 lg:flex">
-            <Link to={accountHref} className="font-sans text-sm font-medium text-navy hover:text-cta">
+            {/* Lien ordinaire (rechargement complet) : la page de connexion et les espaces privés se chargent
+                sans le widget de discussion tiers (voir public/tawk-init.js). */}
+            <a href={accountHref} className="font-sans text-sm font-medium text-navy hover:text-cta">
               {accountLabel}
-            </Link>
+            </a>
             <Button asChild variant="primary" shape="pill" size="sm">
               <Link to={header.applyHref}>{header.applyLabel}</Link>
             </Button>
@@ -77,13 +79,12 @@ export function SiteHeaderNew() {
             </Link>
           ))}
           <div className="mt-2 flex flex-col gap-2 border-t border-[#E7E0D4] pt-4">
-            <Link
-              to={accountHref}
-              onClick={() => setOpen(false)}
+            <a
+              href={accountHref}
               className="rounded-card px-3 py-2 text-center font-sans text-sm font-medium text-navy"
             >
               {accountLabel}
-            </Link>
+            </a>
             <Button asChild variant="primary" shape="pill" onClick={() => setOpen(false)}>
               <Link to={header.applyHref}>{header.applyLabel}</Link>
             </Button>

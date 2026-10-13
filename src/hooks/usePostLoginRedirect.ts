@@ -21,6 +21,10 @@ export function usePostLoginRedirect() {
       from &&
       ((from.startsWith("/admin") && hasAnyRole(user.roles, STAFF_ROLES)) ||
         (from.startsWith("/espace") && hasAnyRole(user.roles, LEARNER_ROLES)));
-    navigate(canReturn ? from : homePathForRoles(user.roles), { replace: true });
+    const target = canReturn ? from : homePathForRoles(user.roles);
+    // Espaces privés : chargement complet de la page (la session est relue depuis le stockage du
+    // navigateur) pour qu'aucun script tiers chargé sur le site public ne reste présent dans l'espace.
+    if (target.startsWith("/admin") || target.startsWith("/espace")) window.location.replace(target);
+    else navigate(target, { replace: true });
   }, [user, location.state, navigate]);
 }

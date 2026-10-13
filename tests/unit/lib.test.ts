@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { fill } from "../../src/lib/template.ts";
 import { todoHref } from "../../src/lib/learnerLinks.ts";
 import { emptyLike } from "../../src/lib/json.ts";
+import { csvCell, csvRow } from "../../src/lib/csv.ts";
 import { computeOrientationResult, type OrientationRule } from "../../src/lib/orientation.ts";
 
 test("fill remplace les variables connues et laisse les inconnues", () => {
@@ -61,4 +62,17 @@ test("quiz : analyse de données → data analyst ; tableaux de bord ou Excel �
 test("quiz : aucune règle satisfaite → résultat par défaut", () => {
   assert.equal(pick({ situation: "student", goal: "team", tools: "basic", availability: "flexible" }), "both");
   assert.equal(computeOrientationResult({}, [], "x"), "x");
+});
+
+test("csvCell neutralise les formules et protège les séparateurs", () => {
+  assert.equal(csvCell('=HYPERLINK("http://x")'), '"\'=HYPERLINK(""http://x"")"');
+  assert.equal(csvCell("+33 1 02"), "'+33 1 02");
+  assert.equal(csvCell("-1"), "'-1");
+  assert.equal(csvCell("@cmd"), "'@cmd");
+  assert.equal(csvCell("a;b"), '"a;b"');
+  assert.equal(csvCell("ligne1\nligne2"), '"ligne1\nligne2"');
+  assert.equal(csvCell("Awa Diop"), "Awa Diop");
+  assert.equal(csvCell(-5), "-5"); // un nombre reste un nombre
+  assert.equal(csvCell(null), "");
+  assert.equal(csvRow(["a", 1, null, "=1+1"]), "a;1;;'=1+1");
 });

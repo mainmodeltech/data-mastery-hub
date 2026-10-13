@@ -1,9 +1,20 @@
+# Politique de référent : les pages dont l'adresse contient un jeton secret (paiement, lien de connexion,
+# réinitialisation du mot de passe, confirmation de newsletter, certificat) n'envoient aucun « Referer »
+# vers les sites tiers (polices, statistiques, discussion…).
+map $request_uri $referrer_policy {
+    default "strict-origin-when-cross-origin";
+    ~^/(paiement|connexion/lien|reinitialiser-mot-de-passe|admin/reset-password|newsletter|certificats)(/|\?|$) "no-referrer";
+}
+
 server {
     listen 80;
     server_name _;
+    server_tokens off;
 
     root /usr/share/nginx/html;
     index index.html;
+
+    include /etc/nginx/conf.d/snippets/security-headers.conf;
 
     # ── Gzip — améliore les performances (Core Web Vitals → SEO) ─────────────
     gzip on;
@@ -14,16 +25,24 @@ server {
     location = /sw.js {
         add_header Cache-Control "no-cache";
         add_header Service-Worker-Allowed "/";
+        include /etc/nginx/conf.d/snippets/security-headers.conf;
     }
     location = /manifest.webmanifest {
         types { application/manifest+json webmanifest; }
         add_header Cache-Control "no-cache";
+        include /etc/nginx/conf.d/snippets/security-headers.conf;
+    }
+    # Scripts d'initialisation (Analytics, discussion) : non versionnés, donc jamais en cache longue durée
+    location ~ ^/(gtag-init|tawk-init)\.js$ {
+        add_header Cache-Control "no-cache";
+        include /etc/nginx/conf.d/snippets/security-headers.conf;
     }
 
     # ── Cache assets statiques (JS/CSS/images) ─────────────────────────────
     location ~* \.(js|css|png|jpg|jpeg|gif|svg|ico|woff2)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
+        include /etc/nginx/conf.d/snippets/security-headers.conf;
     }
 
     # ── Routing SPA + prerender ────────────────────────────────────────────
@@ -32,9 +51,4 @@ server {
     location / {
         try_files $uri $uri/index.html $uri.html /index.html;
     }
-
-    # ── Sécurité basique ────────────────────────────────────────────────────
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-    add_header Referrer-Policy "strict-origin-when-cross-origin";
 }
