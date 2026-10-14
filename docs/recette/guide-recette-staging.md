@@ -181,6 +181,28 @@ Les profils « Admin », « Éditeur » et « Super Admin » ci-dessus sont remp
 | 52 | Communication | Menu : *Candidatures*, *Paiements*, *Apprenants* | Absents du menu et inaccessibles par adresse directe (redirection) | ☐ |
 | 53 | Audit | Tout parcourir, tenter une action | Lecture seule : aucun bouton d'action, 403 si forcé par l'API | ☐ |
 
+### Ergonomie du back-office (lots U0 à U7)
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| U1 | **Densité** (icône dans l'en-tête) : Compact / Standard / Confortable, à 100 % de zoom navigateur | L'affichage est lisible sans dézoomer ; le choix est mémorisé après rechargement | ☐ |
+| U2 | **Candidatures** avec beaucoup de lignes : onglets par étape (Nouvelles, Paiement en attente, À confirmer, Inscrites, Archives) avec compteurs | Chaque onglet filtre ; les compteurs correspondent | ☐ |
+| U3 | **Candidatures** : recherche (nom, e-mail, téléphone, société, formation, session, code promo), tri, pagination | Résultat quasi immédiat, la pagination est conservée | ☐ |
+| U4 | **Candidatures** : ouvrir une ligne (tiroir) puis enregistrer un paiement / un justificatif | Le pipeline de la candidature est visible ; le paiement apparaît dans Paiements | ☐ |
+| U5 | Menu : l'ancienne entrée *Inscriptions* a disparu ; l'adresse `/admin/inscriptions` redirige vers les candidatures | Historique disponible dans l'onglet *Archives* | ☐ |
+| U6 | **Codes promo** : créer un code à 31 % | Refusé (maximum 30 %) ; un ancien code > 30 % est signalé « Plafond dépassé » et n'est plus appliqué | ☐ |
+| U7 | **Certificats** : fin de formation éligible | Le certificat est créé **« À valider »**, invisible pour l'apprenant, aucun e-mail envoyé | ☐ |
+| U8 | **Certificats** : *Aperçu* (PDF avec filigrane), puis *Valider* (ou valider la sélection) | Après validation : visible côté apprenant, e-mail envoyé, PDF sans filigrane, lien de vérification valide ; avant : 404 | ☐ |
+| U9 | **Suivi de session** → apprenant → *Quiz* : un quiz à 1 tentative échoué, accorder des tentatives supplémentaires | L'apprenant peut refaire le quiz (recharger sa page) ; le compteur « tentatives accordées » apparaît | ☐ |
+| U10 | Augmenter le nombre de tentatives du quiz dans le cours | La nouvelle limite s'applique aux apprenants déjà bloqués | ☐ |
+| U11 | **Communauté** (admin) : une question posée dans une leçon apparaît dans la boîte de réception ; y répondre | La réponse part à l'apprenant (notification + e-mail) ; filtres Sans réponse / Répondues | ☐ |
+| U12 | Message ou question avec **code** (barre d'outils : bloc de code, gras, liste, lien ; onglet Aperçu) | Le code s'affiche en bloc formaté avec coloration, chez l'apprenant comme chez l'admin ; aucun HTML saisi n'est interprété | ☐ |
+| U13 | **Masterclass** (admin) : créer une édition (date, lieu, places), la publier | La page publique affiche la prochaine édition ; plusieurs éditions possibles | ☐ |
+| U14 | **Masterclass** : s'inscrire côté public, puis pointer la présence et envoyer un message aux inscrits | Confirmation par e-mail ; présence enregistrée ; message reçu | ☐ |
+| U15 | **Sessions, Alumni, Projets, Témoignages, Messages, Contenus** | Même charte graphique que le reste ; recherche, publication d'un clic, suppression avec confirmation | ☐ |
+| U16 | **Projets** : créer (membres obligatoires), ouvrir la fiche, ajouter couverture et captures d'écran, retirer un membre | Fichiers téléversés et affichés ; un fichier non image est refusé avec un message lisible | ☐ |
+| U17 | **Téléversements** : logo de partenaire (PNG, SVG), document de projet apprenant ~3 Mo (.pbix), fichier > 10 Mo, fichier .exe, justificatif de paiement | Les formats autorisés passent ; trop gros ou interdit = message clair, rien n'est enregistré | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |
