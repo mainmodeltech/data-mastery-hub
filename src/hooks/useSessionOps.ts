@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { EVALUATION_KEYS } from "@/hooks/useEvaluations";
-import { sessionOpsService, type ProjectDecision } from "@/services/api/sessionOpsService";
+import { type QuestionStatus, sessionOpsService, type ProjectDecision } from "@/services/api/sessionOpsService";
 
 const KEYS = {
   messages: (sessionId: string) => ["admin", "session", sessionId, "messages"] as const,
@@ -34,11 +34,24 @@ export function useSessionQuestions(sessionId: string | undefined) {
   });
 }
 
+export function useQuestionInbox(params: { status: QuestionStatus; q?: string; page: number; size: number }) {
+  return useQuery({
+    queryKey: ["admin", "question-inbox", params],
+    queryFn: () => sessionOpsService.inbox(params),
+    placeholderData: (prev) => prev,
+    staleTime: 15 * 1000,
+  });
+}
+
 export function useAnswerQuestion(sessionId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ questionId, answer }: { questionId: string; answer: string }) => sessionOpsService.answer(sessionId, questionId, answer),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.questions(sessionId) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.questions(sessionId) });
+      qc.invalidateQueries({ queryKey: ["admin", "question-inbox"] });
+      qc.invalidateQueries({ queryKey: ["admin", "stats"] });
+    },
   });
 }
 

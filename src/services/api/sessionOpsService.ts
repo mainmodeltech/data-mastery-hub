@@ -36,6 +36,21 @@ export interface SessionQuestion {
   answeredAt: string | null;
 }
 
+/** Question de la boîte de réception (toutes sessions) : comme SessionQuestion, avec sa session et sa formation. */
+export interface InboxQuestion extends SessionQuestion {
+  sessionId: string;
+  sessionName: string | null;
+  formationTitle: string;
+}
+
+export type QuestionStatus = "OPEN" | "ANSWERED" | "ALL";
+
+export interface InboxPage {
+  items: InboxQuestion[];
+  totalElements: number;
+  totalPages: number;
+}
+
 export interface ProjectFileLink {
   id: string;
   name: string;
@@ -54,6 +69,13 @@ export interface Trainer {
 }
 
 export const sessionOpsService = {
+  /** Boîte de réception des questions, toutes sessions confondues (filtrée côté serveur). */
+  inbox: async (params: { status: QuestionStatus; q?: string; page: number; size: number }): Promise<InboxPage> => {
+    const res = await httpClient.get<ApiResponse<InboxQuestion[]> & { pagination?: { totalElements: number; totalPages: number } }>(
+      "/admin/questions", { params });
+    return { items: res.data ?? [], totalElements: res.pagination?.totalElements ?? res.data?.length ?? 0, totalPages: res.pagination?.totalPages ?? 1 };
+  },
+
   /** Les quiz d'un apprenant : tentatives utilisées, limite effective, tentatives accordées. */
   learnerQuizzes: (sessionId: string, learnerId: string) =>
     httpClient.get<QuizSummary[]>(`/admin/sessions/${sessionId}/learners/${learnerId}/quizzes`),

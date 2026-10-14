@@ -24,7 +24,8 @@ export const ACCESS = {
   LEARNERS: ["LEARNERS_VIEW"],
   MESSAGES: ["MESSAGES_MANAGE"],
   NEWSLETTER: ["NEWSLETTER_MANAGE"],
-  COMMUNITY: ["COMMUNITY_MODERATE"],
+  /** Communauté : questions des apprenants (équipe de session) et modération de l'entraide. */
+  COMMUNITY: ["COMMUNITY_MODERATE", "SESSIONS_VIEW"],
   EMAILS: ["EMAIL_LOGS_VIEW"],
   SITE_CONTENT: ["SITE_CONTENT_VIEW"],
   PROGRAM: ["PROGRAM_MANAGE"],

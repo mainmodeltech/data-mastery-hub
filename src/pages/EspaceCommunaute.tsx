@@ -3,11 +3,13 @@
  * répondent (un niveau de réponse). Les noms affichés sont « Prénom N. » ; l'équipe modère les messages.
  * (GET/POST /learner/formations/:id/community, DELETE /learner/community/:postId)
  */
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2, MessageCircle, Trash2 } from "lucide-react";
 
+import { RichText } from "@/components/rich/RichText";
+import { RichTextEditor } from "@/components/rich/RichTextEditor";
 import { Button, Card } from "@/components/shared";
 import { inputClass } from "@/components/admin/AdminKit";
 import { LearnerShell } from "@/components/learner/LearnerShell";
@@ -22,6 +24,7 @@ function Compose({ placeholder, busy, onSubmit, onCancel }: {
   placeholder: string; busy: boolean; onSubmit: (content: string) => Promise<void>; onCancel?: () => void;
 }) {
   const [value, setValue] = useState("");
+  const composeId = useId();
   return (
     <form
       className="flex flex-col gap-2"
@@ -32,7 +35,7 @@ function Compose({ placeholder, busy, onSubmit, onCancel }: {
         setValue("");
       }}
     >
-      <textarea aria-label={placeholder} rows={3} maxLength={2000} required placeholder={placeholder} className={inputClass} value={value} onChange={(e) => setValue(e.target.value)} />
+      <RichTextEditor id={`compose-${composeId}`} label={placeholder} value={value} onChange={setValue} rows={4} maxLength={5000} />
       <div className="flex justify-end gap-2">
         {onCancel && <Button type="button" variant="outline" shape="rounded" size="sm" onClick={onCancel}>Annuler</Button>}
         <Button type="submit" variant="navy" shape="rounded" size="sm" disabled={busy || !value.trim()}>
@@ -49,7 +52,7 @@ function Message({ post, onDelete }: { post: CommunityPost; onDelete: () => void
       <p className="text-xs text-ink-secondary">
         <strong className="text-ink">{post.author}</strong> · {stamp(post.createdAt)}
       </p>
-      <p className="whitespace-pre-wrap text-sm text-ink">{post.content}</p>
+      <RichText source={post.content} />
       {post.mine && (
         <button type="button" onClick={onDelete} className="flex w-fit items-center gap-1 text-xs font-semibold text-ink-secondary hover:text-error">
           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Supprimer

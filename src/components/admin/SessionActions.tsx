@@ -11,6 +11,7 @@ import { Download, Loader2, MessageCircle } from "lucide-react";
 import { ErrorNotice, errorMessage, Field, inputClass } from "@/components/admin/AdminKit";
 import { Button, Card, Pill } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { QuestionItem } from "@/components/admin/QuestionItem";
 import { useIssueCertificate } from "@/hooks/useAdminOps";
 import { QUIZ_STATUS_LABELS, attemptsLabel, type QuizSummary } from "@/types/evaluation.type";
 import {
@@ -330,26 +331,11 @@ export function IssueCertificatesDialog({
 // ─── Questions des apprenants ─────────────────────────────────────────────────
 
 export function QuestionsCard({ sessionId }: { sessionId: string }) {
-  const { toast } = useToast();
   const { data: questions = [], isLoading } = useSessionQuestions(sessionId);
-  const answer = useAnswerQuestion(sessionId);
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [text, setText] = useState("");
   const [showAnswered, setShowAnswered] = useState(false);
 
   const open = questions.filter((q) => !q.answer);
   const shown = showAnswered ? questions : open;
-
-  const submit = async (questionId: string) => {
-    try {
-      await answer.mutateAsync({ questionId, answer: text.trim() });
-      toast({ title: "Réponse envoyée" });
-      setOpenId(null);
-      setText("");
-    } catch (err) {
-      toast({ title: "Envoi impossible", description: errorMessage(err), variant: "destructive" });
-    }
-  };
 
   return (
     <Card radius="stat" className="flex flex-col gap-3 border border-[#E7E0D4] p-5 lg:p-6">
@@ -360,26 +346,8 @@ export function QuestionsCard({ sessionId }: { sessionId: string }) {
       {isLoading && <Loader2 className="h-5 w-5 animate-spin text-ink-secondary" />}
       {!isLoading && shown.length === 0 && <p className="text-sm text-ink-secondary">{questions.length === 0 ? "Aucune question posée pour le moment." : "Toutes les questions ont reçu une réponse."}</p>}
       {shown.map((q) => (
-        <div key={q.id} className="flex flex-col gap-2 border-b border-[#E7E0D4] pb-3 last:border-b-0 last:pb-0">
-          <p className="text-xs text-ink-secondary"><strong className="text-ink">{q.learnerName}</strong> · {q.lessonTitle} · {stamp(q.askedAt)}</p>
-          <p className="text-sm text-ink">{q.question}</p>
-          {q.answer ? (
-            <p className="rounded-xl bg-success-bg px-3 py-2 text-sm text-success">{q.answer}<span className="mt-1 block text-xs opacity-80">{q.answeredBy} · {stamp(q.answeredAt)}</span></p>
-          ) : openId === q.id ? (
-            <div className="flex flex-col gap-2">
-              <textarea aria-label="Votre réponse" rows={3} maxLength={5000} className={inputClass} value={text} onChange={(e) => setText(e.target.value)} />
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => { setOpenId(null); setText(""); }}>Annuler</Button>
-                <Button type="button" variant="navy" shape="rounded" size="sm" disabled={answer.isPending || !text.trim()} onClick={() => void submit(q.id)}>
-                  {answer.isPending ? <Loader2 className="animate-spin" /> : "Répondre"}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button type="button" variant="outline" shape="rounded" size="sm" className="w-fit" onClick={() => { setOpenId(q.id); setText(""); }}>
-              <MessageCircle /> Répondre
-            </Button>
-          )}
+        <div key={q.id} className="border-b border-[#E7E0D4] pb-3 last:border-b-0 last:pb-0">
+          <QuestionItem sessionId={sessionId} q={q} />
         </div>
       ))}
       {questions.length > open.length && (
