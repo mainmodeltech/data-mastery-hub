@@ -32,6 +32,7 @@ import {
   MessagesSquare,
   Award,
   Send,
+  Video,
 } from "lucide-react";
 
 type PermNavItem = AppNavItem & { access: readonly string[] };
@@ -46,11 +47,10 @@ const navItems: PermNavItem[] = [
   { href: "/admin/bootcamp-sessions", label: "Sessions", icon: CalendarDays, section: "Catalogue", access: ACCESS.CATALOG },
   { href: "/admin/candidatures", label: "Candidatures", icon: Wallet, section: "Admissions", access: ACCESS.APPLICATIONS },
   { href: "/admin/paiements", label: "Paiements", icon: Banknote, section: "Admissions", access: ACCESS.PAYMENTS },
-  { href: "/admin/inscriptions", label: "Inscriptions", icon: ClipboardList, section: "Admissions", access: ACCESS.APPLICATIONS },
-  { href: "/admin/masterclass", label: "Masterclass", icon: ClipboardList, section: "Admissions", access: ACCESS.MASTERCLASS },
   { href: "/admin/factures", label: "Factures", icon: Receipt, section: "Admissions", access: ACCESS.INVOICES },
   { href: "/admin/certificats", label: "Certificats", icon: Award, section: "Admissions", access: ACCESS.CERTIFICATES },
   { href: "/admin/promo-codes", label: "Codes parrainage", icon: Tag, section: "Admissions", access: ACCESS.PROMO },
+  { href: "/admin/masterclass", label: "Masterclass", icon: Video, section: "Relation", access: ACCESS.MASTERCLASS },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare, section: "Relation", access: ACCESS.MESSAGES },
   { href: "/admin/communaute", label: "Communauté", icon: MessagesSquare, section: "Relation", access: ACCESS.COMMUNITY },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail, section: "Relation", access: ACCESS.NEWSLETTER },
@@ -89,7 +89,9 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
         "/admin/candidatures": todo.newApplications ?? 0,
         "/admin/paiements": (todo.paymentsToConfirm ?? 0) + (todo.overdueInstallments ?? 0),
         "/admin/messages": todo.unreadMessages ?? 0,
-        "/admin/bootcamp-sessions": (todo.openQuestions ?? 0) + (todo.projectsToReview ?? 0),
+        "/admin/certificats": todo.certificatesToValidate ?? 0,
+        "/admin/bootcamp-sessions": todo.projectsToReview ?? 0,
+        "/admin/communaute": todo.openQuestions ?? 0,
       }
     : {};
   const visibleNav: AppNavItem[] = navItems

@@ -1,988 +1,318 @@
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+/**
+ * AdminPromoCodes.tsx — codes de parrainage (design system).
+ * Une remise de parrainage ne dépasse jamais 30 % (règle serveur). Un code plus ancien au-dessus du plafond est signalé,
+ * refusé aux candidats et doit être corrigé avant toute autre modification.
+ */
+import { useMemo, useState } from "react";
+import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { AlertTriangle, Copy, Eye, EyeOff, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
+
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog, EmptyState, ErrorNotice, errorMessage, Field, inputClass, SwitchRow } from "@/components/admin/AdminKit";
+import { Button, Card, Pill, ProgressBar } from "@/components/shared";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Loader2,
-  Tag,
-  Calendar,
-  Users,
-  Percent,
-  Mail,
-  Phone,
-  User,
-  Copy,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  Save,
-  Search,
-  Filter,
-  Clock,
-} from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
-  usePromoCodes,
-  useCreatePromoCode,
-  useUpdatePromoCode,
-  useDeletePromoCode,
-  useTogglePromoCodeActive,
+  useCreatePromoCode, useDeletePromoCode, usePromoCodes, useTogglePromoCodeActive, useUpdatePromoCode,
 } from "@/hooks/usePromoCodes";
-import type { PromoCode, CreatePromoCodeDTO } from "@/types/promo-code.type";
+import { cn } from "@/lib/utils";
+import { MAX_PROMO_DISCOUNT, type CreatePromoCodeDTO, type PromoCode } from "@/types/promo-code.type";
 
-// Types pour le formulaire
-type FormState = {
-  code: string;
-  description: string;
-  referrerName: string;
-  referrerEmail: string;
-  referrerPhone: string;
-  discountPercent: number;
-  maxUses: string;
-  expiresAt: string;
-  isActive: boolean;
+type Filter = "all" | "active" | "inactive" | "expired" | "full" | "fix";
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: "all", label: "Tous" },
+  { key: "active", label: "Actifs" },
+  { key: "inactive", label: "Inactifs" },
+  { key: "expired", label: "Expirés" },
+  { key: "full", label: "Épuisés" },
+  { key: "fix", label: "À corriger" },
+];
+
+const day = (iso: string | null) => (iso ? format(parseISO(iso), "d MMM yyyy", { locale: fr }) : "—");
+
+function isExpired(c: PromoCode) { return !!c.expiresAt && new Date(c.expiresAt) < new Date(); }
+function isFull(c: PromoCode) { return c.maxUses != null && c.usageCount >= c.maxUses; }
+function isOver(c: PromoCode) { return c.discountPercent > MAX_PROMO_DISCOUNT; }
+
+function statusOf(c: PromoCode): { label: string; variant: "success" | "warning" | "error" | "neutral" } {
+  if (isOver(c)) return { label: "À corriger", variant: "error" };
+  if (!c.isActive) return { label: "Inactif", variant: "neutral" };
+  if (isExpired(c)) return { label: "Expiré", variant: "error" };
+  if (isFull(c)) return { label: "Épuisé", variant: "warning" };
+  return { label: "Actif", variant: "success" };
+}
+
+interface FormState {
+  code: string; description: string; referrerName: string; referrerEmail: string; referrerPhone: string;
+  discountPercent: string; maxUses: string; expiresAt: string; isActive: boolean;
+}
+
+const EMPTY: FormState = {
+  code: "", description: "", referrerName: "", referrerEmail: "", referrerPhone: "",
+  discountPercent: "10", maxUses: "", expiresAt: "", isActive: true,
 };
 
-const defaultForm: FormState = {
-  code: "",
-  description: "",
-  referrerName: "",
-  referrerEmail: "",
-  referrerPhone: "",
-  discountPercent: 0,
-  maxUses: "",
-  expiresAt: "",
-  isActive: true,
-};
-
-// Filtres possibles
-type StatusFilter = "all" | "active" | "inactive" | "expired" | "full";
-
-function promoCodeToForm(promoCode: PromoCode): FormState {
+function toForm(c: PromoCode): FormState {
   return {
-    code: promoCode.code,
-    description: promoCode.description || "",
-    referrerName: promoCode.referrerName,
-    referrerEmail: promoCode.referrerEmail || "",
-    referrerPhone: promoCode.referrerPhone || "",
-    discountPercent: promoCode.discountPercent,
-    maxUses: promoCode.maxUses?.toString() || "",
-    expiresAt: promoCode.expiresAt || "",
-    isActive: promoCode.isActive,
+    code: c.code, description: c.description ?? "", referrerName: c.referrerName, referrerEmail: c.referrerEmail ?? "",
+    referrerPhone: c.referrerPhone ?? "", discountPercent: String(c.discountPercent), maxUses: c.maxUses?.toString() ?? "",
+    expiresAt: c.expiresAt ? c.expiresAt.slice(0, 16) : "", isActive: c.isActive,
   };
 }
 
-function validateForm(form: FormState): { isValid: boolean; errors: Record<string, string> } {
-  const errors: Record<string, string> = {};
+function PromoDialog({ code, onClose }: { code: PromoCode | null; onClose: () => void }) {
+  const { toast } = useToast();
+  const create = useCreatePromoCode();
+  const update = useUpdatePromoCode();
+  const [form, setForm] = useState<FormState>(code ? toForm(code) : EMPTY);
+  const [error, setError] = useState("");
+  const pending = create.isPending || update.isPending;
+  const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
 
-  if (!form.code.trim()) {
-    errors.code = "Le code est obligatoire";
-  } else if (!/^[A-Z0-9_-]+$/.test(form.code.toUpperCase())) {
-    errors.code = "Le code ne doit contenir que des lettres majuscules, chiffres, tirets et underscores";
-  }
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    const percent = Number(form.discountPercent);
+    if (!/^[A-Z0-9_-]+$/.test(form.code.trim().toUpperCase())) return setError("Le code ne contient que des lettres, chiffres, tirets et underscores.");
+    if (!form.referrerName.trim()) return setError("Le nom du parrain est obligatoire.");
+    if (!Number.isInteger(percent) || percent < 0 || percent > MAX_PROMO_DISCOUNT) {
+      return setError(`La remise doit être un entier entre 0 et ${MAX_PROMO_DISCOUNT} %.`);
+    }
+    if (form.maxUses && (!Number.isInteger(Number(form.maxUses)) || Number(form.maxUses) < 1)) return setError("Le nombre d'utilisations doit être un entier positif.");
 
-  if (!form.referrerName.trim()) {
-    errors.referrerName = "Le nom du parrain est obligatoire";
-  }
+    const payload: CreatePromoCodeDTO = {
+      code: form.code.trim().toUpperCase(),
+      description: form.description.trim() || null,
+      referrerName: form.referrerName.trim(),
+      referrerEmail: form.referrerEmail.trim() || null,
+      referrerPhone: form.referrerPhone.trim() || null,
+      discountPercent: percent,
+      maxUses: form.maxUses ? Number(form.maxUses) : null,
+      expiresAt: form.expiresAt || null,
+      isActive: form.isActive,
+    };
+    try {
+      if (code) {
+        await update.mutateAsync({ id: code.id, data: payload });
+        toast({ title: "Code mis à jour", description: payload.code });
+      } else {
+        await create.mutateAsync(payload);
+        toast({ title: "Code créé", description: payload.code });
+      }
+      onClose();
+    } catch (err) {
+      setError(errorMessage(err, "Enregistrement impossible."));
+    }
+  };
 
-  if (form.referrerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.referrerEmail)) {
-    errors.referrerEmail = "Email invalide";
-  }
-
-  if (form.discountPercent < 0 || form.discountPercent > 100) {
-    errors.discountPercent = "La réduction doit être entre 0 et 100%";
-  }
-
-  if (form.maxUses && (parseInt(form.maxUses) < 1 || !Number.isInteger(parseInt(form.maxUses)))) {
-    errors.maxUses = "Le nombre d'utilisations doit être un entier positif";
-  }
-
-  if (form.expiresAt && new Date(form.expiresAt) < new Date()) {
-    errors.expiresAt = "La date d'expiration doit être dans le futur";
-  }
-
-  return { isValid: Object.keys(errors).length === 0, errors };
+  return (
+    <Dialog open onOpenChange={(o) => !o && !pending && onClose()}>
+      <DialogContent className="max-h-[92vh] max-w-xl overflow-y-auto rounded-callout">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-xl font-bold text-navy">{code ? `Modifier ${code.code}` : "Nouveau code de parrainage"}</DialogTitle>
+          <DialogDescription className="text-ink-secondary">
+            Un candidat qui saisit ce code obtient la remise sur sa formation. Remise maximale : {MAX_PROMO_DISCOUNT} %.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          {code && isOver(code) && (
+            <p role="alert" className="flex items-start gap-2 rounded-xl bg-error-bg px-4 py-3 text-sm text-error">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              Ce code accorde {code.discountPercent} % : il est refusé aux candidats tant que la remise n'est pas ramenée à {MAX_PROMO_DISCOUNT} % ou moins.
+            </p>
+          )}
+          {error && <ErrorNotice>{error}</ErrorNotice>}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Code *" htmlFor="pc-code">
+              <input id="pc-code" required className={cn(inputClass, "uppercase")} value={form.code} onChange={(e) => set("code", e.target.value)} placeholder="AWA2026" />
+            </Field>
+            <Field label={`Remise (%) * — max ${MAX_PROMO_DISCOUNT}`} htmlFor="pc-pct">
+              <input id="pc-pct" type="number" required min={0} max={MAX_PROMO_DISCOUNT} step={1} className={inputClass} value={form.discountPercent} onChange={(e) => set("discountPercent", e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Parrain *" htmlFor="pc-ref"><input id="pc-ref" required className={inputClass} value={form.referrerName} onChange={(e) => set("referrerName", e.target.value)} /></Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="E-mail du parrain" htmlFor="pc-mail"><input id="pc-mail" type="email" className={inputClass} value={form.referrerEmail} onChange={(e) => set("referrerEmail", e.target.value)} /></Field>
+            <Field label="Téléphone du parrain" htmlFor="pc-tel"><input id="pc-tel" className={inputClass} value={form.referrerPhone} onChange={(e) => set("referrerPhone", e.target.value)} /></Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Utilisations maximum" htmlFor="pc-max" hint="Vide : illimité."><input id="pc-max" type="number" min={1} className={inputClass} value={form.maxUses} onChange={(e) => set("maxUses", e.target.value)} /></Field>
+            <Field label="Expire le" htmlFor="pc-exp" hint="Vide : sans expiration."><input id="pc-exp" type="datetime-local" className={inputClass} value={form.expiresAt} onChange={(e) => set("expiresAt", e.target.value)} /></Field>
+          </div>
+          <Field label="Note interne" htmlFor="pc-desc"><textarea id="pc-desc" rows={2} className={inputClass} value={form.description} onChange={(e) => set("description", e.target.value)} /></Field>
+          <SwitchRow label="Code actif" description="Désactivé : refusé aux candidats." checked={form.isActive} onChange={(v) => set("isActive", v)} />
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" shape="rounded" disabled={pending} onClick={onClose}>Annuler</Button>
+            <Button type="submit" shape="rounded" disabled={pending}>{pending ? <Loader2 className="animate-spin" /> : code ? "Enregistrer" : "Créer le code"}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export default function AdminPromoCodes() {
   const { can } = useAuth();
   const canManage = can("PROMO_MANAGE");
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { data, isLoading, isError } = usePromoCodes(0, 200);
+  const toggle = useTogglePromoCodeActive();
+  const remove = useDeletePromoCode();
+  const [filter, setFilter] = useState<Filter>("all");
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<PromoCode | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<PromoCode | null>(null);
 
-  // États
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedPromoCode, setSelectedPromoCode] = useState<PromoCode | null>(null);
-  const [editingPromoCode, setEditingPromoCode] = useState<PromoCode | null>(null);
-  const [form, setForm] = useState<FormState>(defaultForm);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const codes = useMemo(() => data?.content ?? [], [data]);
+  const total = data?.totalElements ?? codes.length;
+  const toFix = codes.filter(isOver);
+  const usesTotal = codes.reduce((s, c) => s + c.usageCount, 0);
 
-  // Recherche et filtres
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const counts = useMemo<Record<Filter, number>>(() => ({
+    all: codes.length,
+    active: codes.filter((c) => !isOver(c) && c.isActive && !isExpired(c) && !isFull(c)).length,
+    inactive: codes.filter((c) => !c.isActive).length,
+    expired: codes.filter(isExpired).length,
+    full: codes.filter(isFull).length,
+    fix: codes.filter(isOver).length,
+  }), [codes]);
 
-  // Requêtes
-  const { data, isLoading } = usePromoCodes();
-  const promoCodes = data?.content || [];
-  const totalElements = data?.totalElements || 0;
-
-  const createMutation = useCreatePromoCode();
-  const updateMutation = useUpdatePromoCode();
-  const deleteMutation = useDeletePromoCode();
-  const toggleActiveMutation = useTogglePromoCodeActive();
-
-  const invalidateLists = () => {
-    queryClient.invalidateQueries({ queryKey: ['promoCodes', 'list'] });
-  };
-
-  // Filtrage des codes
-  const filteredPromoCodes = promoCodes.filter((promoCode) => {
-    // Filtre par recherche
-    const matchesSearch =
-        searchQuery === "" ||
-        promoCode.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        promoCode.referrerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (promoCode.referrerEmail?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (promoCode.description?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-
-    if (!matchesSearch) return false;
-
-    // Filtre par statut
-    if (statusFilter === "all") return true;
-
-    const isExpired = promoCode.expiresAt && new Date(promoCode.expiresAt) < new Date();
-    const isFull = promoCode.maxUses ? promoCode.usageCount >= promoCode.maxUses : false;
-
-    switch (statusFilter) {
-      case "active":
-        return promoCode.isActive && !isExpired && !isFull;
-      case "inactive":
-        return !promoCode.isActive;
-      case "expired":
-        return isExpired;
-      case "full":
-        return isFull;
-      default:
-        return true;
-    }
-  });
-
-  // Ouvrir le formulaire de création
-  const openCreate = () => {
-    setEditingPromoCode(null);
-    setForm(defaultForm);
-    setFormErrors({});
-    setDialogOpen(true);
-  };
-
-  // Ouvrir le formulaire d'édition
-  const openEdit = (promoCode: PromoCode) => {
-    setEditingPromoCode(promoCode);
-    setForm(promoCodeToForm(promoCode));
-    setFormErrors({});
-    setDialogOpen(true);
-  };
-
-  // Ouvrir le détail
-  const openDetail = (promoCode: PromoCode) => {
-    setSelectedPromoCode(promoCode);
-    setDetailDialogOpen(true);
-  };
-
-  // Fermer les dialogues
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditingPromoCode(null);
-    setFormErrors({});
-  };
-
-  const closeDetailDialog = () => {
-    setDetailDialogOpen(false);
-    setSelectedPromoCode(null);
-  };
-
-  // Mettre à jour un champ du formulaire
-  const setField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (formErrors[field]) {
-      setFormErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
-
-  // Copier le code
-  const copyToClipboard = (code: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    setTimeout(() => setCopiedCode(null), 2000);
-    toast({
-      title: "Code copié !",
-      description: "Le code a été copié dans le presse-papier",
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return codes.filter((c) => {
+      if (q && !`${c.code} ${c.referrerName} ${c.referrerEmail ?? ""} ${c.description ?? ""}`.toLowerCase().includes(q)) return false;
+      switch (filter) {
+        case "active": return !isOver(c) && c.isActive && !isExpired(c) && !isFull(c);
+        case "inactive": return !c.isActive;
+        case "expired": return isExpired(c);
+        case "full": return isFull(c);
+        case "fix": return isOver(c);
+        default: return true;
+      }
     });
-  };
+  }, [codes, filter, search]);
 
-  // Soumettre le formulaire
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const { isValid, errors } = validateForm(form);
-    if (!isValid) {
-      setFormErrors(errors);
-      toast({
-        title: "Erreur de validation",
-        description: "Veuillez corriger les erreurs du formulaire",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const payload: CreatePromoCodeDTO = {
-      code: form.code.toUpperCase().trim(),
-      description: form.description.trim() || null,
-      referrerName: form.referrerName.trim(),
-      referrerEmail: form.referrerEmail.trim() || null,
-      referrerPhone: form.referrerPhone.trim() || null,
-      discountPercent: form.discountPercent,
-      maxUses: form.maxUses ? parseInt(form.maxUses) : null,
-      expiresAt: form.expiresAt || null,
-      isActive: form.isActive,
-    };
-
-    if (editingPromoCode) {
-      updateMutation.mutate(
-          { id: editingPromoCode.id, data: payload },
-          {
-            onSuccess: (updated) => {
-              invalidateLists();
-              toast({
-                title: "Code mis à jour",
-                description: `Le code ${updated.code} a été modifié avec succès`,
-              });
-              closeDialog();
-            },
-            onError: () => {
-              toast({
-                title: "Erreur",
-                description: "Impossible de modifier le code",
-                variant: "destructive",
-              });
-            },
-          }
-      );
-    } else {
-      createMutation.mutate(payload, {
-        onSuccess: (created) => {
-          invalidateLists();
-          toast({
-            title: "Code créé",
-            description: `Le code ${created.code} a été créé avec succès`,
-          });
-          closeDialog();
-        },
-        onError: () => {
-          toast({
-            title: "Erreur",
-            description: "Impossible de créer le code",
-            variant: "destructive",
-          });
-        },
-      });
-    }
-  };
-
-  // Formater une date
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "—";
-    try {
-      return format(new Date(dateString), "dd MMM yyyy", { locale: fr });
-    } catch {
-      return dateString;
-    }
-  };
-
-  // Obtenir le statut d'un code
-  const getPromoCodeStatus = (promoCode: PromoCode) => {
-    const isExpired = promoCode.expiresAt && new Date(promoCode.expiresAt) < new Date();
-    const isFull = promoCode.maxUses ? promoCode.usageCount >= promoCode.maxUses : false;
-
-    if (!promoCode.isActive) return { label: "Inactif", variant: "outline" as const };
-    if (isExpired) return { label: "Expiré", variant: "destructive" as const };
-    if (isFull) return { label: "Épuisé", variant: "destructive" as const };
-    return { label: "Actif", variant: "default" as const };
+  const copy = async (c: PromoCode) => {
+    try { await navigator.clipboard.writeText(c.code); toast({ title: "Code copié", description: c.code }); } catch { /* presse-papier indisponible */ }
   };
 
   return (
-      <AdminLayout title="Codes de parrainage">
-        <div className="space-y-6">
-          {/* Header Card */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle className="text-2xl font-bold">Gestion des codes promo</CardTitle>
-              {canManage && (
-                <Button onClick={openCreate}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouveau code
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Gérez vos codes de parrainage et suivez leurs utilisations.
-              </p>
-            </CardContent>
-          </Card>
+    <AdminLayout
+      title="Codes de parrainage"
+      description={`${total} code${total > 1 ? "s" : ""} · ${usesTotal} utilisation${usesTotal > 1 ? "s" : ""}`}
+      actions={canManage ? <Button type="button" size="sm" shape="rounded" onClick={() => setCreating(true)}><Plus />Nouveau code</Button> : undefined}
+    >
+      <div className="flex flex-col gap-5">
+        {toFix.length > 0 && (
+          <div role="alert" className="flex flex-wrap items-center gap-3 rounded-card bg-error-bg px-5 py-4 text-sm text-error">
+            <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 flex-1">
+              <strong>{toFix.length} code{toFix.length > 1 ? "s" : ""} dépasse{toFix.length > 1 ? "nt" : ""} {MAX_PROMO_DISCOUNT} %</strong> et {toFix.length > 1 ? "sont refusés" : "est refusé"} aux candidats
+              tant que {toFix.length > 1 ? "leurs remises ne sont pas corrigées" : "sa remise n'est pas corrigée"} : {toFix.map((c) => c.code).join(", ")}.
+            </span>
+            <Button type="button" size="sm" shape="rounded" variant="outline" onClick={() => setFilter("fix")}>Voir</Button>
+          </div>
+        )}
 
-          {/* Barre de recherche et filtres */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                      placeholder="Rechercher par code, parrain, email..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
-                  />
-                </div>
-                <div className="w-full sm:w-64">
-                  <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                    <SelectTrigger>
-                      <Filter className="h-4 w-4 mr-2" />
-                      <SelectValue placeholder="Filtrer par statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les statuts</SelectItem>
-                      <SelectItem value="active">Actifs</SelectItem>
-                      <SelectItem value="inactive">Inactifs</SelectItem>
-                      <SelectItem value="expired">Expirés</SelectItem>
-                      <SelectItem value="full">Épuisés</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Tableau des codes */}
-          <Card>
-            <CardContent className="p-0">
-              {isLoading ? (
-                  <div className="flex justify-center py-20">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-              ) : !filteredPromoCodes.length ? (
-                  <div className="text-center py-20">
-                    <Tag className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-foreground font-medium mb-2">
-                      {searchQuery || statusFilter !== "all"
-                          ? "Aucun code ne correspond aux filtres"
-                          : "Aucun code de parrainage"}
-                    </p>
-                    <p className="text-muted-foreground text-sm mb-6">
-                      {searchQuery || statusFilter !== "all"
-                          ? "Essayez de modifier vos filtres"
-                          : "Créez votre premier code pour commencer"}
-                    </p>
-                    {(searchQuery || statusFilter !== "all") && (
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                              setSearchQuery("");
-                              setStatusFilter("all");
-                            }}
-                        >
-                          Réinitialiser les filtres
-                        </Button>
-                    )}
-                  </div>
-              ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Parrain</TableHead>
-                        <TableHead>Réduction</TableHead>
-                        <TableHead>Utilisations</TableHead>
-                        <TableHead>Expiration</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPromoCodes.map((promoCode) => {
-                        const status = getPromoCodeStatus(promoCode);
-                        const isExpiringSoon = promoCode.expiresAt &&
-                            new Date(promoCode.expiresAt) > new Date() &&
-                            new Date(promoCode.expiresAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-                        return (
-                            <TableRow
-                                key={promoCode.id}
-                                className="cursor-pointer hover:bg-muted/50"
-                                onClick={() => openDetail(promoCode)}
-                            >
-                              {/* Code avec copie */}
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono font-medium">{promoCode.code}</span>
-                                  <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6"
-                                      onClick={(e) => copyToClipboard(promoCode.code, e)}
-                                  >
-                                    {copiedCode === promoCode.code ? (
-                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                                    ) : (
-                                        <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                                    )}
-                                  </Button>
-                                </div>
-                                {promoCode.description && (
-                                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                      {promoCode.description}
-                                    </p>
-                                )}
-                              </TableCell>
-
-                              {/* Parrain */}
-                              <TableCell>
-                                <div className="space-y-1">
-                                  <p className="font-medium">{promoCode.referrerName}</p>
-                                  {(promoCode.referrerEmail || promoCode.referrerPhone) && (
-                                      <div className="text-xs text-muted-foreground space-y-0.5">
-                                        {promoCode.referrerEmail && (
-                                            <p className="flex items-center gap-1">
-                                              <Mail className="h-3 w-3" />
-                                              <span className="truncate max-w-[150px]">{promoCode.referrerEmail}</span>
-                                            </p>
-                                        )}
-                                        {promoCode.referrerPhone && (
-                                            <p className="flex items-center gap-1">
-                                              <Phone className="h-3 w-3" />
-                                              {promoCode.referrerPhone}
-                                            </p>
-                                        )}
-                                      </div>
-                                  )}
-                                </div>
-                              </TableCell>
-
-                              {/* Réduction */}
-                              <TableCell>
-                                <Badge variant="outline" className="bg-primary/5">
-                                  <Percent className="h-3 w-3 mr-1" />
-                                  {promoCode.discountPercent}%
-                                </Badge>
-                              </TableCell>
-
-                              {/* Utilisations */}
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Users className="h-4 w-4 text-muted-foreground" />
-                                  <span className={promoCode.maxUses && promoCode.usageCount >= promoCode.maxUses ? "text-destructive font-medium" : ""}>
-                              {promoCode.usageCount}
-                                    {promoCode.maxUses && ` / ${promoCode.maxUses}`}
-                            </span>
-                                </div>
-                              </TableCell>
-
-                              {/* Expiration */}
-                              <TableCell>
-                                {promoCode.expiresAt ? (
-                                    <div className="flex items-center gap-2">
-                                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                                      <span className={isExpiringSoon ? "text-yellow-600" : ""}>
-                                {formatDate(promoCode.expiresAt)}
-                                        {isExpiringSoon && (
-                                            <Clock className="h-3 w-3 inline ml-1" />
-                                        )}
-                              </span>
-                                    </div>
-                                ) : (
-                                    <span className="text-muted-foreground">—</span>
-                                )}
-                              </TableCell>
-
-                              {/* Statut */}
-                              <TableCell>
-                                <Badge variant={status.variant}>
-                                  {status.label}
-                                </Badge>
-                              </TableCell>
-
-                              {/* Actions */}
-                              <TableCell className="text-right">
-                                {canManage && (
-                                <div className="flex items-center justify-end gap-1">
-                                  <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      title={promoCode.isActive ? "Désactiver" : "Activer"}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleActiveMutation.mutate(promoCode.id);
-                                      }}
-                                      disabled={toggleActiveMutation.isPending}
-                                  >
-                                    {promoCode.isActive ? (
-                                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                    ) : (
-                                        <Eye className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </Button>
-                                  <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        openEdit(promoCode);
-                                      }}
-                                  >
-                                    <Pencil className="h-4 w-4 text-muted-foreground" />
-                                  </Button>
-                                  <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 hover:bg-destructive/10"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (confirm(`Supprimer le code "${promoCode.code}" ?`)) {
-                                          deleteMutation.mutate(promoCode.id, {
-                                            onSuccess: () => {
-                                              toast({
-                                                title: "Code supprimé",
-                                                description: `Le code ${promoCode.code} a été supprimé`,
-                                              });
-                                            },
-                                          });
-                                        }
-                                      }}
-                                      disabled={deleteMutation.isPending}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                </div>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Dialogue de création/édition */}
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingPromoCode ? "Modifier le code de parrainage" : "Nouveau code de parrainage"}
-                </DialogTitle>
-              </DialogHeader>
-
-              <form onSubmit={handleSubmit} className="space-y-6 pt-2">
-                {/* Code et description */}
-                <section className="space-y-4">
-                  <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">
-                    Informations générales
-                  </h3>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="code">
-                      Code * <span className="text-xs text-muted-foreground">(majuscules, chiffres, - et _)</span>
-                    </Label>
-                    <Input
-                        id="code"
-                        placeholder="ex: BIENVENUE2024, PARRAIN_JEAN"
-                        value={form.code}
-                        onChange={(e) => setField("code", e.target.value.toUpperCase())}
-                        className={formErrors.code ? "border-destructive" : ""}
-                        maxLength={50}
-                    />
-                    {formErrors.code && (
-                        <p className="text-xs text-destructive">{formErrors.code}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                        id="description"
-                        placeholder="Description du code (optionnel)"
-                        value={form.description}
-                        onChange={(e) => setField("description", e.target.value)}
-                        rows={2}
-                    />
-                  </div>
-                </section>
-
-                {/* Informations du parrain */}
-                <section className="space-y-4">
-                  <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">
-                    Informations du parrain
-                  </h3>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="referrerName">Nom du parrain *</Label>
-                    <Input
-                        id="referrerName"
-                        placeholder="ex: Jean Dupont"
-                        value={form.referrerName}
-                        onChange={(e) => setField("referrerName", e.target.value)}
-                        className={formErrors.referrerName ? "border-destructive" : ""}
-                    />
-                    {formErrors.referrerName && (
-                        <p className="text-xs text-destructive">{formErrors.referrerName}</p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="referrerEmail">Email</Label>
-                      <Input
-                          id="referrerEmail"
-                          type="email"
-                          placeholder="jean.dupont@email.com"
-                          value={form.referrerEmail}
-                          onChange={(e) => setField("referrerEmail", e.target.value)}
-                          className={formErrors.referrerEmail ? "border-destructive" : ""}
-                      />
-                      {formErrors.referrerEmail && (
-                          <p className="text-xs text-destructive">{formErrors.referrerEmail}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="referrerPhone">Téléphone</Label>
-                      <Input
-                          id="referrerPhone"
-                          placeholder="+221 77 123 45 67"
-                          value={form.referrerPhone}
-                          onChange={(e) => setField("referrerPhone", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                {/* Réduction et limites */}
-                <section className="space-y-4">
-                  <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">
-                    Réduction et limites
-                  </h3>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="discountPercent">Pourcentage de réduction *</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                            id="discountPercent"
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={form.discountPercent}
-                            onChange={(e) => setField("discountPercent", parseInt(e.target.value) || 0)}
-                            className={formErrors.discountPercent ? "border-destructive" : ""}
-                        />
-                        <span className="text-muted-foreground">%</span>
-                      </div>
-                      {formErrors.discountPercent && (
-                          <p className="text-xs text-destructive">{formErrors.discountPercent}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="maxUses">Nombre max d'utilisations</Label>
-                      <Input
-                          id="maxUses"
-                          type="number"
-                          min={1}
-                          step={1}
-                          placeholder="Illimité"
-                          value={form.maxUses}
-                          onChange={(e) => setField("maxUses", e.target.value)}
-                          className={formErrors.maxUses ? "border-destructive" : ""}
-                      />
-                      {formErrors.maxUses && (
-                          <p className="text-xs text-destructive">{formErrors.maxUses}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        Laissez vide pour illimité
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="expiresAt">Date d'expiration</Label>
-                    <Input
-                        id="expiresAt"
-                        type="datetime-local"
-                        value={form.expiresAt}
-                        onChange={(e) => setField("expiresAt", e.target.value)}
-                        className={formErrors.expiresAt ? "border-destructive" : ""}
-                    />
-                    {formErrors.expiresAt && (
-                        <p className="text-xs text-destructive">{formErrors.expiresAt}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Laissez vide pour pas de date d'expiration
-                    </p>
-                  </div>
-                </section>
-
-                {/* État */}
-                <section className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">
-                    État
-                  </h3>
-
-                  <div className="flex items-center justify-between p-3 rounded-lg border border-border">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Code actif</p>
-                      <p className="text-xs text-muted-foreground">
-                        Désactivez pour suspendre temporairement ce code
-                      </p>
-                    </div>
-                    <Switch
-                        checked={form.isActive}
-                        onCheckedChange={(v) => setField("isActive", v)}
-                    />
-                  </div>
-                </section>
-
-                {/* Actions */}
-                <div className="flex items-center gap-3 pt-2 border-t border-border">
-                  <Button
-                      type="submit"
-                      disabled={createMutation.isPending || updateMutation.isPending}
-                  >
-                    {(createMutation.isPending || updateMutation.isPending) ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                        <Save className="h-4 w-4 mr-2" />
-                    )}
-                    {editingPromoCode ? "Enregistrer" : "Créer le code"}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={closeDialog}>
-                    Annuler
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          {/* Dialogue de détail */}
-          <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Détails du code promo</DialogTitle>
-                <DialogDescription>
-                  Informations complètes sur le code de parrainage
-                </DialogDescription>
-              </DialogHeader>
-
-              {selectedPromoCode && (
-                  <div className="space-y-6">
-                    {/* En-tête avec code */}
-                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Code</p>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-2xl font-bold">{selectedPromoCode.code}</span>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => copyToClipboard(selectedPromoCode.code)}
-                          >
-                            {copiedCode === selectedPromoCode.code ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            ) : (
-                                <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                      <Badge variant={getPromoCodeStatus(selectedPromoCode).variant} className="text-sm px-3 py-1">
-                        {getPromoCodeStatus(selectedPromoCode).label}
-                      </Badge>
-                    </div>
-
-                    {/* Description */}
-                    {selectedPromoCode.description && (
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Description</p>
-                          <p className="text-foreground bg-muted/30 p-3 rounded-lg">
-                            {selectedPromoCode.description}
-                          </p>
-                        </div>
-                    )}
-
-                    {/* Grille d'informations */}
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Parrain */}
-                      <div className="col-span-2">
-                        <p className="text-sm text-muted-foreground mb-2">Informations du parrain</p>
-                        <div className="bg-muted/30 p-3 rounded-lg space-y-2">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{selectedPromoCode.referrerName}</span>
-                          </div>
-                          {selectedPromoCode.referrerEmail && (
-                              <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-muted-foreground" />
-                                <a href={`mailto:${selectedPromoCode.referrerEmail}`} className="text-primary hover:underline">
-                                  {selectedPromoCode.referrerEmail}
-                                </a>
-                              </div>
-                          )}
-                          {selectedPromoCode.referrerPhone && (
-                              <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                <a href={`tel:${selectedPromoCode.referrerPhone}`} className="text-primary hover:underline">
-                                  {selectedPromoCode.referrerPhone}
-                                </a>
-                              </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Réduction */}
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Réduction</p>
-                        <div className="bg-muted/30 p-3 rounded-lg">
-                          <span className="text-2xl font-bold text-primary">{selectedPromoCode.discountPercent}%</span>
-                        </div>
-                      </div>
-
-                      {/* Utilisations */}
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Utilisations</p>
-                        <div className="bg-muted/30 p-3 rounded-lg">
-                          <span className="text-2xl font-bold">{selectedPromoCode.usageCount}</span>
-                          {selectedPromoCode.maxUses && (
-                              <span className="text-muted-foreground"> / {selectedPromoCode.maxUses}</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Date d'expiration */}
-                      {selectedPromoCode.expiresAt && (
-                          <div className="col-span-2">
-                            <p className="text-sm text-muted-foreground mb-1">Date d'expiration</p>
-                            <div className="bg-muted/30 p-3 rounded-lg flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <span>{formatDate(selectedPromoCode.expiresAt)}</span>
-                              {new Date(selectedPromoCode.expiresAt) < new Date() && (
-                                  <Badge variant="destructive" className="ml-2">Expiré</Badge>
-                              )}
-                            </div>
-                          </div>
-                      )}
-
-                      {/* Dates de création/modification */}
-                      <div className="col-span-2 border-t pt-4 mt-2">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Créé le</p>
-                            <p>{formatDate(selectedPromoCode.createdAt)}</p>
-                            {selectedPromoCode.createdBy && (
-                                <p className="text-xs text-muted-foreground">par {selectedPromoCode.createdBy}</p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Modifié le</p>
-                            <p>{formatDate(selectedPromoCode.updatedAt)}</p>
-                            {selectedPromoCode.updatedBy && (
-                                <p className="text-xs text-muted-foreground">par {selectedPromoCode.updatedBy}</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Actions dans le dialogue de détail */}
-                    <div className="flex justify-end gap-2 pt-4 border-t">
-                      <Button
-                          variant="outline"
-                          onClick={() => {
-                            closeDetailDialog();
-                            openEdit(selectedPromoCode);
-                          }}
-                      >
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Modifier
-                      </Button>
-                      <Button
-                          variant={selectedPromoCode.isActive ? "outline" : "default"}
-                          onClick={() => {
-                            toggleActiveMutation.mutate(selectedPromoCode.id);
-                            closeDetailDialog();
-                          }}
-                      >
-                        {selectedPromoCode.isActive ? (
-                            <>
-                              <EyeOff className="h-4 w-4 mr-2" />
-                              Désactiver
-                            </>
-                        ) : (
-                            <>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Activer
-                            </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-              )}
-            </DialogContent>
-          </Dialog>
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer les codes">
+          {FILTERS.map((f) => (
+            <Button key={f.key} type="button" size="sm" shape="pill" variant={filter === f.key ? "navy" : "outline"} aria-pressed={filter === f.key} onClick={() => setFilter(f.key)}>
+              {f.label} <span className="ml-1 opacity-70">{counts[f.key]}</span>
+            </Button>
+          ))}
+          <span className="flex-1" />
+          <div className="flex items-center gap-2 rounded-[10px] border border-[#D6CEC0] bg-white px-3 py-2.5">
+            <Search className="h-4 w-4 text-ink-secondary" />
+            <input type="search" aria-label="Rechercher un code" placeholder="Code, parrain, e-mail…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-52 bg-transparent text-sm outline-none" />
+          </div>
         </div>
-      </AdminLayout>
+
+        {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
+        {isError && <ErrorNotice>Impossible de charger les codes. Vérifiez la connexion au serveur puis rechargez la page.</ErrorNotice>}
+        {!isLoading && !isError && visible.length === 0 && (
+          <EmptyState title={codes.length === 0 ? "Aucun code de parrainage" : "Aucun code ne correspond"} text={codes.length === 0 ? "Créez un code pour offrir une remise à un candidat recommandé." : "Modifiez le filtre ou la recherche."} />
+        )}
+
+        {visible.length > 0 && (
+          <Card radius="stat" className="overflow-hidden border border-[#E7E0D4] p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-sm">
+                <thead>
+                  <tr className="border-b border-[#E7E0D4] bg-app-bg text-left text-xs text-ink-secondary">
+                    <th scope="col" className="px-4 py-3 font-semibold">Code</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Parrain</th>
+                    <th scope="col" className="px-4 py-3 text-right font-semibold">Remise</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Utilisations</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Expiration</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Statut</th>
+                    {canManage && <th scope="col" className="px-4 py-3 text-right font-semibold">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((c) => {
+                    const st = statusOf(c);
+                    return (
+                      <tr key={c.id} className="border-b border-[#E7E0D4] last:border-b-0">
+                        <td className="px-4 py-3">
+                          <button type="button" onClick={() => void copy(c)} className="inline-flex items-center gap-1.5 rounded-lg bg-info-bg px-2.5 py-1 font-mono text-[0.8125rem] font-bold text-navy hover:bg-[#D8E4F0]" title="Copier le code">
+                            {c.code}<Copy className="h-3 w-3" aria-hidden="true" />
+                          </button>
+                          {c.description && <p className="mt-1 max-w-[220px] truncate text-xs text-ink-secondary" title={c.description}>{c.description}</p>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-ink">{c.referrerName}</div>
+                          <div className="text-xs text-ink-secondary">{c.referrerEmail ?? c.referrerPhone ?? ""}</div>
+                        </td>
+                        <td className={cn("px-4 py-3 text-right font-heading text-base font-extrabold", isOver(c) ? "text-error" : "text-navy")}>
+                          {c.discountPercent} %
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex w-36 flex-col gap-1">
+                            <span className="text-xs text-ink-secondary">{c.usageCount}{c.maxUses != null ? ` / ${c.maxUses}` : " · illimité"}</span>
+                            {c.maxUses != null && <ProgressBar value={c.usageCount} max={c.maxUses} />}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-ink-secondary">{day(c.expiresAt)}</td>
+                        <td className="px-4 py-3"><Pill variant={st.variant}>{st.label}</Pill></td>
+                        {canManage && (
+                          <td className="px-4 py-3">
+                            <div className="flex justify-end gap-1.5">
+                              <Button type="button" size="sm" shape="rounded" variant="outline" disabled={toggle.isPending || isOver(c)} aria-label={c.isActive ? `Désactiver ${c.code}` : `Activer ${c.code}`} title={c.isActive ? "Désactiver" : "Activer"}
+                                onClick={() => toggle.mutate(c.id)}>{c.isActive ? <EyeOff /> : <Eye />}</Button>
+                              <Button type="button" size="sm" shape="rounded" variant="outline" aria-label={`Modifier ${c.code}`} onClick={() => setEditing(c)}><Pencil /></Button>
+                              <Button type="button" size="sm" shape="rounded" variant="outline" aria-label={`Supprimer ${c.code}`} onClick={() => setDeleting(c)}><Trash2 /></Button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+        {total > codes.length && <p className="text-xs text-ink-secondary">{codes.length} codes affichés sur {total}.</p>}
+      </div>
+
+      {(creating || editing) && <PromoDialog code={editing} onClose={() => { setCreating(false); setEditing(null); }} />}
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(o) => !o && setDeleting(null)}
+        title={`Supprimer le code ${deleting?.code ?? ""} ?`}
+        description="Les inscriptions déjà remisées avec ce code ne changent pas ; il ne pourra plus être utilisé."
+        onConfirm={async () => {
+          if (!deleting) return;
+          await remove.mutateAsync(deleting.id);
+          toast({ title: "Code supprimé", description: deleting.code });
+        }}
+      />
+    </AdminLayout>
   );
 }

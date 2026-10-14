@@ -3,13 +3,15 @@
  * Le serveur limite à 5 questions sans réponse par leçon (409) et contrôle l'accès à la formation
  * (403) : son message est affiché tel quel.
  */
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2 } from "lucide-react";
 
+import { RichText } from "@/components/rich/RichText";
+import { RichTextEditor } from "@/components/rich/RichTextEditor";
 import { Button } from "@/components/shared";
 import { useAskQuestion, useLessonQuestions } from "@/hooks/useLessonQuestions";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +33,7 @@ export function LessonQuestions({ lessonId, disabled }: { lessonId: string; disa
   const { toast } = useToast();
   const { data: questions, isLoading, isError } = useLessonQuestions(lessonId, !disabled);
   const ask = useAskQuestion(lessonId);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { question: "" },
   });
@@ -57,15 +59,20 @@ export function LessonQuestions({ lessonId, disabled }: { lessonId: string; disa
   return (
     <div className="flex flex-col gap-5">
       <form onSubmit={onSubmit} className="flex flex-col gap-2" noValidate>
-        <label htmlFor={`question-${lessonId}`} className="text-sm font-semibold text-ink">Poser une question sur cette leçon</label>
-        <textarea
-          id={`question-${lessonId}`}
-          rows={4}
-          maxLength={QUESTION_MAX}
-          aria-invalid={!!errors.question}
-          className="w-full rounded-card border border-[#D6CEC0] bg-white p-3 text-sm outline-none focus:border-navy"
-          placeholder="Votre question à l'équipe pédagogique…"
-          {...register("question")}
+        <Controller
+          control={control}
+          name="question"
+          render={({ field }) => (
+            <RichTextEditor
+              id={`question-${lessonId}`}
+              label="Poser une question sur cette leçon"
+              value={field.value}
+              onChange={field.onChange}
+              rows={5}
+              maxLength={QUESTION_MAX}
+              placeholder="Votre question à l'équipe pédagogique… Vous pouvez insérer du code avec « Bloc de code »."
+            />
+          )}
         />
         {errors.question && <span role="alert" className="text-xs text-error">{errors.question.message}</span>}
         <Button type="submit" variant="navy" shape="rounded" size="sm" className="w-fit" disabled={ask.isPending}>
@@ -80,11 +87,11 @@ export function LessonQuestions({ lessonId, disabled }: { lessonId: string; disa
         <ul className="flex flex-col gap-3">
           {questions.map((q) => (
             <li key={q.id} className="flex flex-col gap-2 rounded-card border border-[#E7E0D4] bg-white p-4">
-              <p className="whitespace-pre-line text-sm text-ink">{q.question}</p>
+              <RichText source={q.question} />
               <span className="text-xs text-ink-secondary">Posée le {when(q.askedAt)}</span>
               {q.answer ? (
                 <div className="flex flex-col gap-1 rounded-xl bg-info-bg p-3">
-                  <p className="whitespace-pre-line text-sm text-ink">{q.answer}</p>
+                  <RichText source={q.answer} />
                   <span className="text-xs text-ink-secondary">
                     {q.answeredBy ? `${q.answeredBy} · ` : ""}{when(q.answeredAt)}
                   </span>

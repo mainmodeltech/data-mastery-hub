@@ -1,501 +1,351 @@
-// src/pages/admin/AdminMasterclassPage.tsx
-
+/**
+ * AdminMasterclassPage.tsx — masterclass (design system) : une par mois ou tous les deux mois, gérées comme des événements.
+ * Liste des événements (statut, inscrits, présents), création/modification (date, durée, lieu, lien de connexion, places,
+ * publication), fiche d'un événement avec ses inscrits (recherche, présence, export CSV) et message aux inscrits.
+ * Le lien de connexion n'est jamais public : il est envoyé aux inscrits dans la confirmation.
+ */
 import { useMemo, useState } from "react";
-import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import {
-    Search,
-    Users,
-    MailCheck,
-    MailX,
-    GraduationCap,
-    Briefcase,
-    ChevronLeft,
-    ChevronRight,
-    Loader2,
-    Eye,
-    Mail,
-    Phone,
-    Building2,
-    User,
-    Calendar,
-} from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useMasterclassRegistrations } from "@/hooks/useMasterclassRegistrations";
-import { useSiteContent } from "@/hooks/useSiteContent";
-import {MasterclassRegistration} from "@/types";
+import { ArrowLeft, CalendarDays, Download, Loader2, Mail, MapPin, Pencil, Plus, Search, Send, Trash2, Users, Video } from "lucide-react";
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+import { AdminLayout } from "@/components/admin/AdminLayout";
+import { ConfirmDialog, EmptyState, ErrorNotice, errorMessage, Field, inputClass, SwitchRow } from "@/components/admin/AdminKit";
+import { Button, Card, Pill, ProgressBar } from "@/components/shared";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  useAdminMasterclasses, useDeleteMasterclass, useMasterclassRegistrants, useMessageRegistrants, useSaveMasterclass, useSetAttendance,
+} from "@/hooks/useMasterclasses";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { csvRow, downloadCsv } from "@/lib/csv";
+import { cn } from "@/lib/utils";
+import {
+  ATTENDANCE_LABELS, FORMAT_LABELS, STATUS_LABELS,
+  type AdminMasterclass, type Attendance, type MasterclassFormat, type MasterclassPayload, type MasterclassStatus,
+} from "@/services/api/masterclassService";
 
-const PAGE_SIZE      = 10;
+const STATUS_PILL: Record<MasterclassStatus, "neutral" | "success" | "warning" | "info"> = { DRAFT: "neutral", OPEN: "success", CLOSED: "warning", DONE: "info" };
+const ATTENDANCE_PILL: Record<Attendance, "neutral" | "success" | "error"> = { REGISTERED: "neutral", ATTENDED: "success", ABSENT: "error" };
 
-// ─── Profil config ────────────────────────────────────────────────────────────
+const when = (iso: string) => format(parseISO(iso), "EEEE d MMMM yyyy 'à' HH'h'mm", { locale: fr });
+const shortDay = (iso: string) => format(parseISO(iso), "d MMM yyyy", { locale: fr });
+const hours = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60}` : ""}`;
 
-const PROFILE_CONFIG: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-    "Étudiant(e)":      { label: "Étudiant(e)",      className: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300",    icon: GraduationCap },
-    "Professionnel":    { label: "Professionnel",    className: "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-950 dark:text-violet-300", icon: Briefcase },
-    "Entrepreneur":     { label: "Entrepreneur",     className: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300",  icon: Briefcase },
-    "En reconversion":  { label: "En reconversion",  className: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300", icon: User },
-    "Autre":            { label: "Autre",            className: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300",  icon: User },
-};
-
-function getProfileConfig(profile: string | null) {
-    if (!profile) return PROFILE_CONFIG["Autre"];
-    return PROFILE_CONFIG[profile] ?? PROFILE_CONFIG["Autre"];
+interface FormState {
+  title: string; description: string; startsAt: string; durationMinutes: string; format: MasterclassFormat;
+  place: string; joinUrl: string; capacity: string; published: boolean; registrationsClosed: boolean;
 }
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
+const emptyForm = (): FormState => ({
+  title: "", description: "", startsAt: "", durationMinutes: "120", format: "ONLINE", place: "En ligne", joinUrl: "",
+  capacity: "", published: false, registrationsClosed: false,
+});
 
-function KpiCard({
-                     label,
-                     value,
-                     icon: Icon,
-                     accent,
-                     sub,
-                 }: {
-    label: string;
-    value: number | string;
-    icon: React.ElementType;
-    accent: string;
-    sub?: string;
-}) {
-    return (
-        <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
-            <div className={`p-3 rounded-xl ${accent}`}>
-                <Icon className="h-5 w-5" />
-            </div>
-            <div>
-                <p className="text-2xl font-black leading-none">{value}</p>
-                <p className="text-xs text-muted-foreground mt-1">{label}</p>
-                {sub && <p className="text-xs text-muted-foreground/60 mt-0.5">{sub}</p>}
-            </div>
+const toForm = (m: AdminMasterclass): FormState => ({
+  title: m.title, description: m.description ?? "", startsAt: m.startsAt.slice(0, 16), durationMinutes: String(m.durationMinutes), format: m.format,
+  place: m.place ?? "", joinUrl: m.joinUrl ?? "", capacity: m.capacity?.toString() ?? "", published: m.published, registrationsClosed: m.registrationsClosed,
+});
+
+function EventDialog({ event, onClose }: { event: AdminMasterclass | null; onClose: () => void }) {
+  const { toast } = useToast();
+  const save = useSaveMasterclass();
+  const [form, setForm] = useState<FormState>(event ? toForm(event) : emptyForm());
+  const [error, setError] = useState("");
+  const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    const duration = Number(form.durationMinutes);
+    if (!form.startsAt) return setError("La date et l'heure sont obligatoires.");
+    if (!Number.isInteger(duration) || duration < 15 || duration > 600) return setError("La durée doit être comprise entre 15 minutes et 10 heures.");
+    if (form.published && form.format !== "ONSITE" && !form.joinUrl.trim()) return setError("Renseignez le lien de connexion avant de publier : il est envoyé aux inscrits.");
+    const payload: MasterclassPayload = {
+      title: form.title.trim(), description: form.description.trim(),
+      startsAt: form.startsAt.length === 16 ? `${form.startsAt}:00` : form.startsAt,
+      durationMinutes: duration, format: form.format, place: form.place.trim(), joinUrl: form.joinUrl.trim(),
+      capacity: form.capacity ? Number(form.capacity) : null, published: form.published, registrationsClosed: form.registrationsClosed,
+    };
+    try {
+      await save.mutateAsync({ id: event?.id, payload });
+      toast({ title: event ? "Masterclass mise à jour" : "Masterclass créée", description: payload.title });
+      onClose();
+    } catch (err) {
+      setError(errorMessage(err, "Enregistrement impossible."));
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && !save.isPending && onClose()}>
+      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-callout">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-xl font-bold text-navy">{event ? "Modifier la masterclass" : "Nouvelle masterclass"}</DialogTitle>
+          <DialogDescription className="text-ink-secondary">La page « Masterclass » du site affiche la prochaine masterclass publiée.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          {error && <ErrorNotice>{error}</ErrorNotice>}
+          <Field label="Titre *" htmlFor="mc-title"><input id="mc-title" required maxLength={200} className={inputClass} value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Power BI : de zéro à votre premier tableau de bord" /></Field>
+          <Field label="Description" htmlFor="mc-desc"><textarea id="mc-desc" rows={3} maxLength={5000} className={inputClass} value={form.description} onChange={(e) => set("description", e.target.value)} /></Field>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Date et heure *" htmlFor="mc-start"><input id="mc-start" type="datetime-local" required className={inputClass} value={form.startsAt} onChange={(e) => set("startsAt", e.target.value)} /></Field>
+            <Field label="Durée (minutes)" htmlFor="mc-dur"><input id="mc-dur" type="number" min={15} max={600} step={15} className={inputClass} value={form.durationMinutes} onChange={(e) => set("durationMinutes", e.target.value)} /></Field>
+            <Field label="Places" htmlFor="mc-cap" hint="Vide : illimité."><input id="mc-cap" type="number" min={1} className={inputClass} value={form.capacity} onChange={(e) => set("capacity", e.target.value)} /></Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
+            <Field label="Format" htmlFor="mc-format">
+              <select id="mc-format" className={inputClass} value={form.format} onChange={(e) => set("format", e.target.value as MasterclassFormat)}>
+                {Object.entries(FORMAT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </Field>
+            <Field label="Lieu" htmlFor="mc-place"><input id="mc-place" className={inputClass} value={form.place} onChange={(e) => set("place", e.target.value)} placeholder="En ligne (Google Meet) ou adresse" /></Field>
+          </div>
+          <Field label="Lien de connexion" htmlFor="mc-join" hint="Jamais affiché sur le site : envoyé uniquement aux inscrits (confirmation et messages).">
+            <input id="mc-join" type="url" className={inputClass} value={form.joinUrl} onChange={(e) => set("joinUrl", e.target.value)} placeholder="https://meet.google.com/…" />
+          </Field>
+          <SwitchRow label="Publiée" description="Visible sur le site et ouverte aux inscriptions." checked={form.published} onChange={(v) => set("published", v)} />
+          <SwitchRow label="Inscriptions closes" description="Ferme les inscriptions sans dépublier (complet avant l'heure, événement annulé…)." checked={form.registrationsClosed} onChange={(v) => set("registrationsClosed", v)} />
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" shape="rounded" disabled={save.isPending} onClick={onClose}>Annuler</Button>
+            <Button type="submit" shape="rounded" disabled={save.isPending}>{save.isPending ? <Loader2 className="animate-spin" /> : event ? "Enregistrer" : "Créer la masterclass"}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MessageDialog({ event, onClose }: { event: AdminMasterclass; onClose: () => void }) {
+  const { toast } = useToast();
+  const send = useMessageRegistrants(event.id);
+  const [subject, setSubject] = useState(`Rappel — ${event.title}`);
+  const [body, setBody] = useState("");
+  const [audience, setAudience] = useState<"ALL" | "ATTENDED" | "ABSENT">("ALL");
+  const [error, setError] = useState("");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const n = await send.mutateAsync({ subject: subject.trim(), body: body.trim(), audience });
+      toast({ title: n === 0 ? "Aucun destinataire" : `Message envoyé à ${n} inscrit${n > 1 ? "s" : ""}` });
+      onClose();
+    } catch (err) {
+      setError(errorMessage(err, "Envoi impossible."));
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && !send.isPending && onClose()}>
+      <DialogContent className="max-w-lg rounded-callout">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-xl font-bold text-navy">Écrire aux inscrits</DialogTitle>
+          <DialogDescription className="text-ink-secondary">Rappel, lien de connexion, support ou remerciements. L'e-mail reprend la date, le lieu et le lien.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          {error && <ErrorNotice>{error}</ErrorNotice>}
+          <Field label="Destinataires" htmlFor="mm-aud">
+            <select id="mm-aud" className={inputClass} value={audience} onChange={(e) => setAudience(e.target.value as typeof audience)}>
+              <option value="ALL">Tous les inscrits ({event.registered})</option>
+              <option value="ATTENDED">Les présents ({event.attended})</option>
+              <option value="ABSENT">Les absents</option>
+            </select>
+          </Field>
+          <Field label="Objet *" htmlFor="mm-sub"><input id="mm-sub" required maxLength={150} className={inputClass} value={subject} onChange={(e) => setSubject(e.target.value)} /></Field>
+          <Field label="Message *" htmlFor="mm-body"><textarea id="mm-body" required rows={6} maxLength={5000} className={inputClass} value={body} onChange={(e) => setBody(e.target.value)} /></Field>
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" shape="rounded" disabled={send.isPending} onClick={onClose}>Annuler</Button>
+            <Button type="submit" shape="rounded" disabled={send.isPending || !body.trim()}>{send.isPending ? <Loader2 className="animate-spin" /> : <><Send />Envoyer</>}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EventDetail({ event, canManage, onBack, onEdit }: { event: AdminMasterclass; canManage: boolean; onBack: () => void; onEdit: () => void }) {
+  const { toast } = useToast();
+  const { data, isLoading, isError } = useMasterclassRegistrants(event.id);
+  const attendance = useSetAttendance(event.id);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"ALL" | Attendance>("ALL");
+  const [messaging, setMessaging] = useState(false);
+
+  const items = useMemo(() => data?.items ?? [], [data]);
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter((r) => (filter === "ALL" || r.attendance === filter)
+      && (!q || `${r.firstName} ${r.lastName} ${r.email} ${r.phone ?? ""} ${r.company ?? ""} ${r.profile ?? ""}`.toLowerCase().includes(q)));
+  }, [items, search, filter]);
+  const fill = event.capacity ? Math.min(100, Math.round((event.registered / event.capacity) * 100)) : 0;
+
+  const exportCsv = () => {
+    const lines = [csvRow(["Inscrit le", "Prénom", "Nom", "E-mail", "Téléphone", "Profil", "Entreprise", "Présence"])];
+    items.forEach((r) => lines.push(csvRow([r.createdAt.slice(0, 10), r.firstName, r.lastName, r.email, r.phone, r.profile, r.company, ATTENDANCE_LABELS[r.attendance]])));
+    downloadCsv(`masterclass-${event.code}.csv`, lines);
+  };
+
+  return (
+    <div className="flex flex-col gap-5">
+      <button type="button" onClick={onBack} className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-navy hover:text-cta"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Toutes les masterclass</button>
+
+      <Card radius="stat" className="flex flex-col gap-3 border border-[#E7E0D4] p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="font-heading text-xl font-bold text-navy">{event.title}</h2>
+          <Pill variant={STATUS_PILL[event.status]}>{STATUS_LABELS[event.status]}</Pill>
         </div>
-    );
-}
-
-// ─── Detail Dialog ────────────────────────────────────────────────────────────
-
-function RegistrationDetailDialog({
-                                      reg,
-                                      onClose,
-                                  }: {
-    reg: MasterclassRegistration | null;
-    onClose: () => void;
-}) {
-    if (!reg) return null;
-    const profile = getProfileConfig(reg.profile);
-    const ProfileIcon = profile.icon;
-
-    return (
-        <Dialog open={!!reg} onOpenChange={onClose}>
-            <DialogContent className="max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <User className="h-5 w-5 text-primary" />
-                        {reg.firstName} {reg.lastName}
-                    </DialogTitle>
-                </DialogHeader>
-
-                <div className="space-y-4 mt-2">
-                    {/* Badge profil */}
-                    <Badge variant="outline" className={`${profile.className} gap-1.5`}>
-                        <ProfileIcon className="h-3 w-3" />
-                        {profile.label}
-                    </Badge>
-
-                    {/* Infos */}
-                    <div className="space-y-3 text-sm">
-                        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                            <Mail className="h-4 w-4 text-primary shrink-0" />
-                            <a href={`mailto:${reg.email}`} className="text-primary hover:underline truncate">
-                                {reg.email}
-                            </a>
-                        </div>
-                        {reg.phone && (
-                            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                                <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span>{reg.phone}</span>
-                            </div>
-                        )}
-                        {reg.company && (
-                            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                                <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <span>{reg.company}</span>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                            <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span>Inscrit le {format(new Date(reg.createdAt), "d MMMM yyyy à HH:mm", { locale: fr })}</span>
-                        </div>
-                        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                            {reg.emailSent ? (
-                                <><MailCheck className="h-4 w-4 text-emerald-500 shrink-0" /><span className="text-emerald-600 dark:text-emerald-400">Email de confirmation envoyé</span></>
-                            ) : (
-                                <><MailX className="h-4 w-4 text-rose-500 shrink-0" /><span className="text-rose-500">Email non envoyé</span></>
-                            )}
-                        </div>
-                    </div>
-
-                    <Button className="w-full" asChild>
-                        <a href={`mailto:${reg.email}`}>
-                            <Mail className="h-4 w-4 mr-2" />
-                            Envoyer un email
-                        </a>
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-// ─── Pagination ───────────────────────────────────────────────────────────────
-
-function Pagination({
-                        page,
-                        totalPages,
-                        totalElements,
-                        size,
-                        onChange,
-                    }: {
-    page: number;
-    totalPages: number;
-    totalElements: number;
-    size: number;
-    onChange: (p: number) => void;
-}) {
-    const from = page * size + 1;
-    const to   = Math.min((page + 1) * size, totalElements);
-
-    return (
-        <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-      <span>
-        {from}–{to} sur {totalElements} inscription{totalElements !== 1 ? "s" : ""}
-      </span>
-            <div className="flex items-center gap-2">
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={page === 0}
-                    onClick={() => onChange(page - 1)}
-                >
-                    <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="px-2 font-medium text-foreground">
-          {page + 1} / {totalPages}
-        </span>
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={page >= totalPages - 1}
-                    onClick={() => onChange(page + 1)}
-                >
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
-            </div>
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-secondary">
+          <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4" aria-hidden="true" />{when(event.startsAt)} · {hours(event.durationMinutes)}</span>
+          <span className="inline-flex items-center gap-1.5"><Video className="h-4 w-4" aria-hidden="true" />{FORMAT_LABELS[event.format]}</span>
+          {event.place && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" aria-hidden="true" />{event.place}</span>}
         </div>
-    );
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm"><strong className="text-ink">{event.registered}</strong> inscrit{event.registered > 1 ? "s" : ""}{event.capacity ? ` sur ${event.capacity} places` : ""} · <strong className="text-ink">{event.attended}</strong> présent{event.attended > 1 ? "s" : ""}</span>
+            {event.capacity ? <div className="w-56"><ProgressBar value={fill} max={100} /></div> : null}
+          </div>
+          <span className="flex-1" />
+          {canManage && (
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" shape="rounded" size="sm" onClick={onEdit}><Pencil />Modifier</Button>
+              <Button type="button" variant="navy" shape="rounded" size="sm" disabled={event.registered === 0} onClick={() => setMessaging(true)}><Mail />Écrire aux inscrits</Button>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {(["ALL", "REGISTERED", "ATTENDED", "ABSENT"] as const).map((f) => (
+          <Button key={f} type="button" size="sm" shape="pill" variant={filter === f ? "navy" : "outline"} aria-pressed={filter === f} onClick={() => setFilter(f)}>
+            {f === "ALL" ? "Tous" : f === "REGISTERED" ? "À pointer" : ATTENDANCE_LABELS[f]}
+            <span className="ml-1.5 rounded-pill bg-surface-sand px-1.5 text-[0.6875rem] font-bold text-ink-secondary">{f === "ALL" ? items.length : items.filter((r) => r.attendance === f).length}</span>
+          </Button>
+        ))}
+        <span className="flex-1" />
+        <div className="flex items-center gap-2 rounded-[10px] border border-[#D6CEC0] bg-white px-3 py-2.5">
+          <Search className="h-4 w-4 text-ink-secondary" aria-hidden="true" />
+          <input type="search" aria-label="Rechercher un inscrit" placeholder="Nom, e-mail, entreprise…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-52 bg-transparent text-sm outline-none" />
+        </div>
+        <Button type="button" variant="outline" shape="rounded" size="sm" disabled={items.length === 0} onClick={exportCsv}><Download />Exporter</Button>
+      </div>
+
+      {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
+      {isError && <ErrorNotice>Impossible de charger les inscrits.</ErrorNotice>}
+      {!isLoading && !isError && items.length === 0 && <EmptyState title="Aucun inscrit pour le moment" text="Les inscriptions faites depuis le site apparaissent ici." />}
+      {items.length > 0 && visible.length === 0 && <EmptyState title="Aucun inscrit ne correspond" />}
+
+      {visible.length > 0 && (
+        <Card radius="stat" className="overflow-hidden border border-[#E7E0D4] p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="border-b border-[#E7E0D4] bg-app-bg text-xs text-ink-secondary">
+                <tr><th scope="col" className="px-4 py-3 font-semibold">Inscrit</th><th scope="col" className="px-4 py-3 font-semibold">Contact</th><th scope="col" className="px-4 py-3 font-semibold">Profil</th><th scope="col" className="px-4 py-3 font-semibold">Le</th><th scope="col" className="px-4 py-3 font-semibold">Présence</th></tr>
+              </thead>
+              <tbody>
+                {visible.map((r) => (
+                  <tr key={r.id} className="border-b border-[#E7E0D4] last:border-b-0">
+                    <td className="px-4 py-3"><div className="font-semibold text-ink">{r.firstName} {r.lastName}</div>{r.company && <div className="text-xs text-ink-secondary">{r.company}</div>}</td>
+                    <td className="px-4 py-3"><a href={`mailto:${r.email}`} className="text-navy hover:text-cta">{r.email}</a><div className="text-xs text-ink-secondary">{r.phone}</div></td>
+                    <td className="px-4 py-3 text-ink-secondary">{r.profile ?? "—"}</td>
+                    <td className="px-4 py-3 text-ink-secondary">{shortDay(r.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      {canManage ? (
+                        <select aria-label={`Présence de ${r.firstName} ${r.lastName}`} className={cn(inputClass, "w-36 py-1.5")} value={r.attendance} disabled={attendance.isPending}
+                          onChange={(e) => attendance.mutate({ registrationId: r.id, attendance: e.target.value as Attendance }, { onError: (err) => toast({ title: "Enregistrement impossible", description: errorMessage(err), variant: "destructive" }) })}>
+                          {Object.entries(ATTENDANCE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                        </select>
+                      ) : <Pill variant={ATTENDANCE_PILL[r.attendance]}>{ATTENDANCE_LABELS[r.attendance]}</Pill>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+      {data && data.total > items.length && <p className="text-xs text-ink-secondary">{items.length} inscrits affichés sur {data.total}.</p>}
+      {messaging && <MessageDialog event={event} onClose={() => setMessaging(false)} />}
+    </div>
+  );
 }
 
-// ─── Page principale ──────────────────────────────────────────────────────────
+export default function AdminMasterclassPage() {
+  const { can } = useAuth();
+  const canManage = can("MASTERCLASS_MANAGE");
+  const { toast } = useToast();
+  const { data: events = [], isLoading, isError } = useAdminMasterclasses();
+  const remove = useDeleteMasterclass();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<AdminMasterclass | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<AdminMasterclass | null>(null);
 
-const AdminMasterclass = () => {
-    const [page, setPage]             = useState(0);
-    const [search, setSearch]         = useState("");
-    const [filterProfile, setFilterProfile] = useState<string>("all");
-    const [filterEmail, setFilterEmail]     = useState<string>("all");
-    const [selected, setSelected]     = useState<MasterclassRegistration | null>(null);
+  const selected = events.find((e) => e.id === openId) ?? null;
+  const upcoming = events.filter((e) => e.status !== "DONE").sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const done = events.filter((e) => e.status === "DONE");
 
-    // L'événement courant est défini dans « Contenus du site » (page.masterclass → event.id)
-    const masterclassId = useSiteContent("page.masterclass").content?.event.id ?? "";
-    const { data, isLoading, isFetching } = useMasterclassRegistrations(
-        masterclassId,
-        page,
-        PAGE_SIZE,
-    );
-
-    const registrations = data?.items ?? [];
-    const pagination    = data?.pagination;
-
-    // ── KPIs calculés côté client sur la page courante
-    // Les totaux vrais viennent de la pagination
-    const kpis = useMemo(() => {
-        const total     = pagination?.totalElements ?? 0;
-        const emailSent = registrations.filter(r => r.emailSent).length;
-        const profiles  = registrations.reduce<Record<string, number>>((acc, r) => {
-            const k = r.profile ?? "Autre";
-            acc[k] = (acc[k] ?? 0) + 1;
-            return acc;
-        }, {});
-        const topProfile = Object.entries(profiles).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
-        return { total, emailSent, topProfile };
-    }, [registrations, pagination]);
-
-    // ── Filtrage local (sur la page courante) ─────────────────────────────────
-    const filtered = useMemo(() => {
-        const q = search.toLowerCase();
-        return registrations.filter(r => {
-            const matchSearch =
-                !q ||
-                `${r.firstName} ${r.lastName}`.toLowerCase().includes(q) ||
-                r.email.toLowerCase().includes(q) ||
-                (r.company ?? "").toLowerCase().includes(q);
-            const matchProfile =
-                filterProfile === "all" || r.profile === filterProfile;
-            const matchEmail =
-                filterEmail === "all" ||
-                (filterEmail === "sent" && r.emailSent) ||
-                (filterEmail === "pending" && !r.emailSent);
-            return matchSearch && matchProfile && matchEmail;
-        });
-    }, [registrations, search, filterProfile, filterEmail]);
-
-    // Reset page si on change les filtres
-    const handleSearch = (v: string) => { setSearch(v); setPage(0); };
-    const handleProfile = (v: string) => { setFilterProfile(v); setPage(0); };
-    const handleEmail = (v: string) => { setFilterEmail(v); setPage(0); };
-
+  const card = (m: AdminMasterclass) => {
+    const fill = m.capacity ? Math.min(100, Math.round((m.registered / m.capacity) * 100)) : 0;
     return (
-        <AdminLayout title="Masterclass — Inscriptions">
-
-            {/* ── En-tête ─────────────────────────────────────────────────────── */}
-            <div className="mb-6">
-                <div className="flex items-center gap-2 mb-1">
-                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                    <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">
-                        Power BI Dashboard · 20 mars 2026
-                    </p>
-                </div>
-                <p className="text-muted-foreground text-sm">
-                    Construire son premier tableau de bord avec Microsoft Power BI
-                </p>
+      <li key={m.id}>
+        <Card radius="stat" className="flex flex-wrap items-center gap-x-5 gap-y-3 border border-[#E7E0D4] p-4">
+          <button type="button" onClick={() => setOpenId(m.id)} className="min-w-0 flex-1 basis-72 text-left">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-heading text-base font-bold text-navy">{m.title}</span>
+              <Pill variant={STATUS_PILL[m.status]}>{STATUS_LABELS[m.status]}</Pill>
             </div>
-
-            {/* ── KPIs ────────────────────────────────────────────────────────── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <KpiCard
-                    label="Total inscrits"
-                    value={isLoading ? "—" : kpis.total}
-                    icon={Users}
-                    accent="bg-amber-100 text-amber-600 dark:bg-amber-950/60"
-                    sub="Depuis l'ouverture"
-                />
-                <KpiCard
-                    label="Emails envoyés"
-                    value={isLoading ? "—" : kpis.emailSent}
-                    icon={MailCheck}
-                    accent="bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60"
-                    sub="Confirmation Meet"
-                />
-                <KpiCard
-                    label="Sans confirmation"
-                    value={isLoading ? "—" : registrations.filter(r => !r.emailSent).length}
-                    icon={MailX}
-                    accent="bg-rose-100 text-rose-600 dark:bg-rose-950/60"
-                    sub="Email non envoyé"
-                />
-                <KpiCard
-                    label="Profil dominant"
-                    value={isLoading ? "—" : kpis.topProfile}
-                    icon={GraduationCap}
-                    accent="bg-violet-100 text-violet-600 dark:bg-violet-950/60"
-                    sub="Cette page"
-                />
+            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-secondary">
+              <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />{when(m.startsAt)}</span>
+              <span>{FORMAT_LABELS[m.format]}{m.place ? ` · ${m.place}` : ""}</span>
             </div>
-
-            {/* ── Barre de recherche + filtres ────────────────────────────────── */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-5">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        className="pl-9"
-                        placeholder="Rechercher par nom, email, entreprise…"
-                        value={search}
-                        onChange={e => handleSearch(e.target.value)}
-                    />
-                </div>
-
-                <Select value={filterProfile} onValueChange={handleProfile}>
-                    <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Tous les profils" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tous les profils</SelectItem>
-                        {Object.keys(PROFILE_CONFIG).map(k => (
-                            <SelectItem key={k} value={k}>{k}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={filterEmail} onValueChange={handleEmail}>
-                    <SelectTrigger className="w-44">
-                        <SelectValue placeholder="Email" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tous</SelectItem>
-                        <SelectItem value="sent">Email envoyé</SelectItem>
-                        <SelectItem value="pending">Email en attente</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            {/* ── Tableau ─────────────────────────────────────────────────────── */}
-            <div className={`rounded-xl border border-border overflow-hidden transition-opacity duration-200 ${isFetching ? "opacity-60" : "opacity-100"}`}>
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-muted/40 hover:bg-muted/40">
-                            <TableHead className="w-10">#</TableHead>
-                            <TableHead>Participant</TableHead>
-                            <TableHead className="hidden md:table-cell">Profil</TableHead>
-                            <TableHead className="hidden lg:table-cell">Entreprise</TableHead>
-                            <TableHead className="hidden sm:table-cell">Email confirm.</TableHead>
-                            <TableHead className="hidden sm:table-cell">Date</TableHead>
-                            <TableHead className="text-right">Détail</TableHead>
-                        </TableRow>
-                    </TableHeader>
-
-                    <TableBody>
-                        {isLoading ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center py-16">
-                                    <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
-                                </TableCell>
-                            </TableRow>
-                        ) : filtered.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center py-16 text-muted-foreground">
-                                    Aucun résultat.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            filtered.map((reg, idx) => {
-                                const profile    = getProfileConfig(reg.profile);
-                                const ProfileIcon = profile.icon;
-                                const rowNum     = page * PAGE_SIZE + idx + 1;
-
-                                return (
-                                    <TableRow
-                                        key={reg.id}
-                                        className="cursor-pointer hover:bg-muted/30 transition-colors"
-                                        onClick={() => setSelected(reg)}
-                                    >
-                                        {/* Numéro */}
-                                        <TableCell className="text-muted-foreground text-xs font-mono">
-                                            {rowNum}
-                                        </TableCell>
-
-                                        {/* Participant */}
-                                        <TableCell>
-                                            <p className="font-semibold leading-none">
-                                                {reg.firstName} {reg.lastName}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground mt-1 truncate max-w-[200px]">
-                                                {reg.email}
-                                            </p>
-                                        </TableCell>
-
-                                        {/* Profil */}
-                                        <TableCell className="hidden md:table-cell">
-                                            <Badge variant="outline" className={`${profile.className} gap-1 text-xs`}>
-                                                <ProfileIcon className="h-3 w-3" />
-                                                {profile.label}
-                                            </Badge>
-                                        </TableCell>
-
-                                        {/* Entreprise */}
-                                        <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                                            {reg.company ?? "—"}
-                                        </TableCell>
-
-                                        {/* Email confirmation */}
-                                        <TableCell className="hidden sm:table-cell">
-                                            {reg.emailSent ? (
-                                                <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                          <MailCheck className="h-3.5 w-3.5" /> Envoyé
-                        </span>
-                                            ) : (
-                                                <span className="flex items-center gap-1.5 text-xs text-rose-500 font-medium">
-                          <MailX className="h-3.5 w-3.5" /> En attente
-                        </span>
-                                            )}
-                                        </TableCell>
-
-                                        {/* Date */}
-                                        <TableCell className="hidden sm:table-cell text-xs text-muted-foreground whitespace-nowrap">
-                                            {format(new Date(reg.createdAt), "d MMM yyyy", { locale: fr })}
-                                        </TableCell>
-
-                                        {/* Action */}
-                                        <TableCell className="text-right" onClick={e => e.stopPropagation()}>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8"
-                                                onClick={() => setSelected(reg)}
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-
-            {/* ── Pagination ──────────────────────────────────────────────────── */}
-            {pagination && pagination.totalPages > 1 && (
-                <Pagination
-                    page={pagination.page}
-                    totalPages={pagination.totalPages}
-                    totalElements={pagination.totalElements}
-                    size={pagination.size}
-                    onChange={setPage}
-                />
-            )}
-
-            {/* Compteur résultats filtrés */}
-            {!isLoading && (
-                <p className="text-xs text-muted-foreground mt-2 text-right">
-                    {filtered.length !== registrations.length
-                        ? `${filtered.length} résultat(s) filtré(s) sur ${registrations.length} de cette page`
-                        : `${registrations.length} inscription(s) sur cette page`}
-                </p>
-            )}
-
-            {/* ── Dialog détail ────────────────────────────────────────────────── */}
-            <RegistrationDetailDialog
-                reg={selected}
-                onClose={() => setSelected(null)}
-            />
-        </AdminLayout>
+          </button>
+          <div className="flex w-48 flex-col gap-1">
+            <span className="inline-flex items-center gap-1 text-xs text-ink-secondary"><Users className="h-3.5 w-3.5" aria-hidden="true" />{m.registered}{m.capacity ? ` / ${m.capacity}` : ""} inscrit{m.registered > 1 ? "s" : ""}{m.attended ? ` · ${m.attended} présent${m.attended > 1 ? "s" : ""}` : ""}</span>
+            {m.capacity ? <ProgressBar value={fill} max={100} /> : null}
+          </div>
+          <div className="flex shrink-0 gap-1.5">
+            <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => setOpenId(m.id)}>Inscrits</Button>
+            {canManage && <Button type="button" variant="outline" shape="rounded" size="sm" aria-label={`Modifier ${m.title}`} onClick={() => setEditing(m)}><Pencil /></Button>}
+            {canManage && m.registered === 0 && <Button type="button" variant="outline" shape="rounded" size="sm" aria-label={`Supprimer ${m.title}`} onClick={() => setDeleting(m)}><Trash2 /></Button>}
+          </div>
+        </Card>
+      </li>
     );
-};
+  };
 
-export default AdminMasterclass;
+  return (
+    <AdminLayout
+      title="Masterclass"
+      description="Les événements gratuits : dates, inscrits et présences"
+      actions={canManage && !selected ? <Button type="button" size="sm" shape="rounded" onClick={() => setCreating(true)}><Plus />Nouvelle masterclass</Button> : undefined}
+    >
+      {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
+      {isError && <ErrorNotice>Impossible de charger les masterclass.</ErrorNotice>}
+
+      {selected ? (
+        <EventDetail event={selected} canManage={canManage} onBack={() => setOpenId(null)} onEdit={() => setEditing(selected)} />
+      ) : (
+        !isLoading && !isError && (
+          <div className="flex flex-col gap-6">
+            {events.length === 0 && <EmptyState title="Aucune masterclass" text="Créez la prochaine masterclass : elle apparaît sur le site dès qu'elle est publiée." />}
+            {upcoming.length > 0 && (
+              <section className="flex flex-col gap-3"><h2 className="font-heading text-lg font-bold text-navy">À venir</h2><ul className="flex flex-col gap-3">{upcoming.map(card)}</ul></section>
+            )}
+            {done.length > 0 && (
+              <section className="flex flex-col gap-3"><h2 className="font-heading text-lg font-bold text-navy">Terminées</h2><ul className="flex flex-col gap-3">{done.map(card)}</ul></section>
+            )}
+          </div>
+        )
+      )}
+
+      {(creating || editing) && <EventDialog event={editing} onClose={() => { setCreating(false); setEditing(null); }} />}
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(o) => !o && setDeleting(null)}
+        title="Supprimer cette masterclass ?"
+        description={deleting ? `« ${deleting.title} » n'a aucun inscrit ; elle sera supprimée.` : ""}
+        onConfirm={async () => { if (deleting) { try { await remove.mutateAsync(deleting.id); toast({ title: "Masterclass supprimée" }); } catch (e) { toast({ title: "Suppression impossible", description: errorMessage(e), variant: "destructive" }); } } }}
+      />
+    </AdminLayout>
+  );
+}

@@ -155,7 +155,7 @@ export default function AdminFormationEditor() {
       }
     >
       <div className="flex min-w-0 max-w-full flex-col gap-6">
-        <div role="tablist" className="flex max-w-full gap-7 overflow-x-auto border-b border-[#E7E0D4] text-[15px] font-semibold">
+        <div role="tablist" className="flex max-w-full gap-7 overflow-x-auto border-b border-[#E7E0D4] text-[0.9375rem] font-semibold">
           {id && canManageCatalog && <Link to={`/admin/bootcamps/${id}/edit`} className="whitespace-nowrap py-3 text-ink-secondary">Informations</Link>}
           <span role="tab" aria-selected="true" className="-mb-px whitespace-nowrap border-b-2 border-cta py-3 font-bold text-navy">Programme</span>
           <a href="#projet" className="whitespace-nowrap py-3 text-ink-secondary">Projet final</a>
@@ -210,7 +210,7 @@ export default function AdminFormationEditor() {
                         value={m.title}
                         onChange={(e) => patchModule(m.id, (x) => ({ ...x, title: e.target.value }))}
                       />
-                      <span className="text-[13px] text-ink-secondary">{m.lessons.length} éléments{dur ? ` · ${dur}` : ""}</span>
+                      <span className="text-[0.8125rem] text-ink-secondary">{m.lessons.length} éléments{dur ? ` · ${dur}` : ""}</span>
                       <button type="button" aria-label="Monter le module" disabled={mi === 0} onClick={() => edit((ms) => move(ms, mi, -1))}><ChevronUp className="h-4 w-4 disabled:opacity-30" /></button>
                       <button type="button" aria-label="Descendre le module" disabled={mi === modules.length - 1} onClick={() => edit((ms) => move(ms, mi, 1))}><ChevronDown className="h-4 w-4 disabled:opacity-30" /></button>
                       <Button
@@ -244,8 +244,8 @@ export default function AdminFormationEditor() {
                           </div>
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-app-bg"><TypeIcon type={l.type} /></span>
                           <span className="flex min-w-0 flex-1 flex-col">
-                            <span className="truncate text-[15px] font-semibold text-ink">{l.title}</span>
-                            <span className="truncate text-[13px] text-ink-secondary">{lessonSubtitle(l)}</span>
+                            <span className="truncate text-[0.9375rem] font-semibold text-ink">{l.title}</span>
+                            <span className="truncate text-[0.8125rem] text-ink-secondary">{lessonSubtitle(l)}</span>
                           </span>
                           <span className="hidden w-[90px] text-sm text-ink-secondary sm:block">{LESSON_TYPE_LABELS[l.type]}</span>
                           <Pill variant={STATUS_VARIANT[l.status]}>{LESSON_STATUS_LABELS[l.status]}</Pill>

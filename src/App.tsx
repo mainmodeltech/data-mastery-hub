@@ -60,7 +60,6 @@ const AdminMonEspace = lazy(() => import('./pages/admin/AdminMonEspace'));
 const AdminBootcamps = lazy(() => import('./pages/admin/AdminBootcamps'));
 const AdminBootcampForm = lazy(() => import('./pages/admin/BootcampForm'));
 const AdminAllSessions = lazy(() => import('./pages/admin/AdminAllSessions'));
-const AdminInscriptions = lazy(() => import('./pages/admin/AdminInscriptions'));
 const AdminCandidatures = lazy(() => import('./pages/admin/AdminCandidatures'));
 const AdminPaiements = lazy(() => import('./pages/admin/AdminPaiements'));
 const AdminFormationEditor = lazy(() => import('./pages/admin/AdminFormationEditor'));
@@ -218,7 +217,7 @@ const App = () => (
                   <Route path="/admin/sessions/:id" element={<ProtectedRoute permissions={ACCESS.SESSION_FOLLOW}><AdminSessionSuivi /></ProtectedRoute>} />
                   <Route path="/admin/paiements" element={<ProtectedRoute permissions={ACCESS.PAYMENTS}><AdminPaiements /></ProtectedRoute>} />
                   <Route path="/admin/candidatures" element={<ProtectedRoute permissions={ACCESS.APPLICATIONS}><AdminCandidatures /></ProtectedRoute>} />
-                  <Route path="/admin/inscriptions" element={<ProtectedRoute permissions={ACCESS.APPLICATIONS}><AdminInscriptions /></ProtectedRoute>} />
+                  <Route path="/admin/inscriptions" element={<Navigate to="/admin/candidatures?etape=ARCHIVED" replace />} />
                   <Route path="/admin/promo-codes" element={<ProtectedRoute permissions={ACCESS.PROMO}><AdminPromoCodes /></ProtectedRoute>} />
                   <Route path="/admin/temoignages" element={<ProtectedRoute permissions={ACCESS.SITE_CONTENT}><AdminTemoignages /></ProtectedRoute>} />
                   <Route path="/admin/masterclass" element={<ProtectedRoute permissions={ACCESS.MASTERCLASS}><AdminMasterclassPage /></ProtectedRoute>} />

@@ -92,7 +92,7 @@ export function NotificationsBell() {
         >
           <Bell className="h-5 w-5" />
           {unread > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-pill bg-cta px-1 text-[11px] font-bold text-white">{unread}</span>
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-pill bg-cta px-1 text-[0.6875rem] font-bold text-white">{unread}</span>
           )}
         </button>
       </PopoverTrigger>

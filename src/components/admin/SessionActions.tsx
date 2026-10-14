@@ -11,9 +11,11 @@ import { Download, Loader2, MessageCircle } from "lucide-react";
 import { ErrorNotice, errorMessage, Field, inputClass } from "@/components/admin/AdminKit";
 import { Button, Card, Pill } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { QuestionItem } from "@/components/admin/QuestionItem";
 import { useIssueCertificate } from "@/hooks/useAdminOps";
+import { QUIZ_STATUS_LABELS, attemptsLabel, type QuizSummary } from "@/types/evaluation.type";
 import {
-  useAnswerQuestion, useAssignTrainer, useProjectFiles, useReviewProject, useSendSessionMessage,
+  useAnswerQuestion, useAssignTrainer, useGrantAttempts, useLearnerQuizzes, useProjectFiles, useReviewProject, useSendSessionMessage,
   useSessionMessages, useSessionQuestions, useTrainers,
 } from "@/hooks/useSessionOps";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +74,101 @@ export function SessionMessageDialog({
             </Button>
           </div>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Quiz d'un apprenant : tentatives ─────────────────────────────────────────
+
+const QUIZ_PILL: Record<string, "success" | "warning" | "error" | "neutral" | "info"> = {
+  PASSED: "success", FAILED: "error", AVAILABLE: "warning", TO_DO: "neutral", LOCKED: "neutral",
+};
+
+function GrantForm({ quiz, onGrant, onCancel, pending }: {
+  quiz: QuizSummary; pending: boolean; onCancel: () => void;
+  onGrant: (extra: number, reason: string) => Promise<void>;
+}) {
+  const [extra, setExtra] = useState("1");
+  const [reason, setReason] = useState("");
+  return (
+    <form
+      className="mt-3 flex flex-col gap-3 rounded-xl bg-app-bg p-3"
+      onSubmit={async (e) => { e.preventDefault(); await onGrant(Number(extra), reason.trim()); }}
+    >
+      <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
+        <Field label="Tentatives" htmlFor={`gx-${quiz.id}`}>
+          <input id={`gx-${quiz.id}`} type="number" min={1} max={10} required className={inputClass} value={extra} onChange={(e) => setExtra(e.target.value)} />
+        </Field>
+        <Field label="Motif *" htmlFor={`gr-${quiz.id}`} hint="Conservé avec l'octroi (ex. limite réglée à 1 par erreur).">
+          <input id={`gr-${quiz.id}`} required maxLength={1000} className={inputClass} value={reason} onChange={(e) => setReason(e.target.value)} />
+        </Field>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" shape="rounded" size="sm" disabled={pending} onClick={onCancel}>Annuler</Button>
+        <Button type="submit" shape="rounded" size="sm" disabled={pending || !reason.trim()}>{pending ? <Loader2 className="animate-spin" /> : "Accorder"}</Button>
+      </div>
+    </form>
+  );
+}
+
+export function LearnerQuizzesDialog({ sessionId, learner, onClose }: { sessionId: string; learner: TrackedLearner; onClose: () => void }) {
+  const { toast } = useToast();
+  const { data: quizzes = [], isLoading, isError } = useLearnerQuizzes(sessionId, learner.learnerId);
+  const grant = useGrantAttempts(sessionId, learner.learnerId);
+  const [granting, setGranting] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto rounded-callout">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-xl font-bold text-navy">Quiz de {learner.name}</DialogTitle>
+          <DialogDescription className="text-ink-secondary">
+            Tentatives utilisées et limite. Vous pouvez accorder des tentatives supplémentaires à cet apprenant seulement (la limite du quiz, pour tous, se règle dans le programme).
+          </DialogDescription>
+        </DialogHeader>
+        {error && <ErrorNotice>{error}</ErrorNotice>}
+        {isLoading && <Loader2 className="mx-auto h-5 w-5 animate-spin text-ink-secondary" />}
+        {isError && <ErrorNotice>Impossible de charger les quiz de cet apprenant.</ErrorNotice>}
+        {!isLoading && !isError && quizzes.length === 0 && <p className="text-sm text-ink-secondary">Cette formation n'a pas de quiz.</p>}
+        <ul className="flex flex-col gap-3">
+          {quizzes.map((q) => (
+            <li key={q.id} className="rounded-card border border-[#E7E0D4] bg-white p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="min-w-0 flex-1 font-semibold text-ink">{q.title}</span>
+                <Pill variant={QUIZ_PILL[q.status] ?? "neutral"}>{QUIZ_STATUS_LABELS[q.status]}</Pill>
+              </div>
+              <p className="mt-1 text-xs text-ink-secondary">
+                Tentatives {attemptsLabel(q.attemptsUsed, q.maxAttempts)}
+                {(q.extraAttempts ?? 0) > 0 && <> · dont {q.extraAttempts} accordée{(q.extraAttempts ?? 0) > 1 ? "s" : ""}</>}
+                {q.bestScore != null && <> · meilleur score {q.bestScore} % (seuil {q.passThreshold} %)</>}
+              </p>
+              {q.maxAttempts != null && q.status !== "PASSED" && granting !== q.id && (
+                <Button type="button" variant="outline" shape="rounded" size="sm" className="mt-3" onClick={() => { setError(""); setGranting(q.id); }}>
+                  Accorder des tentatives
+                </Button>
+              )}
+              {granting === q.id && (
+                <GrantForm
+                  quiz={q}
+                  pending={grant.isPending}
+                  onCancel={() => setGranting(null)}
+                  onGrant={async (extra, reason) => {
+                    try {
+                      await grant.mutateAsync({ quizId: q.id, extraAttempts: extra, reason });
+                      toast({ title: "Tentatives accordées", description: `${extra} pour ${learner.name} sur « ${q.title} »` });
+                      setGranting(null);
+                    } catch (err) {
+                      setError(errorMessage(err, "L'octroi a échoué."));
+                    }
+                  }}
+                />
+              )}
+            </li>
+          ))}
+        </ul>
+        <div className="flex justify-end"><Button type="button" variant="outline" shape="rounded" onClick={onClose}>Fermer</Button></div>
       </DialogContent>
     </Dialog>
   );
@@ -234,26 +331,11 @@ export function IssueCertificatesDialog({
 // ─── Questions des apprenants ─────────────────────────────────────────────────
 
 export function QuestionsCard({ sessionId }: { sessionId: string }) {
-  const { toast } = useToast();
   const { data: questions = [], isLoading } = useSessionQuestions(sessionId);
-  const answer = useAnswerQuestion(sessionId);
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [text, setText] = useState("");
   const [showAnswered, setShowAnswered] = useState(false);
 
   const open = questions.filter((q) => !q.answer);
   const shown = showAnswered ? questions : open;
-
-  const submit = async (questionId: string) => {
-    try {
-      await answer.mutateAsync({ questionId, answer: text.trim() });
-      toast({ title: "Réponse envoyée" });
-      setOpenId(null);
-      setText("");
-    } catch (err) {
-      toast({ title: "Envoi impossible", description: errorMessage(err), variant: "destructive" });
-    }
-  };
 
   return (
     <Card radius="stat" className="flex flex-col gap-3 border border-[#E7E0D4] p-5 lg:p-6">
@@ -264,26 +346,8 @@ export function QuestionsCard({ sessionId }: { sessionId: string }) {
       {isLoading && <Loader2 className="h-5 w-5 animate-spin text-ink-secondary" />}
       {!isLoading && shown.length === 0 && <p className="text-sm text-ink-secondary">{questions.length === 0 ? "Aucune question posée pour le moment." : "Toutes les questions ont reçu une réponse."}</p>}
       {shown.map((q) => (
-        <div key={q.id} className="flex flex-col gap-2 border-b border-[#E7E0D4] pb-3 last:border-b-0 last:pb-0">
-          <p className="text-xs text-ink-secondary"><strong className="text-ink">{q.learnerName}</strong> · {q.lessonTitle} · {stamp(q.askedAt)}</p>
-          <p className="text-sm text-ink">{q.question}</p>
-          {q.answer ? (
-            <p className="rounded-xl bg-success-bg px-3 py-2 text-sm text-success">{q.answer}<span className="mt-1 block text-xs opacity-80">{q.answeredBy} · {stamp(q.answeredAt)}</span></p>
-          ) : openId === q.id ? (
-            <div className="flex flex-col gap-2">
-              <textarea aria-label="Votre réponse" rows={3} maxLength={5000} className={inputClass} value={text} onChange={(e) => setText(e.target.value)} />
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => { setOpenId(null); setText(""); }}>Annuler</Button>
-                <Button type="button" variant="navy" shape="rounded" size="sm" disabled={answer.isPending || !text.trim()} onClick={() => void submit(q.id)}>
-                  {answer.isPending ? <Loader2 className="animate-spin" /> : "Répondre"}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button type="button" variant="outline" shape="rounded" size="sm" className="w-fit" onClick={() => { setOpenId(q.id); setText(""); }}>
-              <MessageCircle /> Répondre
-            </Button>
-          )}
+        <div key={q.id} className="border-b border-[#E7E0D4] pb-3 last:border-b-0 last:pb-0">
+          <QuestionItem sessionId={sessionId} q={q} />
         </div>
       ))}
       {questions.length > open.length && (

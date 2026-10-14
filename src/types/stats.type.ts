@@ -16,6 +16,8 @@ export interface AdminActions {
   openQuestions?: number;
   projectsToReview?: number;
   upcomingLives?: number;
+  /** Certificats prêts, en attente de validation par l'équipe. */
+  certificatesToValidate?: number;
   failedEmails?: number;
 }
 

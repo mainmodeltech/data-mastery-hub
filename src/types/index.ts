@@ -69,6 +69,9 @@ export interface Registration {
   totalAmount?: number | null;
   acceptedAt?: string | null;
   rejectedReason?: string | null;
+  cancelledAt?: string | null;
+  cancelledReason?: string | null;
+  source?: string | null;
   learnerId?: string | null;
   paymentSummary?: PaymentSummary | null;
   createdAt: string;

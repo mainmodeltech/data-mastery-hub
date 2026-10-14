@@ -38,7 +38,7 @@ export default function EspaceCalendrier() {
                   return (
                     <li key={l.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[#E7E0D4] py-3 first:border-t-0">
                       <span className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-card bg-info-bg text-navy">
-                        <span className="text-[10px] font-bold uppercase">{format(at, "MMM", { locale: fr })}</span>
+                        <span className="text-[0.625rem] font-bold uppercase">{format(at, "MMM", { locale: fr })}</span>
                         <span className="font-heading text-lg font-extrabold leading-none">{format(at, "d")}</span>
                       </span>
                       <div className="flex min-w-0 flex-1 basis-48 flex-col">

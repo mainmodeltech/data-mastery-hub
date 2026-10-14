@@ -15,7 +15,10 @@ export function useEvaluationsOverview(formationId: string | undefined) {
     queryKey: EVALUATION_KEYS.overview(formationId ?? ""),
     queryFn: () => evaluationService.getOverview(formationId as string),
     enabled: !!formationId,
-    staleTime: QUERY_CONFIG.staleTime,
+    // Toujours relu à l'ouverture : une limite de tentatives corrigée par l'équipe doit s'appliquer sans attendre
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 

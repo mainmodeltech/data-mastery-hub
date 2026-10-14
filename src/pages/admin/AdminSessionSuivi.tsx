@@ -17,7 +17,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button, Card, Pill } from "@/components/shared";
 import { ManualRegistrationDialog } from "@/components/admin/ManualRegistrationDialog";
 import {
-  IssueCertificatesDialog, MessagesCard, ProjectReviewDialog, QuestionsCard, SessionMessageDialog, TrainerAssign,
+  IssueCertificatesDialog, LearnerQuizzesDialog, MessagesCard, ProjectReviewDialog, QuestionsCard, SessionMessageDialog, TrainerAssign,
 } from "@/components/admin/SessionActions";
 import { DemoDataBanner } from "@/components/learner/LearnerShell";
 import {
@@ -49,8 +49,9 @@ const PROJECT_PILL: Record<ProjectStatus, "success" | "warning" | "error"> = {
   NOT_STARTED: "error",
 };
 
-const CERT_PILL: Record<CertificateTrackingStatus, "success" | "neutral" | "error" | "info"> = {
+const CERT_PILL: Record<CertificateTrackingStatus, "success" | "neutral" | "error" | "info" | "warning"> = {
   READY: "success",
+  TO_VALIDATE: "warning",
   PENDING: "neutral",
   AT_RISK: "error",
   ISSUED: "info",
@@ -84,7 +85,7 @@ function progressColor(p: number): string {
   return p >= 85 ? "#1F6B4F" : "#8A5A00";
 }
 
-function LearnerRow({ l, selected, onToggle, onReview }: { l: TrackedLearner; selected: boolean; onToggle: () => void; onReview: () => void }) {
+function LearnerRow({ l, selected, onToggle, onReview, onQuizzes }: { l: TrackedLearner; selected: boolean; onToggle: () => void; onReview: () => void; onQuizzes: () => void }) {
   return (
     <div className={cn("flex flex-col gap-3 border-b border-[#E7E0D4] px-4 py-4 text-sm lg:py-3.5", ROW_GRID)}>
       <span className="flex items-center gap-3">
@@ -121,7 +122,12 @@ function LearnerRow({ l, selected, onToggle, onReview }: { l: TrackedLearner; se
         </div>
         <span className="text-xs text-ink-secondary">{l.progressPercent} %</span>
       </span>
-      <span className="font-semibold"><span className="font-normal text-ink-secondary lg:hidden">Quiz : </span>{l.quizPassed}/{l.quizTotal}</span>
+      <span className="flex flex-wrap items-center gap-2 font-semibold">
+        <span><span className="font-normal text-ink-secondary lg:hidden">Quiz : </span>{l.quizPassed}/{l.quizTotal}</span>
+        {l.quizTotal > 0 && (
+          <button type="button" onClick={onQuizzes} className="text-xs font-semibold text-navy underline underline-offset-2 hover:text-cta" aria-label={`Quiz de ${l.name}`}>Gérer</button>
+        )}
+      </span>
       <span className="flex flex-wrap items-center gap-2">
         <Pill variant={PROJECT_PILL[l.project]}>{PROJECT_STATUS_LABELS[l.project]}</Pill>
         {(l.project === "SUBMITTED" || l.project === "CHANGES_REQUESTED") && (
@@ -242,6 +248,7 @@ export default function AdminSessionSuivi() {
   const [messageOpen, setMessageOpen] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
   const [reviewing, setReviewing] = useState<TrackedLearner | null>(null);
+  const [quizzesOf, setQuizzesOf] = useState<TrackedLearner | null>(null);
   const qc = useQueryClient();
   const canForce = can("CERTIFICATES_OVERRIDE");          // délivrer un certificat par dérogation
   const canAddLearner = can("ENROLLMENTS_MANAGE");
@@ -257,6 +264,7 @@ export default function AdminSessionSuivi() {
       { label: "Progression moyenne", value: `${avg} %` },
       { label: "Projets à corriger", value: String(tracking.learners.filter((l) => l.project === "SUBMITTED").length) },
       { label: "Certificats délivrés", value: String(tracking.learners.filter((l) => l.certificate === "ISSUED").length) },
+      { label: "Certificats à valider", value: String(tracking.learners.filter((l) => l.certificate === "TO_VALIDATE").length) },
     ];
   }, [tracking]);
 
@@ -296,7 +304,7 @@ export default function AdminSessionSuivi() {
               {kpis.map((k) => (
                 <Card key={k.label} radius="stat" className="flex flex-col gap-2 border border-[#E7E0D4] p-5">
                   <span className="text-sm text-ink-secondary">{k.label}</span>
-                  <span className="font-heading text-[30px] font-extrabold text-navy">{k.value}</span>
+                  <span className="font-heading text-[1.875rem] font-extrabold text-navy">{k.value}</span>
                 </Card>
               ))}
             </div>
@@ -342,7 +350,7 @@ export default function AdminSessionSuivi() {
                     <p className="px-4 py-6 text-sm text-ink-secondary">Aucun apprenant inscrit à cette session pour le moment.</p>
                   )}
                   {tracking.learners.map((l) => (
-                    <LearnerRow key={l.learnerId} l={l} selected={selected.has(l.learnerId)} onToggle={() => toggle(l.learnerId)} onReview={() => setReviewing(l)} />
+                    <LearnerRow key={l.learnerId} l={l} selected={selected.has(l.learnerId)} onToggle={() => toggle(l.learnerId)} onReview={() => setReviewing(l)} onQuizzes={() => setQuizzesOf(l)} />
                   ))}
                 </div>
               </Card>
@@ -401,6 +409,7 @@ export default function AdminSessionSuivi() {
               />
             )}
             {reviewing && <ProjectReviewDialog sessionId={id} learner={reviewing} onClose={() => setReviewing(null)} />}
+            {quizzesOf && <LearnerQuizzesDialog sessionId={id} learner={quizzesOf} onClose={() => setQuizzesOf(null)} />}
 
             {attendanceOpen && (
               <AttendanceDialog open={attendanceOpen} onOpenChange={setAttendanceOpen} tracking={tracking} sessionId={id} />

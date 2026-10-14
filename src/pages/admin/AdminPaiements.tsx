@@ -91,7 +91,7 @@ function Kpi({ label, value, hint, tone }: { label: string; value: string; hint?
   return (
     <Card radius="stat" className="flex flex-col gap-2 border border-[#E7E0D4] p-5">
       <span className="text-sm text-ink-secondary">{label}</span>
-      <span className={cn("font-heading text-[26px] font-extrabold leading-none", tone === "error" ? "text-error" : "text-navy")}>{value}</span>
+      <span className={cn("font-heading text-[1.625rem] font-extrabold leading-none", tone === "error" ? "text-error" : "text-navy")}>{value}</span>
       {hint && <span className="text-xs text-ink-secondary">{hint}</span>}
     </Card>
   );

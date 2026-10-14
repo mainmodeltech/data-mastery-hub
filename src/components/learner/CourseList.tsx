@@ -23,7 +23,7 @@ export function CourseList({ courses }: { courses: EnrollmentSummary[] }) {
           <li key={c.formationId} className="grid grid-cols-[minmax(0,1fr)] items-center gap-3 border-t border-[#E7E0D4] py-4 first:border-t-0 lg:grid-cols-[minmax(0,1.4fr),minmax(0,1.6fr),auto,auto]">
             <div className="flex min-w-0 flex-col">
               <span className="font-bold text-ink">{c.title}</span>
-              <span className="truncate text-[13px] text-ink-secondary">{c.providerLabel}</span>
+              <span className="truncate text-[0.8125rem] text-ink-secondary">{c.providerLabel}</span>
             </div>
             <div className="flex flex-col gap-1.5">
               <ProgressBar value={c.progressPercent} aria-label={`Progression ${c.title}`} className="h-2" />

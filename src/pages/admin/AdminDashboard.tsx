@@ -55,7 +55,7 @@ function Kpi({ label, value, hint, tone }: { label: string; value: string; hint?
   return (
     <Card radius="stat" className="flex flex-col gap-2 border border-[#E7E0D4] p-5">
       <span className="text-sm text-ink-secondary">{label}</span>
-      <span className={cn("font-heading text-[28px] font-extrabold leading-none", tone === "error" ? "text-error" : "text-navy")}>{value}</span>
+      <span className={cn("font-heading text-[1.75rem] font-extrabold leading-none", tone === "error" ? "text-error" : "text-navy")}>{value}</span>
       {hint && <span className="text-xs text-ink-secondary">{hint}</span>}
     </Card>
   );
@@ -206,6 +206,7 @@ export default function AdminDashboard() {
         { n: a.newApplications, title: "Candidatures à examiner", to: "/admin/candidatures" },
         { n: a.paymentsToConfirm, title: "Paiements à confirmer", to: "/admin/candidatures" },
         { n: a.overdueInstallments, title: "Échéances en retard", to: "/admin/candidatures", urgent: true },
+        { n: a.certificatesToValidate, title: "Certificats à valider", to: "/admin/certificats" },
         { n: a.unreadMessages, title: "Messages non lus", to: "/admin/messages" },
         { n: a.openQuestions, title: "Questions sans réponse", to: "/admin/bootcamp-sessions" },
         { n: a.projectsToReview, title: "Projets à corriger", to: "/admin/bootcamp-sessions" },
@@ -266,7 +267,7 @@ export default function AdminDashboard() {
                 const inner = (
                   <>
                     <span className={cn("flex h-9 min-w-9 items-center justify-center rounded-pill px-2 text-sm font-bold text-white", q.urgent ? "bg-error" : "bg-cta")}>{q.n}</span>
-                    <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">{q.title}</span>
+                    <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-ink">{q.title}</span>
                     {q.to && <ChevronRight className="h-4 w-4 shrink-0 text-ink-secondary" />}
                   </>
                 );

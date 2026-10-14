@@ -68,7 +68,7 @@ function Frame({ backTo, title, right, children }: { backTo: string; title: stri
         <Link to={backTo} aria-label="Retour aux évaluations" className="-ml-2.5 flex h-11 w-11 items-center justify-center rounded-xl text-navy">
           <ArrowLeft className="h-[22px] w-[22px]" />
         </Link>
-        <h1 className="flex-1 truncate font-heading text-[19px] font-extrabold text-navy">{title}</h1>
+        <h1 className="flex-1 truncate font-heading text-[1.1875rem] font-extrabold text-navy">{title}</h1>
         {right}
       </header>
       {children}
@@ -168,7 +168,7 @@ export default function QuizRunner() {
         <main className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-5 lg:py-10">
           <Card radius="callout" className="flex flex-col items-center gap-3 border border-[#E7E0D4] p-8 text-center">
             <Pill variant={result.passed ? "success" : "error"}>{result.passed ? "Réussi" : "Non validé"}</Pill>
-            <span className="font-heading text-[56px] font-extrabold leading-none text-navy">{result.score} %</span>
+            <span className="font-heading text-[3.5rem] font-extrabold leading-none text-navy">{result.score} %</span>
             <p className="text-ink-secondary">
               {result.correctCount} bonne{result.correctCount > 1 ? "s" : ""} réponse{result.correctCount > 1 ? "s" : ""} sur {result.questionCount} · seuil {quiz.passThreshold} %
             </p>
@@ -191,7 +191,7 @@ export default function QuizRunner() {
                       <span className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-pill text-white", ok ? "bg-success" : "bg-error")} aria-label={ok ? "Correct" : "Incorrect"}>
                         {ok ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                       </span>
-                      <span className="text-[15px] font-semibold text-ink">{i + 1}. {qq.text}</span>
+                      <span className="text-[0.9375rem] font-semibold text-ink">{i + 1}. {qq.text}</span>
                     </div>
                     {!ok && (
                       <p className="pl-7 text-sm text-ink-secondary">
@@ -201,7 +201,7 @@ export default function QuizRunner() {
                     <p className="pl-7 text-sm text-ink-secondary">
                       Bonne réponse : <span className="font-semibold text-success">{label(r.correctChoiceId)}</span>
                     </p>
-                    {r.explanation && <p className="pl-7 text-[13px] text-ink-secondary">{r.explanation}</p>}
+                    {r.explanation && <p className="pl-7 text-[0.8125rem] text-ink-secondary">{r.explanation}</p>}
                   </div>
                 );
               })}
@@ -243,7 +243,7 @@ export default function QuizRunner() {
       >
         <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
           <div className="flex flex-col gap-2 px-5 pt-4">
-            <div className="flex justify-between text-[13px] text-ink-secondary">
+            <div className="flex justify-between text-[0.8125rem] text-ink-secondary">
               <span>Question {run.index + 1} sur {total}</span>
               <span>Tentative {run.attempt.attemptNumber}{run.attempt.maxAttempts ? ` sur ${run.attempt.maxAttempts}` : ""}</span>
             </div>
@@ -260,7 +260,7 @@ export default function QuizRunner() {
           </div>
 
           <div className="flex flex-1 flex-col gap-3.5 p-5">
-            <h2 className="font-heading text-[21px] font-bold leading-snug text-navy lg:text-2xl">{question.text}</h2>
+            <h2 className="font-heading text-[1.3125rem] font-bold leading-snug text-navy lg:text-2xl">{question.text}</h2>
             <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
               <legend className="sr-only">Choisissez une réponse</legend>
               {question.choices.map((c, i) => {
@@ -269,7 +269,7 @@ export default function QuizRunner() {
                   <label
                     key={c.id}
                     className={cn(
-                      "flex cursor-pointer items-start gap-3 rounded-[14px] border p-4 text-[15px] leading-snug",
+                      "flex cursor-pointer items-start gap-3 rounded-[14px] border p-4 text-[0.9375rem] leading-snug",
                       selected ? "border-2 border-navy bg-info-bg" : "border-[#D6CEC0] bg-white"
                     )}
                   >
@@ -286,7 +286,7 @@ export default function QuizRunner() {
               })}
             </fieldset>
             {isLast && answeredCount < total && (
-              <p className="text-[13px] text-warning">
+              <p className="text-[0.8125rem] text-warning">
                 {total - answeredCount} question{total - answeredCount > 1 ? "s" : ""} sans réponse (compté{total - answeredCount > 1 ? "es" : "e"} comme fausse{total - answeredCount > 1 ? "s" : ""}).
               </p>
             )}

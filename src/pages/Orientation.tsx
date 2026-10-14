@@ -149,7 +149,7 @@ function ResultScreen({
                     <Sparkles className="h-4 w-4 text-cta" />
                     <span className="text-sm font-semibold text-cta">{ui.analysis}</span>
                 </div>
-                <h2 className="mb-2 font-heading text-[32px] font-extrabold leading-tight tracking-[-1px] text-navy md:text-[40px]">
+                <h2 className="mb-2 font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy md:text-[2.5rem]">
                     {ui.resultTitle}
                 </h2>
                 <p className="text-ink-secondary">{ui.resultSubtitle}</p>
@@ -164,7 +164,7 @@ function ResultScreen({
                         <Icon className="h-8 w-8 text-navy" />
                     </span>
                     <div className="min-w-0">
-                        <h3 className="font-heading text-2xl font-bold leading-tight text-navy md:text-[30px]">{displayTitle}</h3>
+                        <h3 className="font-heading text-2xl font-bold leading-tight text-navy md:text-[1.875rem]">{displayTitle}</h3>
                         <p className="mt-1 font-semibold text-cta">{displaySubtitle}</p>
                     </div>
                 </div>
@@ -258,7 +258,7 @@ function QuestionCard({ question, selected, onSelect }: {
     return (
         <div className="mx-auto w-full max-w-2xl">
             <div className="mb-10 text-center">
-                <h2 className="mb-3 font-heading text-[26px] font-extrabold leading-tight tracking-[-0.5px] text-navy md:text-[34px]">
+                <h2 className="mb-3 font-heading text-[1.625rem] font-extrabold leading-tight tracking-[-0.5px] text-navy md:text-[2.125rem]">
                     {question.title}
                 </h2>
                 <p className="text-ink-secondary">{question.subtitle}</p>
@@ -404,7 +404,7 @@ function OrientationBody({ c, company }: { c: PageOrientation; company: SiteComp
                                     {intro.badge}
                                 </Pill>
                             </div>
-                            <h1 className="mb-6 font-heading text-[40px] font-extrabold leading-[1.05] tracking-[-1.5px] text-navy md:text-[56px]">
+                            <h1 className="mb-6 font-heading text-[2.5rem] font-extrabold leading-[1.05] tracking-[-1.5px] text-navy md:text-[3.5rem]">
                                 {intro.titleBefore} <span className="text-cta">{intro.titleAccent}</span>
                             </h1>
                             <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-ink-secondary lg:mx-0">{intro.description}</p>
@@ -426,7 +426,7 @@ function OrientationBody({ c, company }: { c: PageOrientation; company: SiteComp
 
                             {intro.social && <p className="mb-10 text-sm text-ink-secondary">{intro.social}</p>}
 
-                            <Button onClick={handleStart} size="lg" className="px-10 text-[17px]">
+                            <Button onClick={handleStart} size="lg" className="px-10 text-[1.0625rem]">
                                 {intro.start}
                                 <ArrowRight />
                             </Button>

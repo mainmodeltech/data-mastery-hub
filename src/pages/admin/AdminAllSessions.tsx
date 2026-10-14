@@ -1,440 +1,350 @@
-import { useState } from "react";
+/**
+ * AdminAllSessions.tsx — sessions de toutes les formations (design system) : filtres par statut et formation, recherche,
+ * remplissage des places, mise en avant, suivi, création/modification. Les prix relèvent du droit « Tarifs » (le serveur
+ * refuse la modification d'un prix sans ce droit).
+ */
+import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminBootcampService } from "@/services/Adminbootcampservice";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
+import { BookOpen, CalendarDays, ClipboardList, Loader2, MapPin, Pencil, Plus, Search, Star, Trash2, Users } from "lucide-react";
+
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-    Pencil, Trash2, Star, StarOff, Loader2, Calendar, Users, BookOpen, Plus, ClipboardList,
-} from "lucide-react";
+import { ConfirmDialog, EmptyState, ErrorNotice, errorMessage, Field, inputClass, SwitchRow } from "@/components/admin/AdminKit";
+import { Button, Card, Pill, ProgressBar } from "@/components/shared";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { adminBootcampService } from "@/services/Adminbootcampservice";
 import type {
-    BootcampSession, SessionStatus, SessionFormat,
-    CreateSessionPayload, UpdateSessionPayload,
+  BootcampSession, CreateSessionPayload, SessionFormat, SessionStatus, UpdateSessionPayload,
 } from "@/types/bootcamp.type";
 
 const STATUS_LABELS: Record<SessionStatus, string> = {
-    DRAFT: "Brouillon", UPCOMING: "À venir", OPEN: "Inscriptions ouvertes",
-    CLOSED: "Inscriptions fermées", IN_PROGRESS: "En cours",
-    COMPLETED: "Terminée", CANCELLED: "Annulée",
+  DRAFT: "Brouillon", UPCOMING: "À venir", OPEN: "Inscriptions ouvertes", CLOSED: "Inscriptions fermées",
+  IN_PROGRESS: "En cours", COMPLETED: "Terminée", CANCELLED: "Annulée",
 };
 
-const STATUS_BADGE: Record<SessionStatus, "default" | "secondary" | "outline" | "destructive"> = {
-    DRAFT: "outline", UPCOMING: "secondary", OPEN: "default", CLOSED: "secondary",
-    IN_PROGRESS: "default", COMPLETED: "secondary", CANCELLED: "destructive",
+const STATUS_PILL: Record<SessionStatus, "success" | "warning" | "error" | "info" | "neutral"> = {
+  DRAFT: "neutral", UPCOMING: "info", OPEN: "success", CLOSED: "warning", IN_PROGRESS: "info", COMPLETED: "neutral", CANCELLED: "error",
 };
 
-const FORMAT_LABELS: Record<SessionFormat, string> = {
-    PRESENTIEL: "Présentiel", REMOTE: "À distance", HYBRID: "Hybride",
-};
+const FORMAT_LABELS: Record<SessionFormat, string> = { PRESENTIEL: "Présentiel", REMOTE: "À distance", HYBRID: "Hybride" };
 
-interface SessionWithBootcamp extends BootcampSession {
-    bootcampTitle?: string;
+/** Regroupements affichés en puces (un clic = un filtre) ; « Toutes » ne filtre pas. */
+const GROUPS: { key: string; label: string; statuses: SessionStatus[] | null }[] = [
+  { key: "ALL", label: "Toutes", statuses: null },
+  { key: "OPEN", label: "Inscriptions ouvertes", statuses: ["OPEN"] },
+  { key: "SOON", label: "À venir", statuses: ["UPCOMING", "CLOSED"] },
+  { key: "RUNNING", label: "En cours", statuses: ["IN_PROGRESS"] },
+  { key: "DONE", label: "Terminées", statuses: ["COMPLETED", "CANCELLED"] },
+  { key: "DRAFT", label: "Brouillons", statuses: ["DRAFT"] },
+];
+
+interface SessionWithBootcamp extends BootcampSession { bootcampTitle?: string }
+
+interface FormState {
+  bootcampId: string; sessionName: string; cohortNumber: string; year: string;
+  startDate: string; endDate: string; registrationDeadline: string; maxParticipants: string;
+  status: SessionStatus; format: SessionFormat; location: string;
+  priceOverride: string; earlyBirdPrice: string; priceOverrideAmount: string; earlyBirdAmount: string; earlyBirdDeadline: string;
+  isFeatured: boolean; published: boolean;
 }
 
-type SessionFormState = {
-    bootcampId: string; sessionName: string; cohortNumber: string; year: string;
-    startDate: string; endDate: string; registrationDeadline: string;
-    maxParticipants: string; status: SessionStatus; format: SessionFormat;
-    location: string; priceOverride: string; earlyBirdPrice: string;
-    priceOverrideAmount: string; earlyBirdAmount: string;
-    earlyBirdDeadline: string; isFeatured: boolean; published: boolean;
-};
-
-const defaultForm = (bootcampId = ""): SessionFormState => ({
-    bootcampId, sessionName: "", cohortNumber: "",
-    year: new Date().getFullYear().toString(), startDate: "", endDate: "",
-    registrationDeadline: "", maxParticipants: "20", status: "UPCOMING",
-    format: "PRESENTIEL", location: "Dakar, Sénégal", priceOverride: "",
-    earlyBirdPrice: "", priceOverrideAmount: "", earlyBirdAmount: "", earlyBirdDeadline: "", isFeatured: false, published: true,
+const emptyForm = (bootcampId = ""): FormState => ({
+  bootcampId, sessionName: "", cohortNumber: "", year: String(new Date().getFullYear()), startDate: "", endDate: "",
+  registrationDeadline: "", maxParticipants: "20", status: "UPCOMING", format: "PRESENTIEL", location: "Dakar, Sénégal",
+  priceOverride: "", earlyBirdPrice: "", priceOverrideAmount: "", earlyBirdAmount: "", earlyBirdDeadline: "", isFeatured: false, published: true,
 });
 
-function sessionToForm(s: SessionWithBootcamp): SessionFormState {
-    return {
-        bootcampId: s.bootcampId, sessionName: s.sessionName ?? "",
-        cohortNumber: s.cohortNumber?.toString() ?? "",
-        year: s.year?.toString() ?? new Date().getFullYear().toString(),
-        startDate: s.startDate ?? "", endDate: s.endDate ?? "",
-        registrationDeadline: s.registrationDeadline ?? "",
-        maxParticipants: s.maxParticipants.toString(), status: s.status,
-        format: s.format, location: s.location ?? "", priceOverride: s.price ?? "",
-        earlyBirdPrice: s.earlyBirdPrice ?? "", earlyBirdDeadline: s.earlyBirdDeadline ?? "",
-        priceOverrideAmount: s.priceOverrideAmount?.toString() ?? "",
-        earlyBirdAmount: s.earlyBirdAmount?.toString() ?? "",
-        isFeatured: s.isFeatured, published: s.published,
+function toForm(s: SessionWithBootcamp): FormState {
+  return {
+    bootcampId: s.bootcampId, sessionName: s.sessionName ?? "", cohortNumber: s.cohortNumber?.toString() ?? "",
+    year: s.year?.toString() ?? String(new Date().getFullYear()), startDate: s.startDate ?? "", endDate: s.endDate ?? "",
+    registrationDeadline: s.registrationDeadline ?? "", maxParticipants: s.maxParticipants.toString(), status: s.status,
+    format: s.format, location: s.location ?? "", priceOverride: s.price ?? "", earlyBirdPrice: s.earlyBirdPrice ?? "",
+    priceOverrideAmount: s.priceOverrideAmount?.toString() ?? "", earlyBirdAmount: s.earlyBirdAmount?.toString() ?? "",
+    earlyBirdDeadline: s.earlyBirdDeadline ?? "", isFeatured: s.isFeatured, published: s.published,
+  };
+}
+
+const day = (iso: string | null | undefined, withYear = true) =>
+  (iso ? format(parseISO(iso), withYear ? "d MMM yyyy" : "d MMM", { locale: fr }) : "");
+
+function SessionDialog({
+  session, bootcamps, defaultBootcamp, canPrice, onClose,
+}: { session: SessionWithBootcamp | null; bootcamps: { id: string; title: string }[]; defaultBootcamp: string; canPrice: boolean; onClose: () => void }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [form, setForm] = useState<FormState>(session ? toForm(session) : emptyForm(defaultBootcamp));
+  const [error, setError] = useState("");
+  const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const done = (title: string) => {
+    qc.invalidateQueries({ queryKey: ["admin", "allSessions"] });
+    qc.invalidateQueries({ queryKey: ["admin", "bootcamps"] });
+    toast({ title });
+    onClose();
+  };
+  const create = useMutation({
+    mutationFn: ({ bootcampId, payload }: { bootcampId: string; payload: CreateSessionPayload }) => adminBootcampService.createSession(bootcampId, payload),
+    onSuccess: () => done("Session créée"),
+    onError: (e) => setError(errorMessage(e, "Création impossible.")),
+  });
+  const update = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateSessionPayload }) => adminBootcampService.updateSession(id, payload),
+    onSuccess: () => done("Session mise à jour"),
+    onError: (e) => setError(errorMessage(e, "Enregistrement impossible.")),
+  });
+  const pending = create.isPending || update.isPending;
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!session && !form.bootcampId) return setError("Choisissez la formation.");
+    if (form.startDate && form.endDate && form.endDate < form.startDate) return setError("La date de fin précède la date de début.");
+    const payload: CreateSessionPayload = {
+      sessionName: form.sessionName || undefined,
+      cohortNumber: form.cohortNumber ? parseInt(form.cohortNumber) : undefined,
+      year: form.year ? parseInt(form.year) : undefined,
+      startDate: form.startDate || undefined, endDate: form.endDate || undefined,
+      registrationDeadline: form.registrationDeadline || undefined,
+      maxParticipants: parseInt(form.maxParticipants) || 20,
+      status: form.status, format: form.format, location: form.location || undefined,
+      priceOverride: form.priceOverride || undefined, earlyBirdPrice: form.earlyBirdPrice || undefined,
+      priceOverrideAmount: form.priceOverrideAmount ? parseInt(form.priceOverrideAmount) : undefined,
+      earlyBirdAmount: form.earlyBirdAmount ? parseInt(form.earlyBirdAmount) : undefined,
+      earlyBirdDeadline: form.earlyBirdDeadline || undefined,
+      isFeatured: form.isFeatured, published: form.published,
     };
+    if (session) update.mutate({ id: session.id, payload });
+    else create.mutate({ bootcampId: form.bootcampId, payload });
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && !pending && onClose()}>
+      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-callout">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-xl font-bold text-navy">{session ? "Modifier la session" : "Nouvelle session"}</DialogTitle>
+          <DialogDescription className="text-ink-secondary">Dates, places, format et tarifs spécifiques à cette session.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          {error && <ErrorNotice>{error}</ErrorNotice>}
+          {!session && (
+            <Field label="Formation *" htmlFor="ss-b">
+              <select id="ss-b" required className={inputClass} value={form.bootcampId} onChange={(e) => set("bootcampId", e.target.value)}>
+                <option value="">— Choisir —</option>
+                {bootcamps.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
+              </select>
+            </Field>
+          )}
+          <div className="grid gap-4 sm:grid-cols-[1fr_140px]">
+            <Field label="Nom de la session" htmlFor="ss-n"><input id="ss-n" className={inputClass} placeholder="Cohorte 5 — Mars 2027" value={form.sessionName} onChange={(e) => set("sessionName", e.target.value)} /></Field>
+            <Field label="N° de cohorte" htmlFor="ss-c"><input id="ss-c" type="number" min={1} className={inputClass} value={form.cohortNumber} onChange={(e) => set("cohortNumber", e.target.value)} /></Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Début" htmlFor="ss-s"><input id="ss-s" type="date" className={inputClass} value={form.startDate} onChange={(e) => set("startDate", e.target.value)} /></Field>
+            <Field label="Fin" htmlFor="ss-e"><input id="ss-e" type="date" className={inputClass} value={form.endDate} onChange={(e) => set("endDate", e.target.value)} /></Field>
+            <Field label="Limite d'inscription" htmlFor="ss-d"><input id="ss-d" type="date" className={inputClass} value={form.registrationDeadline} onChange={(e) => set("registrationDeadline", e.target.value)} /></Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-4">
+            <Field label="Statut" htmlFor="ss-st">
+              <select id="ss-st" className={inputClass} value={form.status} onChange={(e) => set("status", e.target.value as SessionStatus)}>
+                {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </Field>
+            <Field label="Format" htmlFor="ss-f">
+              <select id="ss-f" className={inputClass} value={form.format} onChange={(e) => set("format", e.target.value as SessionFormat)}>
+                {Object.entries(FORMAT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </Field>
+            <Field label="Places" htmlFor="ss-m"><input id="ss-m" type="number" min={1} className={inputClass} value={form.maxParticipants} onChange={(e) => set("maxParticipants", e.target.value)} /></Field>
+            <Field label="Lieu" htmlFor="ss-l"><input id="ss-l" className={inputClass} value={form.location} onChange={(e) => set("location", e.target.value)} /></Field>
+          </div>
+
+          <fieldset className="flex flex-col gap-3 rounded-card border border-[#E7E0D4] p-4" disabled={!canPrice}>
+            <legend className="px-1 font-heading text-sm font-bold text-navy">Tarifs de la session <span className="font-normal text-ink-secondary">(vides : le prix de la formation s'applique)</span></legend>
+            {!canPrice && <p className="text-xs text-ink-secondary">Les tarifs sont gérés par la finance : ces champs sont en lecture seule pour votre profil.</p>}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Prix affiché" htmlFor="ss-po"><input id="ss-po" className={inputClass} placeholder="400 000 FCFA" value={form.priceOverride} onChange={(e) => set("priceOverride", e.target.value)} /></Field>
+              <Field label="Montant (FCFA)" htmlFor="ss-pa"><input id="ss-pa" type="number" min={0} step={1000} className={inputClass} value={form.priceOverrideAmount} onChange={(e) => set("priceOverrideAmount", e.target.value)} /></Field>
+              <Field label="Prix early bird affiché" htmlFor="ss-eb"><input id="ss-eb" className={inputClass} placeholder="350 000 FCFA" value={form.earlyBirdPrice} onChange={(e) => set("earlyBirdPrice", e.target.value)} /></Field>
+              <Field label="Montant early bird (FCFA)" htmlFor="ss-ea"><input id="ss-ea" type="number" min={0} step={1000} className={inputClass} value={form.earlyBirdAmount} onChange={(e) => set("earlyBirdAmount", e.target.value)} /></Field>
+              <Field label="Early bird jusqu'au" htmlFor="ss-ed" className="sm:col-span-2"><input id="ss-ed" type="date" className={inputClass} value={form.earlyBirdDeadline} onChange={(e) => set("earlyBirdDeadline", e.target.value)} /></Field>
+            </div>
+            <p className="text-xs text-ink-secondary">Les montants servent au calcul des paiements ; les prix en texte ne servent qu'à l'affichage.</p>
+          </fieldset>
+
+          <SwitchRow label="Mise en avant" description="Affichée comme « Prochaine session » sur la fiche de la formation." checked={form.isFeatured} onChange={(v) => set("isFeatured", v)} />
+          <SwitchRow label="Publiée" description="Visible sur le site public." checked={form.published} onChange={(v) => set("published", v)} />
+
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" shape="rounded" disabled={pending} onClick={onClose}>Annuler</Button>
+            <Button type="submit" shape="rounded" disabled={pending}>{pending ? <Loader2 className="animate-spin" /> : session ? "Enregistrer" : "Créer la session"}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export default function AdminAllSessions() {
-    const queryClient = useQueryClient();
-    const { toast } = useToast();
-    const [searchParams] = useSearchParams();
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const { can } = useAuth();
+  const canManage = can("CATALOG_MANAGE");
+  const canPrice = can("PRICING_MANAGE");
+  const [searchParams] = useSearchParams();
 
-    const [statusFilter, setStatusFilter] = useState<SessionStatus | "ALL">("ALL");
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editingSession, setEditingSession] = useState<SessionWithBootcamp | null>(null);
-    const [form, setForm] = useState<SessionFormState>(defaultForm());
+  const [group, setGroup] = useState("ALL");
+  const [bootcampFilter, setBootcampFilter] = useState(searchParams.get("bootcamp") ?? "");
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<SessionWithBootcamp | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<SessionWithBootcamp | null>(null);
 
-    const { data: bootcamps, isLoading: loadingBootcamps } = useQuery({
-        queryKey: ["admin", "bootcamps"],
-        queryFn: adminBootcampService.list,
-    });
+  const { data: bootcamps, isLoading: loadingBootcamps } = useQuery({ queryKey: ["admin", "bootcamps"], queryFn: adminBootcampService.list });
+  const { data: allSessions, isLoading: loadingSessions, isError } = useQuery({
+    queryKey: ["admin", "allSessions", bootcamps?.map((b) => b.id)],
+    queryFn: async (): Promise<SessionWithBootcamp[]> => {
+      if (!bootcamps?.length) return [];
+      const results = await Promise.all(
+        bootcamps.map((b) => adminBootcampService.listSessions(b.id).then((s) => s.map((x) => ({ ...x, bootcampTitle: b.title })))),
+      );
+      return results.flat();
+    },
+    enabled: !!bootcamps?.length,
+  });
 
-    const { data: allSessions, isLoading: loadingSessions } = useQuery({
-        queryKey: ["admin", "allSessions", bootcamps?.map((b) => b.id)],
-        queryFn: async (): Promise<SessionWithBootcamp[]> => {
-            if (!bootcamps?.length) return [];
-            const results = await Promise.all(
-                bootcamps.map((b) =>
-                    adminBootcampService.listSessions(b.id)
-                        .then((sessions) => sessions.map((s) => ({ ...s, bootcampTitle: b.title })))
-                )
-            );
-            return results.flat();
-        },
-        enabled: !!bootcamps?.length,
-    });
+  const invalidate = () => { qc.invalidateQueries({ queryKey: ["admin", "allSessions"] }); qc.invalidateQueries({ queryKey: ["admin", "bootcamps"] }); };
+  const featured = useMutation({ mutationFn: (id: string) => adminBootcampService.toggleSessionFeatured(id), onSuccess: invalidate });
+  const remove = useMutation({
+    mutationFn: (id: string) => adminBootcampService.deleteSession(id),
+    onSuccess: () => { invalidate(); toast({ title: "Session supprimée" }); },
+  });
 
-    const invalidate = () => {
-        queryClient.invalidateQueries({ queryKey: ["admin", "allSessions"] });
-        queryClient.invalidateQueries({ queryKey: ["admin", "bootcamps"] });
-    };
+  const sessions = useMemo(() => allSessions ?? [], [allSessions]);
+  const groupCount = (statuses: SessionStatus[] | null) => (statuses ? sessions.filter((s) => statuses.includes(s.status)).length : sessions.length);
 
-    const createMutation = useMutation({
-        mutationFn: ({ bootcampId, payload }: { bootcampId: string; payload: CreateSessionPayload }) =>
-            adminBootcampService.createSession(bootcampId, payload),
-        onSuccess: () => { invalidate(); closeDialog(); toast({ title: "Session créée" }); },
-        onError: () => toast({ title: "Erreur", variant: "destructive" }),
-    });
+  const visible = useMemo(() => {
+    const g = GROUPS.find((x) => x.key === group)!;
+    const q = search.trim().toLowerCase();
+    return sessions
+      .filter((s) => (!g.statuses || g.statuses.includes(s.status))
+        && (!bootcampFilter || s.bootcampId === bootcampFilter)
+        && (!q || `${s.sessionName ?? ""} ${s.bootcampTitle ?? ""} ${s.location ?? ""}`.toLowerCase().includes(q)))
+      .sort((a, b) => {
+        // À venir et en cours : la plus proche d'abord ; terminées : la plus récente d'abord
+        const ta = a.startDate ? new Date(a.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+        const tb = b.startDate ? new Date(b.startDate).getTime() : Number.MAX_SAFE_INTEGER;
+        return group === "DONE" ? tb - ta : ta - tb;
+      });
+  }, [sessions, group, bootcampFilter, search]);
 
-    const updateMutation = useMutation({
-        mutationFn: ({ id, payload }: { id: string; payload: UpdateSessionPayload }) =>
-            adminBootcampService.updateSession(id, payload),
-        onSuccess: () => { invalidate(); closeDialog(); toast({ title: "Session mise à jour" }); },
-        onError: () => toast({ title: "Erreur", variant: "destructive" }),
-    });
+  const isLoading = loadingBootcamps || loadingSessions;
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: string) => adminBootcampService.deleteSession(id),
-        onSuccess: () => { invalidate(); toast({ title: "Session supprimée" }); },
-        onError: () => toast({ title: "Erreur", description: "Suppression impossible", variant: "destructive" }),
-    });
+  return (
+    <AdminLayout
+      title="Sessions"
+      description={`${sessions.length} session${sessions.length > 1 ? "s" : ""} sur ${bootcamps?.length ?? 0} formation${(bootcamps?.length ?? 0) > 1 ? "s" : ""}`}
+      actions={canManage ? <Button type="button" size="sm" shape="rounded" disabled={!bootcamps?.length} onClick={() => setCreating(true)}><Plus />Nouvelle session</Button> : undefined}
+    >
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer les sessions">
+          {GROUPS.map((g) => (
+            <Button key={g.key} type="button" size="sm" shape="pill" variant={group === g.key ? "navy" : "outline"} aria-pressed={group === g.key} onClick={() => setGroup(g.key)}>
+              {g.label}<span className="ml-1.5 rounded-pill bg-surface-sand px-1.5 text-[0.6875rem] font-bold text-ink-secondary">{groupCount(g.statuses)}</span>
+            </Button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <select aria-label="Formation" className={cn(inputClass, "max-w-xs")} value={bootcampFilter} onChange={(e) => setBootcampFilter(e.target.value)}>
+            <option value="">Toutes les formations</option>
+            {bootcamps?.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
+          </select>
+          <div className="flex min-w-[220px] flex-1 items-center gap-2 rounded-[10px] border border-[#D6CEC0] bg-white px-3 py-2.5 sm:max-w-xs">
+            <Search className="h-4 w-4 text-ink-secondary" aria-hidden="true" />
+            <input type="search" aria-label="Rechercher une session" placeholder="Nom, formation, lieu…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-transparent text-sm outline-none" />
+          </div>
+        </div>
 
-    const featuredMutation = useMutation({
-        mutationFn: (id: string) => adminBootcampService.toggleSessionFeatured(id),
-        onSuccess: () => invalidate(),
-    });
+        {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
+        {isError && <ErrorNotice>Impossible de charger les sessions.</ErrorNotice>}
+        {!isLoading && !isError && sessions.length === 0 && (
+          <EmptyState title="Aucune session" text="Créez d'abord une formation, puis ajoutez ses sessions."
+            action={<Button asChild variant="outline" shape="rounded"><Link to="/admin/bootcamps"><BookOpen />Gérer les formations</Link></Button>} />
+        )}
+        {!isLoading && sessions.length > 0 && visible.length === 0 && <EmptyState title="Aucune session ne correspond" text="Modifiez les filtres ou la recherche." />}
 
-    const openCreateDialog = () => {
-        setEditingSession(null);
-        setForm(defaultForm(searchParams.get("bootcamp") ?? bootcamps?.[0]?.id ?? ""));
-        setDialogOpen(true);
-    };
-
-    const openEditDialog = (session: SessionWithBootcamp) => {
-        setEditingSession(session);
-        setForm(sessionToForm(session));
-        setDialogOpen(true);
-    };
-
-    const closeDialog = () => { setDialogOpen(false); setEditingSession(null); };
-
-    const set = (field: keyof SessionFormState, value: unknown) =>
-        setForm((prev) => ({ ...prev, [field]: value }));
-
-    const handleSubmit = () => {
-        const payload: CreateSessionPayload = {
-            sessionName: form.sessionName || undefined,
-            cohortNumber: form.cohortNumber ? parseInt(form.cohortNumber) : undefined,
-            year: form.year ? parseInt(form.year) : undefined,
-            startDate: form.startDate || undefined, endDate: form.endDate || undefined,
-            registrationDeadline: form.registrationDeadline || undefined,
-            maxParticipants: parseInt(form.maxParticipants) || 20,
-            status: form.status, format: form.format,
-            location: form.location || undefined,
-            priceOverride: form.priceOverride || undefined,
-            earlyBirdPrice: form.earlyBirdPrice || undefined,
-            priceOverrideAmount: form.priceOverrideAmount ? parseInt(form.priceOverrideAmount) : undefined,
-            earlyBirdAmount: form.earlyBirdAmount ? parseInt(form.earlyBirdAmount) : undefined,
-            earlyBirdDeadline: form.earlyBirdDeadline || undefined,
-            isFeatured: form.isFeatured, published: form.published,
-        };
-
-        if (editingSession) {
-            updateMutation.mutate({ id: editingSession.id, payload });
-        } else {
-            if (!form.bootcampId) {
-                toast({ title: "Sélectionnez un bootcamp", variant: "destructive" });
-                return;
-            }
-            createMutation.mutate({ bootcampId: form.bootcampId, payload });
-        }
-    };
-
-    const isPending = createMutation.isPending || updateMutation.isPending;
-    const isLoading = loadingBootcamps || loadingSessions;
-    const sessions = allSessions ?? [];
-    const filtered = statusFilter === "ALL" ? sessions : sessions.filter((s) => s.status === statusFilter);
-    const sorted = [...filtered].sort((a, b) => {
-        if (!a.startDate && !b.startDate) return 0;
-        if (!a.startDate) return 1;
-        if (!b.startDate) return -1;
-        return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
-    });
-
-    return (
-        <AdminLayout title="Sessions bootcamp">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-                <div className="flex flex-wrap items-center gap-3">
-                    <p className="text-sm text-muted-foreground">
-                        {sessions.length} session{sessions.length > 1 ? "s" : ""} au total
-                    </p>
-                    <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as SessionStatus | "ALL")}>
-                        <SelectTrigger className="w-52 max-w-full">
-                            <SelectValue placeholder="Filtrer par statut" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">Tous les statuts</SelectItem>
-                            {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>{label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <Button onClick={openCreateDialog} disabled={!bootcamps?.length}>
-                    <Plus className="h-4 w-4" />
-                    Nouvelle session
-                </Button>
-            </div>
-
-            {isLoading ? (
-                <div className="flex justify-center py-20">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-            ) : !sessions.length ? (
-                <div className="text-center py-20 border border-dashed border-border rounded-xl bg-card">
-                    <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-foreground font-medium mb-2">Aucune session</p>
-                    <p className="text-muted-foreground text-sm mb-6">
-                        Créez d'abord un bootcamp, puis ajoutez des sessions.
-                    </p>
-                    <Button asChild variant="outline">
-                        <Link to="/admin/bootcamps"><BookOpen className="h-4 w-4" />Gérer les bootcamps</Link>
-                    </Button>
-                </div>
-            ) : !sorted.length ? (
-                <div className="text-center py-16 border border-dashed border-border rounded-xl bg-card">
-                    <p className="text-foreground font-medium">Aucune session avec ce statut</p>
-                    <Button variant="ghost" className="mt-3 text-sm" onClick={() => setStatusFilter("ALL")}>
-                        Voir toutes les sessions
-                    </Button>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {sorted.map((session) => (
-                        <div key={session.id} className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/20 transition-colors">
-                            <button
-                                onClick={() => featuredMutation.mutate(session.id)}
-                                className={`flex-shrink-0 transition-colors ${session.isFeatured ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
-                                title={session.isFeatured ? "Retirer la mise en avant" : "Mettre en avant"}
-                            >
-                                {session.isFeatured ? <Star className="h-5 w-5 fill-current" /> : <StarOff className="h-5 w-5" />}
-                            </button>
-
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                    <p className="font-semibold text-foreground">
-                                        {session.sessionName ?? `Cohorte ${session.cohortNumber ?? "?"}`}
-                                    </p>
-                                    <Badge variant={STATUS_BADGE[session.status]} className="text-xs">
-                                        {STATUS_LABELS[session.status]}
-                                    </Badge>
-                                    {!session.published && <Badge variant="outline" className="text-xs">Brouillon</Badge>}
-                                </div>
-                                <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                                    {session.bootcampTitle && (
-                                        <span className="flex items-center gap-1 text-primary/80 font-medium">
-                      <BookOpen className="h-3 w-3" />{session.bootcampTitle}
-                    </span>
-                                    )}
-                                    {session.startDate && (
-                                        <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                                            {new Date(session.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
-                                            {session.endDate && ` → ${new Date(session.endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`}
-                    </span>
-                                    )}
-                                    <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                                        {session.currentParticipants}/{session.maxParticipants}
-                                        {session.isFull && <span className="text-destructive font-medium ml-1">· Complet</span>}
-                  </span>
-                                    {session.price && <span className="font-medium text-foreground">{session.price}</span>}
-                                    <span>{FORMAT_LABELS[session.format]}</span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                                <Button asChild variant="ghost" size="icon" className="h-8 w-8" title="Suivi de la session">
-                                    <Link to={`/admin/sessions/${session.id}`} aria-label="Suivi de la session"><ClipboardList className="h-4 w-4 text-muted-foreground" /></Link>
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(session)}>
-                                    <Pencil className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                                <Button
-                                    variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10"
-                                    onClick={() => { if (confirm(`Supprimer cette session ?`)) deleteMutation.mutate(session.id); }}
-                                    disabled={deleteMutation.isPending}
-                                >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>{editingSession ? "Modifier la session" : "Nouvelle session"}</DialogTitle>
-                    </DialogHeader>
-
-                    <div className="space-y-4 py-2">
-                        {!editingSession && (
-                            <div className="space-y-1.5">
-                                <Label>Bootcamp *</Label>
-                                <Select value={form.bootcampId} onValueChange={(v) => set("bootcampId", v)}>
-                                    <SelectTrigger><SelectValue placeholder="Choisir un bootcamp" /></SelectTrigger>
-                                    <SelectContent>
-                                        {bootcamps?.map((b) => <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label>Nom de la session</Label>
-                                <Input placeholder="ex: Cohorte 5 — Mars 2025" value={form.sessionName} onChange={(e) => set("sessionName", e.target.value)} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>N° de cohorte</Label>
-                                <Input type="number" min={1} placeholder="ex: 5" value={form.cohortNumber} onChange={(e) => set("cohortNumber", e.target.value)} />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label>Date de début</Label>
-                                <Input type="date" value={form.startDate} onChange={(e) => set("startDate", e.target.value)} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Date de fin</Label>
-                                <Input type="date" value={form.endDate} onChange={(e) => set("endDate", e.target.value)} />
-                            </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <Label>Limite d'inscription</Label>
-                            <Input type="date" value={form.registrationDeadline} onChange={(e) => set("registrationDeadline", e.target.value)} />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label>Statut</Label>
-                                <Select value={form.status} onValueChange={(v) => set("status", v as SessionStatus)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {Object.entries(STATUS_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Format</Label>
-                                <Select value={form.format} onValueChange={(v) => set("format", v as SessionFormat)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {Object.entries(FORMAT_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label>Participants max</Label>
-                                <Input type="number" min={1} value={form.maxParticipants} onChange={(e) => set("maxParticipants", e.target.value)} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Lieu</Label>
-                                <Input placeholder="ex: Dakar, Sénégal" value={form.location} onChange={(e) => set("location", e.target.value)} />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label>Prix spécifique</Label>
-                                <Input placeholder="ex: 400 000 FCFA" value={form.priceOverride} onChange={(e) => set("priceOverride", e.target.value)} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Prix early bird</Label>
-                                <Input placeholder="ex: 350 000 FCFA" value={form.earlyBirdPrice} onChange={(e) => set("earlyBirdPrice", e.target.value)} />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label>Montant spécifique (FCFA)</Label>
-                                <Input type="number" min={0} step={1000} placeholder="400000" value={form.priceOverrideAmount} onChange={(e) => set("priceOverrideAmount", e.target.value)} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Montant early bird (FCFA)</Label>
-                                <Input type="number" min={0} step={1000} placeholder="350000" value={form.earlyBirdAmount} onChange={(e) => set("earlyBirdAmount", e.target.value)} />
-                            </div>
-                            <p className="col-span-2 text-xs text-muted-foreground">
-                                Les montants servent au calcul des paiements ; les prix en texte ci-dessus ne servent qu'à l'affichage.
-                                Vides : le prix de la formation s'applique.
-                            </p>
-                        </div>
-
-                        <div className="space-y-3 pt-2 border-t border-border">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-foreground">Mise en avant</p>
-                                    <p className="text-xs text-muted-foreground">Affiché comme "Prochaine session" sur la card</p>
-                                </div>
-                                <Switch checked={form.isFeatured} onCheckedChange={(v) => set("isFeatured", v)} />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-foreground">Publiée</p>
-                                    <p className="text-xs text-muted-foreground">Visible sur le site public</p>
-                                </div>
-                                <Switch checked={form.published} onCheckedChange={(v) => set("published", v)} />
-                            </div>
-                        </div>
+        <ul className="flex flex-col gap-3">
+          {visible.map((s) => {
+            const fill = s.maxParticipants > 0 ? Math.min(100, Math.round((s.currentParticipants / s.maxParticipants) * 100)) : 0;
+            return (
+              <li key={s.id}>
+                <Card radius="stat" className="flex flex-wrap items-center gap-x-5 gap-y-3 border border-[#E7E0D4] p-4">
+                  <button
+                    type="button"
+                    disabled={!canManage || featured.isPending}
+                    onClick={() => featured.mutate(s.id)}
+                    className={cn("shrink-0", s.isFeatured ? "text-cta" : "text-[#C9C0B0] hover:text-cta", !canManage && "cursor-default hover:text-[#C9C0B0]")}
+                    title={s.isFeatured ? "Mise en avant : retirer" : "Mettre en avant"}
+                    aria-label={s.isFeatured ? "Retirer la mise en avant" : "Mettre en avant"}
+                    aria-pressed={s.isFeatured}
+                  >
+                    <Star className={cn("h-5 w-5", s.isFeatured && "fill-current")} />
+                  </button>
+                  <div className="min-w-0 flex-1 basis-64">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-heading text-base font-bold text-navy">{s.sessionName ?? `Cohorte ${s.cohortNumber ?? "?"}`}</span>
+                      <Pill variant={STATUS_PILL[s.status]}>{STATUS_LABELS[s.status]}</Pill>
+                      {!s.published && <Pill variant="neutral">Non publiée</Pill>}
                     </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-secondary">
+                      {s.bootcampTitle && <span className="inline-flex items-center gap-1 font-semibold text-navy"><BookOpen className="h-3.5 w-3.5" aria-hidden="true" />{s.bootcampTitle}</span>}
+                      {s.startDate && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />{day(s.startDate)}{s.endDate ? ` → ${day(s.endDate)}` : ""}</span>}
+                      <span>{FORMAT_LABELS[s.format]}</span>
+                      {s.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" aria-hidden="true" />{s.location}</span>}
+                      {s.price && <span className="font-semibold text-ink">{s.price}</span>}
+                    </div>
+                  </div>
+                  <div className="flex w-40 flex-col gap-1" aria-label="Places">
+                    <span className="inline-flex items-center gap-1 text-xs text-ink-secondary"><Users className="h-3.5 w-3.5" aria-hidden="true" />{s.currentParticipants} / {s.maxParticipants} places{s.isFull ? " · complète" : ""}</span>
+                    <ProgressBar value={fill} max={100} />
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Button asChild variant="outline" shape="rounded" size="sm"><Link to={`/admin/sessions/${s.id}`} aria-label={`Suivi de ${s.sessionName ?? "la session"}`}><ClipboardList />Suivi</Link></Button>
+                    {(canManage || canPrice) && (
+                      <Button type="button" variant="outline" shape="rounded" size="sm" aria-label={`Modifier ${s.sessionName ?? "la session"}`} onClick={() => setEditing(s)}><Pencil /></Button>
+                    )}
+                    {canManage && (
+                      <Button type="button" variant="outline" shape="rounded" size="sm" aria-label={`Supprimer ${s.sessionName ?? "la session"}`} onClick={() => setDeleting(s)}><Trash2 /></Button>
+                    )}
+                  </div>
+                </Card>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
-                    <DialogFooter>
-                        <Button variant="outline" onClick={closeDialog}>Annuler</Button>
-                        <Button onClick={handleSubmit} disabled={isPending}>
-                            {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                            {editingSession ? "Enregistrer" : "Créer la session"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </AdminLayout>
-    );
+      {(creating || editing) && (
+        <SessionDialog
+          session={editing}
+          bootcamps={bootcamps ?? []}
+          defaultBootcamp={bootcampFilter || searchParams.get("bootcamp") || bootcamps?.[0]?.id || ""}
+          canPrice={canPrice}
+          onClose={() => { setCreating(false); setEditing(null); }}
+        />
+      )}
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(o) => !o && setDeleting(null)}
+        title="Supprimer cette session ?"
+        description={deleting ? `« ${deleting.sessionName ?? "Session"} » (${deleting.bootcampTitle ?? ""}) sera supprimée. Les inscriptions existantes ne sont pas supprimées.` : ""}
+        onConfirm={async () => { if (deleting) { try { await remove.mutateAsync(deleting.id); } catch (e) { toast({ title: "Suppression impossible", description: errorMessage(e), variant: "destructive" }); } } }}
+      />
+    </AdminLayout>
+  );
 }

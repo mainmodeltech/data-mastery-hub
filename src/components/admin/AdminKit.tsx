@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const inputClass =
-  "w-full rounded-xl border border-[#D6CEC0] bg-white px-3.5 py-2.5 font-sans text-[15px] text-ink outline-none placeholder:text-ink-secondary/60 focus:border-navy disabled:bg-app-bg disabled:text-ink-secondary";
+  "w-full rounded-xl border border-[#D6CEC0] bg-white px-3.5 py-2.5 font-sans text-[0.9375rem] text-ink outline-none placeholder:text-ink-secondary/60 focus:border-navy disabled:bg-app-bg disabled:text-ink-secondary";
 
 export function Field({
   label, hint, htmlFor, className, children,

@@ -81,6 +81,22 @@ export function useRevokeCertificate() {
   });
 }
 
+export function useValidateCertificate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (publicId: string) => certificateAdminService.validate(publicId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: OPS_KEYS.certificates }); qc.invalidateQueries({ queryKey: ["admin", "stats"] }); },
+  });
+}
+
+export function useValidateCertificates() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (publicIds: string[]) => certificateAdminService.validateMany(publicIds),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: OPS_KEYS.certificates }); qc.invalidateQueries({ queryKey: ["admin", "stats"] }); },
+  });
+}
+
 export function useResendCertificate() {
   return useMutation({ mutationFn: (publicId: string) => certificateAdminService.resend(publicId) });
 }

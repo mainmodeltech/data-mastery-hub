@@ -21,7 +21,30 @@ import { fill } from "@/lib/template";
 import { PAGE_SEO, SeoHead } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card, Pill, SectionHeader, ContentGate } from "@/components/shared";
+import { useNextMasterclass } from "@/hooks/useMasterclasses";
+import { FORMAT_LABELS, type PublicMasterclass } from "@/services/api/masterclassService";
 import type { PageMasterclass, SiteCompany } from "@/types/siteContent";
+
+/** Complète l'événement du contenu avec la masterclass publiée par l'équipe (date, durée, lieu, places) ; sans masterclass publiée, les inscriptions sont closes. */
+function withLiveEvent(c: PageMasterclass, next: PublicMasterclass | null | undefined): PageMasterclass {
+    if (!next) return { ...c, event: { ...c.event, registrationsClosed: true } };
+    const startsAt = new Date(`${next.startsAt}Z`);   // heure du serveur (UTC), affichée en UTC comme le reste de la page
+    const hours = Math.floor(next.durationMinutes / 60);
+    const minutes = next.durationMinutes % 60;
+    return {
+        ...c,
+        event: {
+            ...c.event,
+            id: next.code,
+            startsAt: startsAt.toISOString(),
+            durationLabel: `${hours} h${minutes ? ` ${minutes}` : ""}`,
+            timeLabel: new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(startsAt).replace(":", "h"),
+            place: next.place ?? c.event.place,
+            format: FORMAT_LABELS[next.format] ?? c.event.format,
+            registrationsClosed: !next.registrationOpen,
+        },
+    };
+}
 
 const ICONS: Record<string, LucideIcon> = { chart: BarChart3, zap: Zap, award: Award };
 
@@ -273,7 +296,7 @@ function RegistrationForm({ c, eventDate }: { c: PageMasterclass; eventDate: Dat
                     <Mail className="h-3 w-3" />
                     {f.meetNote}
                 </p>
-                <p className="flex items-center justify-center gap-1 text-[11px]">
+                <p className="flex items-center justify-center gap-1 text-[0.6875rem]">
                     <ShieldCheck className="h-3 w-3" />
                     Protégé par reCAPTCHA ·{" "}
                     <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline">Confidentialité</a>
@@ -290,17 +313,18 @@ function RegistrationForm({ c, eventDate }: { c: PageMasterclass; eventDate: Dat
 export default function MasterclassPage() {
     const page = useSiteContent("page.masterclass");
     const company = useSiteContent("site.company");
+    const next = useNextMasterclass();
 
     return (
         <SiteLayout>
             <SeoHead {...PAGE_SEO.masterclass} />
             <ContentGate
                 content={page.content && company.content ? { page: page.content, company: company.content } : undefined}
-                isLoading={page.isLoading || company.isLoading}
+                isLoading={page.isLoading || company.isLoading || next.isLoading}
                 isError={page.isError || company.isError}
                 onRetry={() => { page.refetch(); company.refetch(); }}
             >
-                {({ page: p, company: c }) => <MasterclassBody c={p} company={c} />}
+                {({ page: p, company: c }) => <MasterclassBody c={withLiveEvent(p, next.data)} company={c} />}
             </ContentGate>
         </SiteLayout>
     );
@@ -324,7 +348,7 @@ function MasterclassBody({ c, company }: { c: PageMasterclass; company: SiteComp
                                 {closed ? c.hero.badgeClosed : c.hero.badgeOpen}
                             </Pill>
                         </div>
-                        <h1 className="font-heading text-[40px] font-extrabold leading-[1.05] tracking-[-1.5px] text-navy md:text-[56px]">
+                        <h1 className="font-heading text-[2.5rem] font-extrabold leading-[1.05] tracking-[-1.5px] text-navy md:text-[3.5rem]">
                             {c.hero.titleBefore} <span className="text-cta">{c.hero.titleAccent}</span> {c.hero.titleAfter}
                         </h1>
                         <p className="max-w-xl text-lg leading-relaxed text-ink-secondary">{c.hero.description}</p>
@@ -457,7 +481,7 @@ function MasterclassBody({ c, company }: { c: PageMasterclass; company: SiteComp
                     )}
                     <div className="flex min-w-0 flex-col gap-4">
                         <span className="text-sm font-bold uppercase tracking-[1.5px] text-cta">{c.speaker.label}</span>
-                        <h2 className="font-heading text-[34px] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[44px]">
+                        <h2 className="font-heading text-[2.125rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.75rem]">
                             {c.speaker.name}
                         </h2>
                         <p className="font-semibold text-navy">{c.speaker.role}</p>
@@ -475,7 +499,7 @@ function MasterclassBody({ c, company }: { c: PageMasterclass; company: SiteComp
                     <div className="mb-4 flex justify-center gap-1" aria-hidden="true">
                         {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-[#F5B301] text-[#F5B301]" />)}
                     </div>
-                    <h2 className="mx-auto mb-4 max-w-2xl font-heading text-[30px] font-extrabold leading-tight tracking-[-0.5px] text-white md:text-[40px]">
+                    <h2 className="mx-auto mb-4 max-w-2xl font-heading text-[1.875rem] font-extrabold leading-tight tracking-[-0.5px] text-white md:text-[2.5rem]">
                         {closed ? c.cta.titleClosed : c.cta.titleOpen}
                     </h2>
                     <p className="mx-auto mb-8 max-w-xl text-lg text-[#D5DEE8]">

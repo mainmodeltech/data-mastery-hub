@@ -23,6 +23,9 @@ export interface PromoCode {
     usageCount: number;
     expiresAt: string | null;
 
+    /** Vrai : la remise dépasse le plafond ; le code est refusé aux candidats tant qu'elle n'est pas corrigée. */
+    overLimit?: boolean;
+
     // État
     isActive: boolean;
 
@@ -43,3 +46,6 @@ export type CreatePromoCodeDTO = Omit<
 >;
 
 export type UpdatePromoCodeDTO = Partial<CreatePromoCodeDTO>;
+
+/** Remise maximale d'un code de parrainage (règle du serveur). */
+export const MAX_PROMO_DISCOUNT = 30;

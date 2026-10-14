@@ -87,7 +87,7 @@ export default function AdminNewsletter() {
           {([["CONFIRMED", "Confirmés"], ["PENDING", "En attente"], ["UNSUBSCRIBED", "Désinscrits"]] as const).map(([k, label]) => (
             <Card key={k} radius="stat" className="flex flex-col gap-1 border border-[#E7E0D4] p-5">
               <span className="text-sm text-ink-secondary">{label}</span>
-              <span className="font-heading text-[28px] font-extrabold text-navy">{counts[k]}</span>
+              <span className="font-heading text-[1.75rem] font-extrabold text-navy">{counts[k]}</span>
             </Card>
           ))}
         </div>

@@ -1,377 +1,178 @@
-// src/pages/admin/AdminTemoignages.tsx
+/**
+ * AdminTemoignages.tsx — témoignages affichés sur le site (design system) : liste filtrable (publiés / brouillons),
+ * recherche, publication d'un clic, création et modification, suppression confirmée.
+ */
+import { useMemo, useState } from "react";
+import { Eye, EyeOff, Loader2, Pencil, Plus, Search, Star, Trash2 } from "lucide-react";
 
-import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog, EmptyState, ErrorNotice, errorMessage, Field, inputClass, SwitchRow } from "@/components/admin/AdminKit";
+import { Button, Card, Pill } from "@/components/shared";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Eye, EyeOff, Star, Loader2 } from "lucide-react";
-
-import {
-  useAdminTestimonials,
-  useCreateTestimonial,
-  useUpdateTestimonial,
-  useDeleteTestimonial,
-  useToggleTestimonialPublished,
+  useAdminTestimonials, useCreateTestimonial, useDeleteTestimonial, useToggleTestimonialPublished, useUpdateTestimonial,
 } from "@/hooks/useTestimonials";
+import { cn } from "@/lib/utils";
 import type { Testimonial, TestimonialRequest } from "@/types/testimonial.types";
 import { TESTIMONIAL_EMPTY_FORM } from "@/types/testimonial.types";
 
-// ─── Sous-composants ──────────────────────────────────────────────────────────
-
-function StarRating({
-                      value,
-                      onChange,
-                    }: {
-  value: number;
-  onChange: (n: number) => void;
-}) {
+function Stars({ value, onChange }: { value: number; onChange?: (n: number) => void }) {
   return (
-      <div className="flex gap-2">
-        {[1, 2, 3, 4, 5].map((n) => (
-            <button
-                key={n}
-                type="button"
-                onClick={() => onChange(n)}
-                className={`p-1 rounded transition-colors ${
-                    n <= value ? "text-accent" : "text-muted-foreground"
-                }`}
-            >
-              <Star className={`h-6 w-6 ${n <= value ? "fill-accent" : ""}`} />
-            </button>
-        ))}
-      </div>
+    <div className="flex gap-1" role={onChange ? "radiogroup" : "img"} aria-label={`Note : ${value} sur 5`}>
+      {[1, 2, 3, 4, 5].map((n) => {
+        const star = <Star className={cn(onChange ? "h-6 w-6" : "h-3.5 w-3.5", n <= value ? "fill-cta text-cta" : "text-[#C9C0B0]")} aria-hidden="true" />;
+        return onChange
+          ? <button key={n} type="button" role="radio" aria-checked={n === value} aria-label={`${n} sur 5`} onClick={() => onChange(n)} className="rounded p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy">{star}</button>
+          : <span key={n}>{star}</span>;
+      })}
+    </div>
   );
 }
 
-function TestimonialCard({
-                           item,
-                           onEdit,
-                           onDelete,
-                           onToggle,
-                           togglePending,
-                         }: {
-  item: Testimonial;
-  onEdit: (item: Testimonial) => void;
-  onDelete: (id: string) => void;
-  onToggle: (id: string) => void;
-  togglePending: boolean;
-}) {
-  return (
-      <div className="bg-card border border-border rounded-xl p-5 flex items-start gap-4">
-        <div className="flex-1 min-w-0">
-          {/* Nom + étoiles + badges */}
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="font-semibold text-foreground">{item.name}</span>
-            <div className="flex">
-              {Array.from({ length: item.rating }).map((_, i) => (
-                  <Star key={i} className="h-3 w-3 fill-accent text-accent" />
-              ))}
-            </div>
-            <Badge variant={item.published ? "default" : "outline"}>
-              {item.published ? "Publié" : "Brouillon"}
-            </Badge>
-            {item.bootcamp && (
-                <Badge variant="secondary" className="text-xs">
-                  {item.bootcamp}
-                </Badge>
-            )}
-          </div>
+function TestimonialDialog({ item, onClose }: { item: Testimonial | null; onClose: () => void }) {
+  const { toast } = useToast();
+  const create = useCreateTestimonial();
+  const update = useUpdateTestimonial();
+  const [form, setForm] = useState<TestimonialRequest>(item ? {
+    name: item.name, role: item.role ?? "", company: item.company ?? "", content: item.content, bootcamp: item.bootcamp ?? "",
+    result: item.result ?? "", rating: item.rating, published: item.published, displayOrder: item.displayOrder,
+  } : TESTIMONIAL_EMPTY_FORM);
+  const [error, setError] = useState("");
+  const pending = create.isPending || update.isPending;
+  const set = (patch: Partial<TestimonialRequest>) => setForm((f) => ({ ...f, ...patch }));
 
-          {/* Poste / Entreprise */}
-          <p className="text-sm text-muted-foreground">
-            {item.role}
-            {item.company && ` • ${item.company}`}
-          </p>
-
-          {/* Résultat */}
-          {item.result && (
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
-                🎯 {item.result}
-              </p>
-          )}
-
-          {/* Contenu */}
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-1 italic">
-            "{item.content}"
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-              variant="ghost"
-              size="icon"
-              title={item.published ? "Masquer" : "Publier"}
-              onClick={() => onToggle(item.id)}
-              disabled={togglePending}
-          >
-            {item.published ? (
-                <EyeOff className="h-4 w-4" />
-            ) : (
-                <Eye className="h-4 w-4" />
-            )}
-          </Button>
-          <Button variant="ghost" size="icon" title="Modifier" onClick={() => onEdit(item)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-              variant="ghost"
-              size="icon"
-              title="Supprimer"
-              className="text-destructive hover:text-destructive"
-              onClick={() => onDelete(item.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-  );
-}
-
-function TestimonialFormDialog({
-                                 open,
-                                 onOpenChange,
-                                 editItem,
-                                 form,
-                                 setForm,
-                                 onSave,
-                                 saving,
-                               }: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  editItem: Testimonial | null;
-  form: TestimonialRequest;
-  setForm: (f: TestimonialRequest) => void;
-  onSave: () => void;
-  saving: boolean;
-}) {
-  const set = (patch: Partial<TestimonialRequest>) =>
-      setForm({ ...form, ...patch });
-
-  return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editItem ? "Modifier le témoignage" : "Nouveau témoignage"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 mt-4">
-            {/* Nom */}
-            <div className="space-y-2">
-              <Label>Nom *</Label>
-              <Input value={form.name} onChange={(e) => set({ name: e.target.value })} />
-            </div>
-
-            {/* Poste / Entreprise */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Poste</Label>
-                <Input value={form.role} onChange={(e) => set({ role: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Entreprise</Label>
-                <Input value={form.company} onChange={(e) => set({ company: e.target.value })} />
-              </div>
-            </div>
-
-            {/* Bootcamp / Résultat */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Bootcamp</Label>
-                <Input
-                    placeholder="Ex: Power BI"
-                    value={form.bootcamp}
-                    onChange={(e) => set({ bootcamp: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Résultat obtenu</Label>
-                <Input
-                    placeholder="Ex: Embauché en 3 mois"
-                    value={form.result}
-                    onChange={(e) => set({ result: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* Note */}
-            <div className="space-y-2">
-              <Label>Note (1-5)</Label>
-              <StarRating value={form.rating} onChange={(n) => set({ rating: n })} />
-            </div>
-
-            {/* Contenu */}
-            <div className="space-y-2">
-              <Label>Témoignage *</Label>
-              <Textarea
-                  value={form.content}
-                  onChange={(e) => set({ content: e.target.value })}
-                  rows={4}
-              />
-            </div>
-
-            {/* Ordre d'affichage */}
-            <div className="space-y-2">
-              <Label>Ordre d'affichage</Label>
-              <Input
-                  type="number"
-                  min={0}
-                  value={form.displayOrder}
-                  onChange={(e) => set({ displayOrder: Number(e.target.value) })}
-              />
-            </div>
-
-            {/* Publié */}
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                  type="checkbox"
-                  checked={form.published}
-                  onChange={(e) => set({ published: e.target.checked })}
-                  className="w-4 h-4"
-              />
-              <span className="text-sm">Publié</span>
-            </label>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <Button onClick={onSave} disabled={saving} className="flex-1">
-                {saving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Sauvegarde...
-                    </>
-                ) : (
-                    "Sauvegarder"
-                )}
-              </Button>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Annuler
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-const AdminTemoignages = () => {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editItem, setEditItem]     = useState<Testimonial | null>(null);
-  const [form, setForm]             = useState<TestimonialRequest>(TESTIMONIAL_EMPTY_FORM);
-
-  // ── Hooks ──────────────────────────────────────────────────────────────────
-  const { data: items = [], isLoading } = useAdminTestimonials();
-  const createMutation  = useCreateTestimonial();
-  const updateMutation  = useUpdateTestimonial();
-  const deleteMutation  = useDeleteTestimonial();
-  const toggleMutation  = useToggleTestimonialPublished();
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-  const openCreate = () => {
-    setEditItem(null);
-    setForm(TESTIMONIAL_EMPTY_FORM);
-    setDialogOpen(true);
-  };
-
-  const openEdit = (item: Testimonial) => {
-    setEditItem(item);
-    setForm({
-      name:         item.name,
-      role:         item.role         ?? "",
-      company:      item.company      ?? "",
-      content:      item.content,
-      bootcamp:     item.bootcamp     ?? "",
-      result:       item.result       ?? "",
-      rating:       item.rating,
-      published:    item.published,
-      displayOrder: item.displayOrder,
-    });
-    setDialogOpen(true);
-  };
-
-  const handleSave = () => {
-    if (!form.name.trim() || !form.content.trim()) return;
-    const onSuccess = () => setDialogOpen(false);
-
-    if (editItem) {
-      updateMutation.mutate(
-          { id: editItem.id, payload: form },
-          { onSuccess },
-      );
-    } else {
-      createMutation.mutate(form, { onSuccess });
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!form.name.trim() || !form.content.trim()) return setError("Le nom et le témoignage sont obligatoires.");
+    try {
+      if (item) await update.mutateAsync({ id: item.id, payload: form });
+      else await create.mutateAsync(form);
+      toast({ title: item ? "Témoignage mis à jour" : "Témoignage ajouté", description: form.name });
+      onClose();
+    } catch (err) {
+      setError(errorMessage(err, "Enregistrement impossible."));
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm("Supprimer ce témoignage ?")) return;
-    deleteMutation.mutate(id);
-  };
+  return (
+    <Dialog open onOpenChange={(o) => !o && !pending && onClose()}>
+      <DialogContent className="max-h-[92vh] max-w-xl overflow-y-auto rounded-callout">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-xl font-bold text-navy">{item ? "Modifier le témoignage" : "Nouveau témoignage"}</DialogTitle>
+          <DialogDescription className="text-ink-secondary">Affiché sur le site une fois publié.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          {error && <ErrorNotice>{error}</ErrorNotice>}
+          <Field label="Nom *" htmlFor="tm-name"><input id="tm-name" required className={inputClass} value={form.name} onChange={(e) => set({ name: e.target.value })} /></Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Poste" htmlFor="tm-role"><input id="tm-role" className={inputClass} value={form.role} onChange={(e) => set({ role: e.target.value })} /></Field>
+            <Field label="Entreprise" htmlFor="tm-co"><input id="tm-co" className={inputClass} value={form.company} onChange={(e) => set({ company: e.target.value })} /></Field>
+            <Field label="Formation suivie" htmlFor="tm-bc"><input id="tm-bc" className={inputClass} placeholder="Power BI" value={form.bootcamp} onChange={(e) => set({ bootcamp: e.target.value })} /></Field>
+            <Field label="Résultat obtenu" htmlFor="tm-res"><input id="tm-res" className={inputClass} placeholder="Embauché en 3 mois" value={form.result} onChange={(e) => set({ result: e.target.value })} /></Field>
+          </div>
+          <Field label="Note"><Stars value={form.rating} onChange={(n) => set({ rating: n })} /></Field>
+          <Field label="Témoignage *" htmlFor="tm-content"><textarea id="tm-content" required rows={5} className={inputClass} value={form.content} onChange={(e) => set({ content: e.target.value })} /></Field>
+          <Field label="Ordre d'affichage" htmlFor="tm-order" hint="0 = en premier."><input id="tm-order" type="number" min={0} className={cn(inputClass, "w-32")} value={form.displayOrder} onChange={(e) => set({ displayOrder: Number(e.target.value) })} /></Field>
+          <SwitchRow label="Publié" description="Visible sur le site." checked={form.published} onChange={(v) => set({ published: v })} />
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" shape="rounded" disabled={pending} onClick={onClose}>Annuler</Button>
+            <Button type="submit" shape="rounded" disabled={pending}>{pending ? <Loader2 className="animate-spin" /> : "Enregistrer"}</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-  // ─────────────────────────────────────────────────────────────────────────
+export default function AdminTemoignages() {
+  const { can } = useAuth();
+  const canManage = can("SITE_CONTENT_MANAGE");
+  const { toast } = useToast();
+  const { data: items = [], isLoading, isError } = useAdminTestimonials();
+  const toggle = useToggleTestimonialPublished();
+  const remove = useDeleteTestimonial();
+  const [filter, setFilter] = useState<"ALL" | "PUBLISHED" | "DRAFT">("ALL");
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<Testimonial | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<Testimonial | null>(null);
+
+  const published = items.filter((i) => i.published).length;
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter((i) => (filter === "ALL" || (filter === "PUBLISHED") === i.published)
+      && (!q || `${i.name} ${i.role ?? ""} ${i.company ?? ""} ${i.bootcamp ?? ""} ${i.content}`.toLowerCase().includes(q)));
+  }, [items, filter, search]);
+
+  const tabs: { key: typeof filter; label: string; n: number }[] = [
+    { key: "ALL", label: "Tous", n: items.length },
+    { key: "PUBLISHED", label: "Publiés", n: published },
+    { key: "DRAFT", label: "Brouillons", n: items.length - published },
+  ];
 
   return (
-      <AdminLayout title="Témoignages">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-muted-foreground">
-            {items.length} témoignage{items.length !== 1 ? "s" : ""}
-          </p>
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Button>
+    <AdminLayout
+      title="Témoignages"
+      description="Ce que disent les anciens apprenants et les entreprises, affiché sur le site"
+      actions={canManage ? <Button type="button" size="sm" shape="rounded" onClick={() => setCreating(true)}><Plus />Ajouter</Button> : undefined}
+    >
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer les témoignages">
+          {tabs.map((t) => (
+            <Button key={t.key} type="button" size="sm" shape="pill" variant={filter === t.key ? "navy" : "outline"} aria-pressed={filter === t.key} onClick={() => setFilter(t.key)}>
+              {t.label}<span className="ml-1.5 rounded-pill bg-surface-sand px-1.5 text-[0.6875rem] font-bold text-ink-secondary">{t.n}</span>
+            </Button>
+          ))}
+          <span className="flex-1" />
+          <div className="flex items-center gap-2 rounded-[10px] border border-[#D6CEC0] bg-white px-3 py-2.5">
+            <Search className="h-4 w-4 text-ink-secondary" aria-hidden="true" />
+            <input type="search" aria-label="Rechercher un témoignage" placeholder="Nom, entreprise, texte…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-52 bg-transparent text-sm outline-none" />
+          </div>
         </div>
 
-        {/* Liste */}
-        {isLoading ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        ) : items.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              Aucun témoignage pour l'instant.
-            </div>
-        ) : (
-            <div className="space-y-4">
-              {items.map((item) => (
-                  <TestimonialCard
-                      key={item.id}
-                      item={item}
-                      onEdit={openEdit}
-                      onDelete={handleDelete}
-                      onToggle={(id) => toggleMutation.mutate(id)}
-                      togglePending={toggleMutation.isPending}
-                  />
-              ))}
-            </div>
-        )}
+        {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
+        {isError && <ErrorNotice>Impossible de charger les témoignages.</ErrorNotice>}
+        {!isLoading && !isError && visible.length === 0 && <EmptyState title={items.length === 0 ? "Aucun témoignage" : "Aucun témoignage ne correspond"} text={items.length === 0 ? "Ajoutez le premier témoignage pour le montrer sur le site." : undefined} />}
 
-        {/* Dialog formulaire */}
-        <TestimonialFormDialog
-            open={dialogOpen}
-            onOpenChange={setDialogOpen}
-            editItem={editItem}
-            form={form}
-            setForm={setForm}
-            onSave={handleSave}
-            saving={createMutation.isPending || updateMutation.isPending}
-        />
-      </AdminLayout>
+        <ul className="flex flex-col gap-3">
+          {visible.map((t) => (
+            <li key={t.id}>
+              <Card radius="stat" className="flex flex-wrap items-start gap-4 border border-[#E7E0D4] p-4">
+                <div className="min-w-0 flex-1 basis-72">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-heading text-base font-bold text-navy">{t.name}</span>
+                    <Stars value={t.rating} />
+                    <Pill variant={t.published ? "success" : "neutral"}>{t.published ? "Publié" : "Brouillon"}</Pill>
+                    {t.bootcamp && <Pill variant="info">{t.bootcamp}</Pill>}
+                  </div>
+                  <p className="text-sm text-ink-secondary">{[t.role, t.company].filter(Boolean).join(" · ")}</p>
+                  {t.result && <p className="mt-0.5 text-xs font-semibold text-success">{t.result}</p>}
+                  <p className="mt-1.5 line-clamp-3 text-sm italic text-ink">« {t.content} »</p>
+                </div>
+                {canManage && (
+                  <div className="flex shrink-0 gap-1.5">
+                    <Button type="button" size="sm" shape="rounded" variant="outline" disabled={toggle.isPending} aria-label={t.published ? `Masquer ${t.name}` : `Publier ${t.name}`} title={t.published ? "Masquer" : "Publier"} onClick={() => toggle.mutate(t.id)}>{t.published ? <EyeOff /> : <Eye />}</Button>
+                    <Button type="button" size="sm" shape="rounded" variant="outline" aria-label={`Modifier ${t.name}`} onClick={() => setEditing(t)}><Pencil /></Button>
+                    <Button type="button" size="sm" shape="rounded" variant="outline" aria-label={`Supprimer ${t.name}`} onClick={() => setDeleting(t)}><Trash2 /></Button>
+                  </div>
+                )}
+              </Card>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {(creating || editing) && <TestimonialDialog item={editing} onClose={() => { setCreating(false); setEditing(null); }} />}
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(o) => !o && setDeleting(null)}
+        title="Supprimer ce témoignage ?"
+        description={deleting ? `Le témoignage de ${deleting.name} disparaît du site.` : ""}
+        onConfirm={async () => { if (deleting) { try { await remove.mutateAsync(deleting.id); toast({ title: "Témoignage supprimé" }); } catch (e) { toast({ title: "Suppression impossible", description: errorMessage(e), variant: "destructive" }); } } }}
+      />
+    </AdminLayout>
   );
-};
-
-export default AdminTemoignages;
+}
