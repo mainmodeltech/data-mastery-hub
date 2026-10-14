@@ -11,6 +11,23 @@ import type {
   PaginatedResponse,
 } from '@/types';
 
+/** Étapes du parcours d'une candidature (onglets de la page Candidatures). */
+export type RegistrationStage = 'NEW' | 'AWAITING_PAYMENT' | 'TO_CONFIRM' | 'ENROLLED' | 'ARCHIVED';
+
+export interface RegistrationQuery {
+  stage?: RegistrationStage;
+  q?: string;
+  bootcampId?: string;
+  sessionId?: string;
+  page?: number;
+  size?: number;
+  /** ex. « createdAt,desc » ou « lastName,asc » */
+  sort?: string;
+}
+
+/** Nombre de candidatures par étape (+ ALL), pour la même recherche. */
+export type RegistrationSummary = Record<RegistrationStage | 'ALL', number>;
+
 const PUBLIC_PATH = '/registrations';
 const ADMIN_PATH = '/admin/registrations';
 
@@ -24,6 +41,14 @@ export const registrationService = {
     httpClient.get<PaginatedResponse<Registration>>(ADMIN_PATH, {
       params: { page, size, status },
     }),
+
+  /** Liste filtrée, triée et paginée côté serveur (admin). */
+  search: (query: RegistrationQuery) =>
+    httpClient.get<PaginatedResponse<Registration>>(`${ADMIN_PATH}/search`, { params: { ...query } }),
+
+  /** Compteurs par étape pour la même recherche (admin). */
+  summary: (query: Pick<RegistrationQuery, 'q' | 'bootcampId' | 'sessionId'>) =>
+    httpClient.get<RegistrationSummary>(`${ADMIN_PATH}/summary`, { params: { ...query } }),
 
   /** Recuperer une inscription par ID (admin) */
   getById: (id: string) =>
