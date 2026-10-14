@@ -1,484 +1,215 @@
-import { useState, useRef } from "react";
+/**
+ * AdminAlumni.tsx — anciens apprenants affichés sur le site (design system) : liste paginée par le serveur, recherche dans la
+ * page, publication d'un clic, création/modification en sections (identité, poste, formation), photo de profil (téléversée
+ * vers le stockage, contrôlée côté serveur), suppression confirmée.
+ */
+import { useMemo, useRef, useState } from "react";
+import { Eye, EyeOff, GraduationCap, Linkedin, Loader2, Pencil, Plus, Search, Trash2, Upload, User } from "lucide-react";
+
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import {
-  useAdminAlumni,
-  useCreateAlumni,
-  useUpdateAlumni,
-  useDeleteAlumni,
-  useUploadAlumniPhoto,
-} from "@/hooks/useNetworking";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ConfirmDialog, EmptyState, ErrorNotice, errorMessage, Field, inputClass, Pager, SwitchRow } from "@/components/admin/AdminKit";
+import { Button, Card, Pill } from "@/components/shared";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  Linkedin,
-  GraduationCap,
-  Loader2,
-  Upload,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  User,
-} from "lucide-react";
+import { useAdminAlumni, useCreateAlumni, useDeleteAlumni, useUpdateAlumni, useUploadAlumniPhoto } from "@/hooks/useNetworking";
 import type { AlumniDetail, CreateAlumniPayload } from "@/services/api/networkingService.ts";
 
-// ─── Constantes ───────────────────────────────────────────────────────────────
-
-const PAGE_SIZES = [10, 20, 50] as const;
-type PageSize = (typeof PAGE_SIZES)[number];
+const PAGE_SIZE = 20;
 
 const EMPTY_FORM: CreateAlumniPayload = {
-  name:            "",
-  email:           null,
-  phone:           null,
-  currentTitle:    null,
-  currentPosition: null,
-  linkedinUrl:     null,
-  cohort:          null,
-  year:            new Date().getFullYear(),
-  bootcampTitle:   null,
-  registrationId:  null,
-  published:       true,
-  displayOrder:    0,
+  name: "", email: null, phone: null, currentTitle: null, currentPosition: null, linkedinUrl: null, cohort: null,
+  year: new Date().getFullYear(), bootcampTitle: null, registrationId: null, published: true, displayOrder: 0,
 };
 
-// ─── Sous-composants ─────────────────────────────────────────────────────────
-
-function AlumniAvatar({ alumni, size = "md" }: { alumni: Pick<AlumniDetail, "name" | "photoUrl">; size?: "sm" | "md" | "lg" }) {
-  const sizes = { sm: "w-9 h-9 text-xs", md: "w-12 h-12 text-sm", lg: "w-16 h-16 text-base" };
-  if (alumni.photoUrl) {
-    return (
-        <img
-            src={alumni.photoUrl}
-            alt={alumni.name}
-            className={`${sizes[size]} rounded-full object-cover flex-shrink-0`}
-        />
-    );
-  }
-  return (
-      <div className={`${sizes[size]} rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0`}>
-        <GraduationCap className="h-5 w-5 text-primary" />
-      </div>
-  );
+function Avatar({ name, photoUrl, size = "h-11 w-11" }: { name: string; photoUrl?: string | null; size?: string }) {
+  return photoUrl
+    ? <img src={photoUrl} alt={name} className={`${size} shrink-0 rounded-pill object-cover`} />
+    : <span className={`${size} flex shrink-0 items-center justify-center rounded-pill bg-info-bg text-navy`}><GraduationCap className="h-5 w-5" aria-hidden="true" /></span>;
 }
 
-function PaginationBar({
-                         page, totalPages, totalElements, pageSize,
-                         onPageChange, onPageSizeChange, isLoading,
-                       }: {
-  page: number; totalPages: number; totalElements: number; pageSize: PageSize;
-  onPageChange: (p: number) => void; onPageSizeChange: (s: PageSize) => void; isLoading: boolean;
-}) {
-  const from = totalElements === 0 ? 0 : page * pageSize + 1;
-  const to   = Math.min((page + 1) * pageSize, totalElements);
+function AlumniDialog({ item, onClose }: { item: AlumniDetail | null; onClose: () => void }) {
+  const { toast } = useToast();
+  const create = useCreateAlumni();
+  const update = useUpdateAlumni();
+  const uploadPhoto = useUploadAlumniPhoto();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState<CreateAlumniPayload>(item ? {
+    name: item.name, email: item.email, phone: item.phone, currentTitle: item.currentTitle, currentPosition: item.currentPosition,
+    linkedinUrl: item.linkedinUrl, cohort: item.cohort, year: item.year, bootcampTitle: item.bootcampTitle, registrationId: item.registrationId,
+    published: item.published, displayOrder: item.displayOrder,
+  } : EMPTY_FORM);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(item?.photoUrl ?? null);
+  const [error, setError] = useState("");
+  const pending = create.isPending || update.isPending;
+  const set = (patch: Partial<CreateAlumniPayload>) => setForm((f) => ({ ...f, ...patch }));
+  const text = (v: string | null | undefined) => v ?? "";
 
-  return (
-      <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-3">
-        <div className="flex items-center gap-3">
-          <p className="text-xs text-muted-foreground whitespace-nowrap">
-            {totalElements === 0 ? "Aucun résultat" : `${from}–${to} sur ${totalElements}`}
-          </p>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">Lignes :</span>
-            <Select
-                value={String(pageSize)}
-                onValueChange={(v) => onPageSizeChange(Number(v) as PageSize)}
-                disabled={isLoading}
-            >
-              <SelectTrigger className="h-7 w-16 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZES.map((s) => (
-                    <SelectItem key={s} value={String(s)} className="text-xs">{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onPageChange(0)}
-                  disabled={page === 0 || isLoading}><ChevronsLeft className="h-3.5 w-3.5" /></Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onPageChange(page - 1)}
-                  disabled={page === 0 || isLoading}><ChevronLeft className="h-3.5 w-3.5" /></Button>
-          <span className="text-xs text-muted-foreground px-2">
-          {page + 1} / {Math.max(1, totalPages)}
-        </span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onPageChange(page + 1)}
-                  disabled={page >= totalPages - 1 || isLoading}><ChevronRight className="h-3.5 w-3.5" /></Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onPageChange(totalPages - 1)}
-                  disabled={page >= totalPages - 1 || isLoading}><ChevronsRight className="h-3.5 w-3.5" /></Button>
-        </div>
-      </div>
-  );
-}
-
-// ─── Formulaire ───────────────────────────────────────────────────────────────
-
-function AlumniForm({
-                      initial, alumniId, onSave, onClose,
-                    }: {
-  initial: CreateAlumniPayload;
-  alumniId: string | null;
-  onSave: (data: CreateAlumniPayload) => Promise<void>;
-  onClose: () => void;
-}) {
-  const { toast }        = useToast();
-  const uploadPhoto      = useUploadAlumniPhoto();
-  const [form, setForm]  = useState<CreateAlumniPayload>(initial);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef     = useRef<HTMLInputElement>(null);
-
-  const set = (patch: Partial<CreateAlumniPayload>) =>
-      setForm((prev) => ({ ...prev, ...patch }));
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !alumniId) return;
-    setUploading(true);
+    e.target.value = "";
+    if (!file || !item) return;
     try {
-      const updated = await uploadPhoto.mutateAsync({ id: alumniId, file });
-      set({ photoUrl: updated.photoUrl ?? undefined });
+      const updated = await uploadPhoto.mutateAsync({ id: item.id, file });
+      setPhotoUrl(updated.photoUrl ?? null);
       toast({ title: "Photo mise à jour" });
-    } catch {
-      toast({ title: "Erreur lors de l'upload", variant: "destructive" });
-    } finally {
-      setUploading(false);
+    } catch (err) {
+      toast({ title: "Téléversement impossible", description: errorMessage(err), variant: "destructive" });
     }
   };
 
-  const handleSubmit = async () => {
-    if (!form.name.trim()) {
-      toast({ title: "Le nom est obligatoire", variant: "destructive" });
-      return;
-    }
-    setSaving(true);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!form.name.trim()) return setError("Le nom est obligatoire.");
     try {
-      await onSave(form);
-    } finally {
-      setSaving(false);
+      if (item) await update.mutateAsync({ id: item.id, data: form });
+      else await create.mutateAsync(form);
+      toast({ title: item ? "Alumni mis à jour" : "Alumni ajouté", description: form.name });
+      onClose();
+    } catch (err) {
+      setError(errorMessage(err, "Enregistrement impossible."));
     }
   };
 
   return (
-      <div className="space-y-5 mt-2">
-
-        {/* Photo — uniquement en mode édition */}
-        {alumniId && (
-            <div className="flex items-center gap-4 p-4 bg-muted/40 rounded-xl">
-              {form.photoUrl ? (
-                  <img src={form.photoUrl} alt={form.name}
-                       className="w-16 h-16 rounded-full object-cover border border-border" />
-              ) : (
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center border border-border">
-                    <User className="h-7 w-7 text-primary/40" />
-                  </div>
-              )}
-              <div>
-                <p className="text-sm font-medium text-foreground mb-1">Photo de profil</p>
-                <p className="text-xs text-muted-foreground mb-2">JPG, PNG — max 5 Mo</p>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-                       onChange={handlePhotoUpload} />
-                <Button type="button" size="sm" variant="outline" disabled={uploading}
-                        onClick={() => fileInputRef.current?.click()}>
-                  {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> : <Upload className="h-3.5 w-3.5 mr-2" />}
-                  {uploading ? "Upload…" : "Changer la photo"}
+    <Dialog open onOpenChange={(o) => !o && !pending && onClose()}>
+      <DialogContent className="max-h-[92vh] max-w-xl overflow-y-auto rounded-callout">
+        <DialogHeader>
+          <DialogTitle className="font-heading text-xl font-bold text-navy">{item ? `Modifier — ${item.name}` : "Nouvel alumni"}</DialogTitle>
+          <DialogDescription className="text-ink-secondary">Affiché sur la page Alumni du site une fois publié.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="flex flex-col gap-5">
+          {error && <ErrorNotice>{error}</ErrorNotice>}
+          {item && (
+            <div className="flex items-center gap-4 rounded-card bg-app-bg p-4">
+              {photoUrl ? <img src={photoUrl} alt={form.name} className="h-16 w-16 rounded-pill object-cover" /> : <span className="flex h-16 w-16 items-center justify-center rounded-pill bg-white text-ink-secondary"><User className="h-7 w-7" aria-hidden="true" /></span>}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-semibold text-ink">Photo de profil</span>
+                <span className="text-xs text-ink-secondary">JPEG, PNG, WebP ou GIF — 5 Mo au plus</span>
+                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" aria-label="Choisir une photo" onChange={onPhoto} />
+                <Button type="button" size="sm" shape="rounded" variant="outline" className="w-fit" disabled={uploadPhoto.isPending} onClick={() => fileRef.current?.click()}>
+                  {uploadPhoto.isPending ? <Loader2 className="animate-spin" /> : <Upload />}{photoUrl ? "Changer la photo" : "Ajouter une photo"}
                 </Button>
               </div>
             </div>
-        )}
+          )}
+          {!item && <p className="text-xs text-ink-secondary">La photo se téléverse après la création, depuis la fiche.</p>}
 
-        {/* Identité */}
-        <div>
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 block">
-            Identité
-          </Label>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs mb-1 block">Nom complet *</Label>
-              <Input value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder="Amadou Diallo" />
+          <fieldset className="flex flex-col gap-3"><legend className="mb-1 font-heading text-sm font-bold text-navy">Identité</legend>
+            <Field label="Nom complet *" htmlFor="al-name"><input id="al-name" required className={inputClass} value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder="Amadou Diallo" /></Field>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="E-mail" htmlFor="al-mail"><input id="al-mail" type="email" className={inputClass} value={text(form.email)} onChange={(e) => set({ email: e.target.value || null })} /></Field>
+              <Field label="Téléphone" htmlFor="al-tel"><input id="al-tel" className={inputClass} value={text(form.phone)} onChange={(e) => set({ phone: e.target.value || null })} /></Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs mb-1 block">Email</Label>
-                <Input type="email" value={form.email ?? ""} onChange={(e) => set({ email: e.target.value || null })} placeholder="amadou@example.com" />
-              </div>
-              <div>
-                <Label className="text-xs mb-1 block">Téléphone</Label>
-                <Input value={form.phone ?? ""} onChange={(e) => set({ phone: e.target.value || null })} placeholder="+221 77 000 00 00" />
-              </div>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3"><legend className="mb-1 font-heading text-sm font-bold text-navy">Poste actuel</legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Titre" htmlFor="al-title"><input id="al-title" className={inputClass} value={text(form.currentTitle)} onChange={(e) => set({ currentTitle: e.target.value || null })} placeholder="Data Analyst" /></Field>
+              <Field label="Organisation" htmlFor="al-org"><input id="al-org" className={inputClass} value={text(form.currentPosition)} onChange={(e) => set({ currentPosition: e.target.value || null })} placeholder="Orange Sénégal" /></Field>
             </div>
+            <Field label="LinkedIn" htmlFor="al-in"><input id="al-in" type="url" className={inputClass} value={text(form.linkedinUrl)} onChange={(e) => set({ linkedinUrl: e.target.value || null })} placeholder="https://linkedin.com/in/…" /></Field>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3"><legend className="mb-1 font-heading text-sm font-bold text-navy">Formation Model Technologie</legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Formation suivie" htmlFor="al-bc"><input id="al-bc" className={inputClass} value={text(form.bootcampTitle)} onChange={(e) => set({ bootcampTitle: e.target.value || null })} placeholder="Power BI" /></Field>
+              <Field label="Promotion" htmlFor="al-co"><input id="al-co" className={inputClass} value={text(form.cohort)} onChange={(e) => set({ cohort: e.target.value || null })} placeholder="Promo mars 2026" /></Field>
+              <Field label="Année" htmlFor="al-year"><input id="al-year" type="number" className={inputClass} value={form.year ?? ""} onChange={(e) => set({ year: Number(e.target.value) || null })} /></Field>
+              <Field label="Ordre d'affichage" htmlFor="al-order" hint="0 = en premier."><input id="al-order" type="number" min={0} className={inputClass} value={form.displayOrder} onChange={(e) => set({ displayOrder: Number(e.target.value) })} /></Field>
+            </div>
+          </fieldset>
+
+          <SwitchRow label="Publié sur le site" checked={form.published} onChange={(v) => set({ published: v })} />
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" shape="rounded" disabled={pending} onClick={onClose}>Annuler</Button>
+            <Button type="submit" shape="rounded" disabled={pending}>{pending ? <Loader2 className="animate-spin" /> : item ? "Enregistrer" : "Créer l'alumni"}</Button>
           </div>
-        </div>
-
-        {/* Poste actuel */}
-        <div>
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 block">
-            Poste actuel
-          </Label>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs mb-1 block">Titre</Label>
-              <Input value={form.currentTitle ?? ""} onChange={(e) => set({ currentTitle: e.target.value || null })} placeholder="Data Analyst" />
-            </div>
-            <div>
-              <Label className="text-xs mb-1 block">Organisation</Label>
-              <Input value={form.currentPosition ?? ""} onChange={(e) => set({ currentPosition: e.target.value || null })} placeholder="Orange Sénégal" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <Label className="text-xs mb-1 block">LinkedIn</Label>
-            <Input value={form.linkedinUrl ?? ""} onChange={(e) => set({ linkedinUrl: e.target.value || null })} placeholder="https://linkedin.com/in/..." />
-          </div>
-        </div>
-
-        {/* Formation */}
-        <div>
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3 block">
-            Formation Model Technologie
-          </Label>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs mb-1 block">Bootcamp suivi</Label>
-              <Input value={form.bootcampTitle ?? ""} onChange={(e) => set({ bootcampTitle: e.target.value || null })} placeholder="Power BI, Data Analyst…" />
-            </div>
-            <div>
-              <Label className="text-xs mb-1 block">Cohorte</Label>
-              <Input value={form.cohort ?? ""} onChange={(e) => set({ cohort: e.target.value || null })} placeholder="Promo Mars 2025" />
-            </div>
-            <div>
-              <Label className="text-xs mb-1 block">Année</Label>
-              <Input type="number" value={form.year ?? ""} onChange={(e) => set({ year: Number(e.target.value) || null })} />
-            </div>
-            <div>
-              <Label className="text-xs mb-1 block">Ordre d'affichage</Label>
-              <Input type="number" value={form.displayOrder} onChange={(e) => set({ displayOrder: Number(e.target.value) })} />
-            </div>
-          </div>
-        </div>
-
-        {/* Statut */}
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input type="checkbox" checked={form.published}
-                 onChange={(e) => set({ published: e.target.checked })} className="w-4 h-4" />
-          <span className="text-sm">Publié sur le site</span>
-        </label>
-
-        {/* Actions */}
-        <div className="flex gap-3 pt-1">
-          <Button onClick={handleSubmit} disabled={saving} className="flex-1">
-            {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            {saving ? "Sauvegarde…" : alumniId ? "Mettre à jour" : "Créer l'alumni"}
-          </Button>
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
-        </div>
-      </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-// ─── Page principale ──────────────────────────────────────────────────────────
+export default function AdminAlumni() {
+  const { can } = useAuth();
+  const canManage = can("SITE_CONTENT_MANAGE");
+  const { toast } = useToast();
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState("");
+  const { data, isLoading, isError } = useAdminAlumni(page, PAGE_SIZE);
+  const update = useUpdateAlumni();
+  const remove = useDeleteAlumni();
+  const [editing, setEditing] = useState<AlumniDetail | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<AlumniDetail | null>(null);
 
-const AdminAlumni = () => {
-  const { toast }  = useToast();
-  const [page, setPage]         = useState(0);
-  const [pageSize, setPageSize] = useState<PageSize>(20);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editItem, setEditItem]     = useState<AlumniDetail | null>(null);
-
-  const { data, isLoading }  = useAdminAlumni(page, pageSize);
-  const createMutation       = useCreateAlumni();
-  const updateMutation       = useUpdateAlumni();
-  const deleteMutation       = useDeleteAlumni();
-
-  const alumniList   = data?.content   ?? [];
-  const totalPages   = data?.totalPages   ?? 0;
-  const totalElements = data?.totalElements ?? 0;
-
-  const openCreate = () => { setEditItem(null); setDialogOpen(true); };
-  const openEdit   = (item: AlumniDetail) => { setEditItem(item); setDialogOpen(true); };
-  const closeDialog = () => { setDialogOpen(false); setEditItem(null); };
-
-  const handleSave = async (formData: CreateAlumniPayload) => {
-    try {
-      if (editItem) {
-        await updateMutation.mutateAsync({ id: editItem.id, data: formData });
-        toast({ title: "Alumni mis à jour" });
-      } else {
-        await createMutation.mutateAsync(formData);
-        toast({ title: "Alumni créé" });
-      }
-      closeDialog();
-    } catch {
-      toast({ title: "Erreur lors de la sauvegarde", variant: "destructive" });
-    }
-  };
-
-  const handleTogglePublish = async (item: AlumniDetail) => {
-    try {
-      await updateMutation.mutateAsync({ id: item.id, data: { published: !item.published } });
-    } catch {
-      toast({ title: "Erreur", variant: "destructive" });
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cet alumni ? Cette action est irréversible.")) return;
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast({ title: "Alumni supprimé" });
-    } catch {
-      toast({ title: "Erreur lors de la suppression", variant: "destructive" });
-    }
-  };
-
-  const initialForm: CreateAlumniPayload = editItem
-      ? {
-        name:            editItem.name,
-        email:           editItem.email,
-        phone:           editItem.phone,
-        currentTitle:    editItem.currentTitle,
-        currentPosition: editItem.currentPosition,
-        linkedinUrl:     editItem.linkedinUrl,
-        cohort:          editItem.cohort,
-        year:            editItem.year,
-        bootcampTitle:   editItem.bootcampTitle,
-        registrationId:  editItem.registrationId,
-        published:       editItem.published,
-        displayOrder:    editItem.displayOrder,
-      }
-      : EMPTY_FORM;
+  const list = useMemo(() => data?.content ?? [], [data]);
+  const total = data?.totalElements ?? 0;
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? list.filter((a) => `${a.name} ${a.currentTitle ?? ""} ${a.currentPosition ?? ""} ${a.bootcampTitle ?? ""} ${a.cohort ?? ""}`.toLowerCase().includes(q)) : list;
+  }, [list, search]);
 
   return (
-      <AdminLayout title="Alumni">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-muted-foreground text-sm">
-              {totalElements} alumni enregistré{totalElements !== 1 ? "s" : ""}
-            </p>
-          </div>
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-2" />Ajouter un alumni
-          </Button>
+    <AdminLayout
+      title="Alumni"
+      description={`${total} ancien${total > 1 ? "s" : ""} apprenant${total > 1 ? "s" : ""} enregistré${total > 1 ? "s" : ""}`}
+      actions={canManage ? <Button type="button" size="sm" shape="rounded" onClick={() => setCreating(true)}><Plus />Ajouter</Button> : undefined}
+    >
+      <div className="flex flex-col gap-5">
+        <div className="flex items-center gap-2 rounded-[10px] border border-[#D6CEC0] bg-white px-3 py-2.5 sm:max-w-sm">
+          <Search className="h-4 w-4 text-ink-secondary" aria-hidden="true" />
+          <input type="search" aria-label="Rechercher un alumni" placeholder="Nom, poste, formation, promotion…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-transparent text-sm outline-none" />
         </div>
 
-        {/* Liste */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          {isLoading ? (
-              <div className="flex justify-center items-center py-20">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-          ) : alumniList.length === 0 ? (
-              <div className="text-center py-20 text-muted-foreground">
-                <GraduationCap className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                <p className="text-sm">Aucun alumni enregistré.</p>
-                <Button variant="outline" size="sm" className="mt-4" onClick={openCreate}>
-                  Ajouter le premier alumni
-                </Button>
-              </div>
-          ) : (
-              <>
-                <div className="divide-y divide-border">
-                  {alumniList.map((item) => (
-                      <div key={item.id}
-                           className="flex items-center gap-4 px-5 py-4 hover:bg-muted/20 transition-colors group">
-                        <AlumniAvatar alumni={item} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                            <span className="font-semibold text-sm text-foreground">{item.name}</span>
-                            {item.cohort && <Badge variant="secondary" className="text-xs">{item.cohort}</Badge>}
-                            <Badge variant={item.published ? "default" : "outline"} className="text-xs">
-                              {item.published ? "Publié" : "Brouillon"}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {[item.currentTitle, item.currentPosition].filter(Boolean).join(" · ") || "Aucun poste renseigné"}
-                          </p>
-                          {item.bootcampTitle && (
-                              <p className="text-xs text-primary/70 mt-0.5">{item.bootcampTitle}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {item.linkedinUrl && (
-                              <a href={item.linkedinUrl} target="_blank" rel="noopener noreferrer">
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <Linkedin className="h-3.5 w-3.5 text-blue-600" />
-                                </Button>
-                              </a>
-                          )}
-                          <Button variant="ghost" size="icon" className="h-8 w-8"
-                                  onClick={() => handleTogglePublish(item)}>
-                            {item.published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8"
-                                  onClick={() => openEdit(item)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                                  onClick={() => handleDelete(item.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                  ))}
-                </div>
+        {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
+        {isError && <ErrorNotice>Impossible de charger les alumni.</ErrorNotice>}
+        {!isLoading && !isError && visible.length === 0 && <EmptyState title={list.length === 0 ? "Aucun alumni enregistré" : "Aucun alumni ne correspond"} text={list.length === 0 ? "Ajoutez les anciens apprenants que vous souhaitez mettre en avant." : undefined} />}
 
-                {/* Pagination */}
-                {totalPages > 0 && (
-                    <div className="border-t border-border px-5">
-                      <PaginationBar
-                          page={page} totalPages={totalPages}
-                          totalElements={totalElements} pageSize={pageSize}
-                          onPageChange={setPage}
-                          onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
-                          isLoading={isLoading}
-                      />
+        {visible.length > 0 && (
+          <Card radius="stat" className="overflow-hidden border border-[#E7E0D4] p-0">
+            <ul>
+              {visible.map((a) => (
+                <li key={a.id} className="flex flex-wrap items-center gap-4 border-b border-[#E7E0D4] px-4 py-3.5 last:border-b-0">
+                  <Avatar name={a.name} photoUrl={a.photoUrl} />
+                  <div className="min-w-0 flex-1 basis-60">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-heading text-base font-bold text-navy">{a.name}</span>
+                      {a.cohort && <Pill variant="info">{a.cohort}</Pill>}
+                      <Pill variant={a.published ? "success" : "neutral"}>{a.published ? "Publié" : "Brouillon"}</Pill>
                     </div>
-                )}
-              </>
-          )}
-        </div>
+                    <p className="truncate text-sm text-ink-secondary">{[a.currentTitle, a.currentPosition].filter(Boolean).join(" · ") || "Poste non renseigné"}</p>
+                    {a.bootcampTitle && <p className="text-xs font-semibold text-navy">{a.bootcampTitle}</p>}
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    {a.linkedinUrl && <Button asChild size="sm" shape="rounded" variant="outline"><a href={a.linkedinUrl} target="_blank" rel="noopener noreferrer" aria-label={`LinkedIn de ${a.name}`}><Linkedin /></a></Button>}
+                    {canManage && (
+                      <>
+                        <Button type="button" size="sm" shape="rounded" variant="outline" aria-label={a.published ? `Masquer ${a.name}` : `Publier ${a.name}`} title={a.published ? "Masquer" : "Publier"} disabled={update.isPending}
+                          onClick={() => update.mutate({ id: a.id, data: { published: !a.published } }, { onError: (e) => toast({ title: "Action impossible", description: errorMessage(e), variant: "destructive" }) })}>{a.published ? <EyeOff /> : <Eye />}</Button>
+                        <Button type="button" size="sm" shape="rounded" variant="outline" aria-label={`Modifier ${a.name}`} onClick={() => setEditing(a)}><Pencil /></Button>
+                        <Button type="button" size="sm" shape="rounded" variant="outline" aria-label={`Supprimer ${a.name}`} onClick={() => setDeleting(a)}><Trash2 /></Button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+        <Pager page={page} totalPages={data?.totalPages ?? 1} totalElements={total} onChange={setPage} />
+      </div>
 
-        {/* Dialog */}
-        <Dialog open={dialogOpen} onOpenChange={closeDialog}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editItem ? `Modifier — ${editItem.name}` : "Nouvel alumni"}
-              </DialogTitle>
-            </DialogHeader>
-            <AlumniForm
-                key={editItem?.id ?? "new"}
-                initial={initialForm}
-                alumniId={editItem?.id ?? null}
-                onSave={handleSave}
-                onClose={closeDialog}
-            />
-          </DialogContent>
-        </Dialog>
-      </AdminLayout>
+      {(creating || editing) && <AlumniDialog key={editing?.id ?? "new"} item={editing} onClose={() => { setCreating(false); setEditing(null); }} />}
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(o) => !o && setDeleting(null)}
+        title="Supprimer cet alumni ?"
+        description={deleting ? `${deleting.name} disparaît du site. Cette action est irréversible.` : ""}
+        onConfirm={async () => { if (deleting) { try { await remove.mutateAsync(deleting.id); toast({ title: "Alumni supprimé" }); } catch (e) { toast({ title: "Suppression impossible", description: errorMessage(e), variant: "destructive" }); } } }}
+      />
+    </AdminLayout>
   );
-};
-
-export default AdminAlumni;
+}

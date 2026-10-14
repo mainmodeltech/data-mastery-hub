@@ -6,7 +6,7 @@ import { Code2, FileText, Loader2, RotateCcw, Save, SlidersHorizontal } from "lu
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { JsonContentEditor, type Json } from "@/components/admin/JsonContentEditor";
-import { Button } from "@/components/ui/button";
+import { Button, Card } from "@/components/shared";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -134,7 +134,7 @@ export default function AdminContenus() {
         {/* Liste des contenus */}
         <nav aria-label="Contenus du site" className="flex flex-col gap-1.5">
           {isLoading && (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</p>
+            <p className="flex items-center gap-2 text-sm text-ink-secondary"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</p>
           )}
           {keys.map((key) => (
             <button
@@ -144,38 +144,38 @@ export default function AdminContenus() {
               aria-current={key === selectedKey ? "true" : undefined}
               className={
                 key === selectedKey
-                  ? "flex flex-col rounded-lg border border-primary bg-primary/5 px-3 py-2.5 text-left"
-                  : "flex flex-col rounded-lg border border-border px-3 py-2.5 text-left hover:bg-muted/50"
+                  ? "flex flex-col rounded-card border border-navy bg-info-bg px-3.5 py-3 text-left"
+                  : "flex flex-col rounded-card border border-[#E7E0D4] bg-white px-3.5 py-3 text-left hover:bg-app-bg"
               }
             >
-              <span className="flex items-center gap-2 text-sm font-semibold"><FileText className="h-4 w-4 shrink-0" /> {keyLabel(key)}</span>
-              <span className="mt-0.5 text-xs text-muted-foreground">{KEY_LABELS[key]?.hint ?? key}</span>
+              <span className="flex items-center gap-2 font-heading text-sm font-bold text-navy"><FileText className="h-4 w-4 shrink-0" aria-hidden="true" /> {keyLabel(key)}</span>
+              <span className="mt-0.5 text-xs text-ink-secondary">{KEY_LABELS[key]?.hint ?? key}</span>
             </button>
           ))}
         </nav>
 
         {/* Éditeur */}
-        <section className="min-w-0 rounded-xl border border-border bg-card p-5">
+        <Card radius="card" className="min-w-0 border border-[#E7E0D4] p-5">
           {selectedKey === null || draft === null ? (
-            <p className="py-16 text-center text-sm text-muted-foreground">Choisissez un contenu dans la liste pour le modifier.</p>
+            <p className="py-16 text-center text-sm text-ink-secondary">Choisissez un contenu dans la liste pour le modifier.</p>
           ) : (
             <>
-              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[#E7E0D4] pb-4">
                 <div>
-                  <h2 className="text-lg font-bold">{keyLabel(selectedKey)}</h2>
-                  <p className="text-xs text-muted-foreground">Clé technique : {selectedKey}{dirty ? " · modifications non enregistrées" : ""}</p>
+                  <h2 className="font-heading text-lg font-bold text-navy">{keyLabel(selectedKey)}</h2>
+                  <p className="text-xs text-ink-secondary">Clé technique : {selectedKey}{dirty ? " · modifications non enregistrées" : ""}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => setMode(mode === "form" ? "json" : "form")}>
-                    {mode === "form" ? <><Code2 className="mr-1.5 h-4 w-4" /> Mode JSON</> : <><SlidersHorizontal className="mr-1.5 h-4 w-4" /> Mode formulaire</>}
+                  <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => setMode(mode === "form" ? "json" : "form")}>
+                    {mode === "form" ? <><Code2 /> Mode JSON</> : <><SlidersHorizontal /> Mode formulaire</>}
                   </Button>
                   {canReset && (
-                    <Button type="button" variant="outline" size="sm" onClick={() => setConfirmReset(true)} disabled={reset.isPending}>
-                      <RotateCcw className="mr-1.5 h-4 w-4" /> Restaurer
+                    <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => setConfirmReset(true)} disabled={reset.isPending}>
+                      <RotateCcw /> Restaurer
                     </Button>
                   )}
-                  <Button type="button" size="sm" onClick={handleSave} disabled={!dirty || Boolean(jsonError) || save.isPending}>
-                    {save.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />} Enregistrer
+                  <Button type="button" size="sm" shape="rounded" onClick={handleSave} disabled={!dirty || Boolean(jsonError) || save.isPending}>
+                    {save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Enregistrer
                   </Button>
                 </div>
               </div>
@@ -188,12 +188,12 @@ export default function AdminContenus() {
                   {jsonError && <p role="alert" className="text-xs text-destructive">JSON invalide : {jsonError}</p>}
                 </div>
               )}
-              <p className="mt-6 text-xs text-muted-foreground">
+              <p className="mt-6 text-xs text-ink-secondary">
                 Astuce : les images se référencent par leur adresse (ex. <code>/images/photos/picture-1.jpg</code>). Les textes peuvent contenir des variables entre accolades, comme <code>{"{date}"}</code>, remplacées automatiquement sur le site.
               </p>
             </>
           )}
-        </section>
+        </Card>
       </div>
 
       <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
