@@ -21,7 +21,30 @@ import { fill } from "@/lib/template";
 import { PAGE_SEO, SeoHead } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card, Pill, SectionHeader, ContentGate } from "@/components/shared";
+import { useNextMasterclass } from "@/hooks/useMasterclasses";
+import { FORMAT_LABELS, type PublicMasterclass } from "@/services/api/masterclassService";
 import type { PageMasterclass, SiteCompany } from "@/types/siteContent";
+
+/** Complète l'événement du contenu avec la masterclass publiée par l'équipe (date, durée, lieu, places) ; sans masterclass publiée, les inscriptions sont closes. */
+function withLiveEvent(c: PageMasterclass, next: PublicMasterclass | null | undefined): PageMasterclass {
+    if (!next) return { ...c, event: { ...c.event, registrationsClosed: true } };
+    const startsAt = new Date(`${next.startsAt}Z`);   // heure du serveur (UTC), affichée en UTC comme le reste de la page
+    const hours = Math.floor(next.durationMinutes / 60);
+    const minutes = next.durationMinutes % 60;
+    return {
+        ...c,
+        event: {
+            ...c.event,
+            id: next.code,
+            startsAt: startsAt.toISOString(),
+            durationLabel: `${hours} h${minutes ? ` ${minutes}` : ""}`,
+            timeLabel: new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(startsAt).replace(":", "h"),
+            place: next.place ?? c.event.place,
+            format: FORMAT_LABELS[next.format] ?? c.event.format,
+            registrationsClosed: !next.registrationOpen,
+        },
+    };
+}
 
 const ICONS: Record<string, LucideIcon> = { chart: BarChart3, zap: Zap, award: Award };
 
@@ -290,17 +313,18 @@ function RegistrationForm({ c, eventDate }: { c: PageMasterclass; eventDate: Dat
 export default function MasterclassPage() {
     const page = useSiteContent("page.masterclass");
     const company = useSiteContent("site.company");
+    const next = useNextMasterclass();
 
     return (
         <SiteLayout>
             <SeoHead {...PAGE_SEO.masterclass} />
             <ContentGate
                 content={page.content && company.content ? { page: page.content, company: company.content } : undefined}
-                isLoading={page.isLoading || company.isLoading}
+                isLoading={page.isLoading || company.isLoading || next.isLoading}
                 isError={page.isError || company.isError}
                 onRetry={() => { page.refetch(); company.refetch(); }}
             >
-                {({ page: p, company: c }) => <MasterclassBody c={p} company={c} />}
+                {({ page: p, company: c }) => <MasterclassBody c={withLiveEvent(p, next.data)} company={c} />}
             </ContentGate>
         </SiteLayout>
     );

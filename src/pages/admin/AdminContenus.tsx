@@ -38,7 +38,7 @@ const KEY_LABELS: Record<string, { label: string; hint: string }> = {
   "page.alumni": { label: "Alumni", hint: "Titres, chiffres, appels à l'action" },
   "page.about": { label: "À propos", hint: "Mission, parcours, valeurs, équipe, partenaires" },
   "page.contact": { label: "Contact", hint: "Formulaire, FAQ, photo" },
-  "page.masterclass": { label: "Masterclass", hint: "Événement (identifiant, date, inscriptions), programme, formateur" },
+  "page.masterclass": { label: "Masterclass", hint: "Textes de la page, programme, formateur (la date, le lieu et les inscriptions se gèrent dans Masterclass)" },
   "page.orientation": { label: "Quiz d'orientation", hint: "Questions, règles de recommandation, résultats" },
 };
 
