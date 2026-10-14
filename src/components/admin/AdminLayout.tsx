@@ -33,6 +33,7 @@ import {
   Award,
   Send,
   Video,
+  ScrollText,
 } from "lucide-react";
 
 type PermNavItem = AppNavItem & { access: readonly string[] };
@@ -62,6 +63,7 @@ const navItems: PermNavItem[] = [
   { href: "/admin/apprenants", label: "Apprenants", icon: GraduationCap, section: "Équipe & comptes", access: ACCESS.LEARNERS },
   { href: "/admin/comptes", label: "Comptes back-office", icon: ShieldCheck, section: "Équipe & comptes", access: ACCESS.ACCOUNTS },
   { href: "/admin/profils", label: "Profils & droits", icon: KeyRound, section: "Équipe & comptes", access: ACCESS.PROFILES },
+  { href: "/admin/audit", label: "Journal d'audit", icon: ScrollText, section: "Équipe & comptes", access: ACCESS.AUDIT },
 ];
 
 interface AdminLayoutProps {
@@ -87,7 +89,7 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
     ? {
         // Un compteur absent = la personne ne traite pas cette file (le serveur ne le renvoie pas)
         "/admin/candidatures": todo.newApplications ?? 0,
-        "/admin/paiements": (todo.paymentsToConfirm ?? 0) + (todo.overdueInstallments ?? 0),
+        "/admin/paiements": (todo.paymentsToConfirm ?? 0) + (todo.overdueInstallments ?? 0) + (todo.refundsToApprove ?? 0),
         "/admin/messages": todo.unreadMessages ?? 0,
         "/admin/certificats": todo.certificatesToValidate ?? 0,
         "/admin/bootcamp-sessions": todo.projectsToReview ?? 0,

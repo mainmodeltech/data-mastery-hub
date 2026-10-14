@@ -14,7 +14,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { EmptyState, ErrorNotice, errorMessage, inputClass, ReasonDialog } from "@/components/admin/AdminKit";
 import { Button, Card, Pill, ProgressBar } from "@/components/shared";
 import {
-  useAllPayments, useConfirmPayment, useRefundPayment, useRejectPayment, useRemindPayment,
+  useAllPayments, useApproveRefund, useConfirmPayment, useDeclineRefund, useRefundPayment, useRejectPayment, useRemindPayment,
 } from "@/hooks/usePayments";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -32,9 +32,10 @@ const STATUS_VARIANT: Record<PaymentStatus, "success" | "warning" | "info" | "ne
   REFUNDED: "neutral",
 };
 
-const FILTERS: { key: "ALL" | PaymentStatus | "OVERDUE"; label: string }[] = [
+const FILTERS: { key: "ALL" | PaymentStatus | "OVERDUE" | "REFUND_REQUESTED"; label: string }[] = [
   { key: "ALL", label: "Tous" },
   { key: "DECLARED", label: "À confirmer" },
+  { key: "REFUND_REQUESTED", label: "Remboursements à valider" },
   { key: "PENDING", label: "En attente" },
   { key: "OVERDUE", label: "En retard" },
   { key: "CONFIRMED", label: "Confirmés" },
@@ -145,17 +146,21 @@ function FormationProgress({ group }: { group: FormationGroup }) {
   );
 }
 
-type Pending = { kind: "reject" | "refund"; payment: AdminPayment } | null;
+type Pending = { kind: "reject" | "refund" | "decline"; payment: AdminPayment } | null;
 
 export default function AdminPaiements() {
-  const { can } = useAuth();
+  const { can, user } = useAuth();
+  const me = user?.email?.toLowerCase() ?? "";
   const canManage = can("PAYMENTS_MANAGE");
   const canRefund = can("PAYMENTS_REFUND");
+  const canApproveRefund = can("PAYMENTS_REFUND_APPROVE");
   const { toast } = useToast();
   const { data, isLoading, isError, error } = useAllPayments();
   const confirm = useConfirmPayment();
   const reject = useRejectPayment();
   const refund = useRefundPayment();
+  const approveRefund = useApproveRefund();
+  const declineRefund = useDeclineRefund();
   const remind = useRemindPayment();
 
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("ALL");
@@ -167,21 +172,23 @@ export default function AdminPaiements() {
   const groups = useMemo(() => groupByFormation(payments), [payments]);
   const total = useMemo(() => summarize(payments), [payments]);
   const toConfirm = payments.filter((p) => p.status === "DECLARED").length;
+  const refundsWaiting = payments.filter((p) => p.status === "CONFIRMED" && !!p.refundRequestedAt).length;
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return payments.filter((p) => {
       if (formation && (p.bootcampTitle ?? "Formation non renseignée") !== formation) return false;
-      if (filter === "OVERDUE" ? !isOverdue(p) : filter !== "ALL" && p.status !== filter) return false;
+      if (filter === "REFUND_REQUESTED") { if (!(p.status === "CONFIRMED" && p.refundRequestedAt)) return false; }
+      else if (filter === "OVERDUE" ? !isOverdue(p) : filter !== "ALL" && p.status !== filter) return false;
       if (!q) return true;
       return [p.firstName, p.lastName, p.email, p.reference, p.invoiceRef].some((v) => v?.toLowerCase().includes(q));
     });
   }, [payments, filter, formation, query]);
 
-  const run = async (action: () => Promise<unknown>, success: string) => {
+  const run = async (action: () => Promise<unknown>, success: string | ((result: unknown) => string)) => {
     try {
-      await action();
-      toast({ title: success });
+      const result = await action();
+      toast({ title: typeof success === "function" ? success(result) : success });
     } catch (e) {
       toast({ title: "Action impossible", description: errorMessage(e), variant: "destructive" });
     }
@@ -218,9 +225,9 @@ export default function AdminPaiements() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par statut">
-                {FILTERS.map((f) => (
+                {FILTERS.filter((f) => f.key !== "REFUND_REQUESTED" || refundsWaiting > 0 || filter === f.key).map((f) => (
                   <Button key={f.key} type="button" size="sm" shape="pill" variant={filter === f.key ? "navy" : "outline"} aria-pressed={filter === f.key} onClick={() => setFilter(f.key)}>
-                    {f.label}
+                    {f.label}{f.key === "REFUND_REQUESTED" && <span className="ml-1.5 rounded-pill bg-surface-sand px-1.5 text-[0.6875rem] font-bold text-ink-secondary">{refundsWaiting}</span>}
                   </Button>
                 ))}
               </div>
@@ -279,11 +286,24 @@ export default function AdminPaiements() {
                               <div className="flex flex-col items-start gap-1">
                                 <Pill variant={STATUS_VARIANT[p.status]}>{PAYMENT_STATUS_LABELS[p.status]}</Pill>
                                 {overdue && <Pill variant="error">En retard</Pill>}
+                                {p.status === "CONFIRMED" && p.refundRequestedAt && <Pill variant="warning">Remboursement demandé</Pill>}
+                                {(p.confirmedUnchecked || p.refundUnchecked) && <Pill variant="warning">Sans second contrôle</Pill>}
                               </div>
                             </td>
                             <td className="py-3 pr-3">
                               <div>{p.method ? PAYMENT_METHOD_LABELS[p.method] ?? p.method : "—"}</div>
                               <div className="break-all text-xs text-ink-secondary">{p.reference ?? ""}</div>
+                              {p.recordedBy && (
+                                <div className="text-xs text-ink-secondary">
+                                  Saisi par {p.recordedBy.toLowerCase() === me ? "vous" : p.recordedBy}
+                                  {p.status === "DECLARED" && p.recordedBy.toLowerCase() === me ? " — à confirmer par une autre personne" : ""}
+                                </div>
+                              )}
+                              {p.status === "CONFIRMED" && p.refundRequestedAt && (
+                                <div className="mt-1 text-xs text-ink-secondary">
+                                  Demandé par {p.refundRequestedBy?.toLowerCase() === me ? "vous" : p.refundRequestedBy} : « {p.refundRequestReason} »
+                                </div>
+                              )}
                               {p.proofUrl && (
                                 <a href={p.proofUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-navy">
                                   Justificatif <ExternalLink className="h-3 w-3" />
@@ -301,8 +321,15 @@ export default function AdminPaiements() {
                                 {p.status === "PENDING" && canManage && (
                                   <Button size="sm" shape="rounded" variant="outline" disabled={remind.isPending} onClick={() => void run(() => remind.mutateAsync(p.id), "Relance envoyée")}>Relancer</Button>
                                 )}
-                                {p.status === "CONFIRMED" && canRefund && (
+                                {p.status === "CONFIRMED" && !p.refundRequestedAt && canRefund && (
                                   <Button size="sm" shape="rounded" variant="outline" onClick={() => setPending({ kind: "refund", payment: p })}>Rembourser</Button>
+                                )}
+                                {p.status === "CONFIRMED" && p.refundRequestedAt && canApproveRefund && p.refundRequestedBy?.toLowerCase() !== me && (
+                                  <>
+                                    <Button size="sm" shape="rounded" variant="navy" disabled={approveRefund.isPending}
+                                      onClick={() => void run(() => approveRefund.mutateAsync(p.id), "Remboursement validé")}>Valider le remboursement</Button>
+                                    <Button size="sm" shape="rounded" variant="outline" onClick={() => setPending({ kind: "decline", payment: p })}>Refuser la demande</Button>
+                                  </>
                                 )}
                                 <Button asChild size="sm" shape="rounded" variant="outline">
                                   <Link to="/admin/candidatures" aria-label={`Candidature de ${p.firstName} ${p.lastName}`}>Candidature</Link>
@@ -323,19 +350,27 @@ export default function AdminPaiements() {
 
       {pending && (
         <ReasonDialog
-          title={pending.kind === "reject" ? "Refuser ce paiement" : "Rembourser ce paiement"}
+          title={pending.kind === "reject" ? "Refuser ce paiement" : pending.kind === "decline" ? "Refuser la demande de remboursement" : "Rembourser ce paiement"}
           description={
             pending.kind === "reject"
               ? `Le candidat ${pending.payment.firstName} ${pending.payment.lastName} est prévenu par e-mail et l'échéance repasse « en attente ».`
-              : `Remboursement de ${formatAmount(pending.payment.amount, pending.payment.currency)} pour ${pending.payment.firstName} ${pending.payment.lastName}.`
+              : pending.kind === "decline"
+                ? `La demande de ${pending.payment.refundRequestedBy} (« ${pending.payment.refundRequestReason} ») est refusée ; le paiement reste confirmé. Indiquez pourquoi.`
+                : `Remboursement de ${formatAmount(pending.payment.amount, pending.payment.currency)} pour ${pending.payment.firstName} ${pending.payment.lastName}. `
+                  + "Votre demande est soumise à une autre personne habilitée ; si vous êtes la seule à pouvoir la valider, le remboursement est effectué tout de suite et consigné « sans second contrôle »."
           }
-          confirmLabel={pending.kind === "reject" ? "Refuser" : "Rembourser"}
+          confirmLabel={pending.kind === "reject" ? "Refuser" : pending.kind === "decline" ? "Refuser la demande" : "Demander le remboursement"}
           onClose={() => setPending(null)}
           onSubmit={async (reason) => {
             const { kind, payment } = pending;
             await run(
-              () => (kind === "reject" ? reject.mutateAsync({ id: payment.id, reason }) : refund.mutateAsync({ id: payment.id, reason })),
-              kind === "reject" ? "Paiement refusé" : "Paiement remboursé"
+              () => (kind === "reject" ? reject.mutateAsync({ id: payment.id, reason })
+                : kind === "decline" ? declineRefund.mutateAsync({ id: payment.id, reason })
+                : refund.mutateAsync({ id: payment.id, reason })),
+              (result) => kind === "reject" ? "Paiement refusé"
+                : kind === "decline" ? "Demande de remboursement refusée"
+                : (result as AdminPayment).status === "REFUNDED" ? "Paiement remboursé (sans second contrôle : vous étiez la seule personne habilitée)"
+                : "Demande envoyée : une autre personne doit la valider"
             );
             setPending(null);
           }}
