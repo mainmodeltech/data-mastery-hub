@@ -107,6 +107,6 @@ export const sessionOpsService = {
     (await httpClient.get<ApiResponse<Trainer[]>>("/admin/trainers")).data ?? [],
 
   assignTrainer: async (sessionId: string, trainerId: string | null): Promise<void> => {
-    await httpClient.put<unknown>(`/admin/sessions/${sessionId}/trainer`, { trainerId });
+    await httpClient.put<unknown>(`/admin/bootcamps/sessions/${sessionId}/trainer`, { trainerId });
   },
 };
