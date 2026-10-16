@@ -11,6 +11,8 @@
 export interface AdminActions {
   newApplications?: number;
   paymentsToConfirm?: number;
+  /** Demandes de remboursement faites par quelqu'un d'autre, à valider. */
+  refundsToApprove?: number;
   overdueInstallments?: number;
   unreadMessages?: number;
   openQuestions?: number;

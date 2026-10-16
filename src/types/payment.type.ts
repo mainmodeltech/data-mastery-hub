@@ -53,6 +53,18 @@ export interface AdminPayment {
   notes: string | null;
   reminderCount: number;
   lastReminderAt: string | null;
+  refundedAt?: string | null;
+  refundReason?: string | null;
+  /** Qui a saisi ce paiement reçu hors site (il ne le confirme pas lui-même s'il existe une autre personne habilitée). */
+  recordedBy?: string | null;
+  /** Confirmé par la personne qui l'avait saisi, faute d'une autre personne habilitée. */
+  confirmedUnchecked?: boolean;
+  /** Demande de remboursement en attente de validation par une autre personne. */
+  refundRequestedAt?: string | null;
+  refundRequestedBy?: string | null;
+  refundRequestReason?: string | null;
+  /** Remboursé sans second contrôle. */
+  refundUnchecked?: boolean;
   /** Lien à communiquer au candidat */
   paymentLink: string | null;
   createdAt: string;

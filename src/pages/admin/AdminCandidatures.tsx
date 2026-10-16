@@ -68,6 +68,7 @@ export default function AdminCandidatures() {
   const { can } = useAuth();
   const canDecide = can("APPLICATIONS_DECIDE");
   const canManagePayments = can("PAYMENTS_MANAGE");
+  const canRecordPayments = can("PAYMENTS_RECORD");
   const canInvoice = can("INVOICES_MANAGE");
   const canEnroll = can("ENROLLMENTS_MANAGE");
 
@@ -153,7 +154,7 @@ export default function AdminCandidatures() {
   const declaredOf = (r: Registration) => (paymentsByRegistration.get(r.id) ?? []).find((p) => p.status === "DECLARED");
 
   const drawerActions: DrawerActions = {
-    canDecide, canManagePayments, canInvoice,
+    canDecide, canManagePayments, canRecordPayments, canInvoice,
     onAccept: (r) => setDialog({ kind: "accept", r }),
     onReject: (r) => setDialog({ kind: "reject", r }),
     onCancel: (r) => setDialog({ kind: "cancel", r }),

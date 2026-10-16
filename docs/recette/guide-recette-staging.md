@@ -203,6 +203,27 @@ Les profils « Admin », « Éditeur » et « Super Admin » ci-dessus sont remp
 | U16 | **Projets** : créer (membres obligatoires), ouvrir la fiche, ajouter couverture et captures d'écran, retirer un membre | Fichiers téléversés et affichés ; un fichier non image est refusé avec un message lisible | ☐ |
 | U17 | **Téléversements** : logo de partenaire (PNG, SVG), document de projet apprenant ~3 Mo (.pbix), fichier > 10 Mo, fichier .exe, justificatif de paiement | Les formats autorisés passent ; trop gros ou interdit = message clair, rien n'est enregistré | ☐ |
 
+### Journal d'audit et séparation des tâches (phases 3b et 3c)
+
+Prévoir **deux comptes** habilités sur l'argent (par exemple Finance et Direction), tous deux **connectés dans les 90 derniers jours**, plus un compte Admissions et un compte Audit.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| S1 | **Finance** : Paiements → ligne *Confirmé* → **Rembourser** avec un motif | Message « Demande envoyée : une autre personne doit la valider » ; la ligne affiche *Remboursement demandé* ; le paiement reste *Confirmé* | ☐ |
+| S2 | Même compte : tenter de **valider sa propre demande** (appel direct) | Refus : « Vous avez demandé ce remboursement : une autre personne habilitée doit le valider » ; aucun bouton *Valider* pour le demandeur | ☐ |
+| S3 | **Direction** : pastille *Paiements* ; filtre *Remboursements à valider* → **Valider le remboursement** | Échéance *Remboursée* ; si plus rien n'est payé, inscription *Annulée*, place libérée | ☐ |
+| S4 | Refaire S1 puis **Refuser la demande** avec motif | Le paiement reste *Confirmé*, la demande disparaît ; une nouvelle demande reste possible | ☐ |
+| S5 | **Admissions** : Candidatures → *Paiement reçu hors site* (virement) | Paiement *À confirmer*, « Saisi par vous » ; **aucun** bouton Confirmer pour Admissions | ☐ |
+| S6 | **Finance** (autre personne que celle qui a saisi) : confirmer ce paiement | Confirmé ; l'accès s'ouvre ; aucun marquage dans l'audit | ☐ |
+| S7 | **Finance** : saisir un paiement hors site puis tenter de le **confirmer soi-même** | Refus « Vous avez saisi ce paiement : une autre personne habilitée doit le confirmer » | ☐ |
+| S8 | **Un seul** compte habilité actif (désactiver temporairement les autres) : saisir puis confirmer ; demander puis exécuter un remboursement | Possible ; lignes **Sans second contrôle** dans l'audit ; message explicite au remboursement | ☐ |
+| S9 | Un compte jamais connecté (ou inactif > 90 jours) existe | Il **ne compte pas** comme second validateur (ne bloque pas une petite équipe) | ☐ |
+| S10 | Accepter une candidature à un **montant différent du tarif** (Direction) | Audit : *Candidature acceptée* marquée **Dérogation**, avec le tarif du catalogue en détail | ☐ |
+| S11 | **Audit / Direction** : Journal d'audit → période, catégorie, action, personne, texte ; bouton **À surveiller** ; flèche d'une ligne | Les actions S1 à S10 y figurent avec auteur, profils, résumé lisible, IP ; « À surveiller » isole *Sans second contrôle* et *Dérogation* | ☐ |
+| S12 | **Admissions / Finance / Communication** : ouvrir `/admin/audit` | Page absente du menu, accès refusé (403) | ☐ |
+| S13 | Tenter de **modifier ou supprimer** une ligne du journal (base de données) | Refus : « Le journal d'audit est en ajout seul » | ☐ |
+| S14 | Modifier un **prix**, un **code parrainage**, une **part de revenu**, les **droits d'un profil**, créer un **compte**, **réinitialiser un MFA**, **valider un certificat**, **accorder des tentatives**, **modifier une page du site** | Chaque action produit une ligne d'audit (catégories Tarifs, Comptes et droits, Pédagogie, Site) | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |

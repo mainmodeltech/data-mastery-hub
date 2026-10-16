@@ -107,6 +107,19 @@ export function useRefundPayment() {
   });
 }
 
+export function useApproveRefund() {
+  const refresh = useRefreshPipeline();
+  return useMutation({ mutationFn: (id: string) => paymentAdminService.approveRefund(id), onSuccess: refresh });
+}
+
+export function useDeclineRefund() {
+  const refresh = useRefreshPipeline();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => paymentAdminService.declineRefund(id, reason),
+    onSuccess: refresh,
+  });
+}
+
 export function useRemindPayment() {
   const refresh = useRefreshPipeline();
   return useMutation({ mutationFn: (id: string) => paymentAdminService.remind(id), onSuccess: refresh });

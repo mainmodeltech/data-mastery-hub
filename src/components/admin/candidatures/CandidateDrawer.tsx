@@ -20,6 +20,8 @@ const dayOnly = (iso: string | null | undefined) => (iso ? format(new Date(iso),
 export interface DrawerActions {
   canDecide: boolean;
   canManagePayments: boolean;
+  /** Saisir un paiement reçu hors site (la confirmation reste à la Finance). */
+  canRecordPayments: boolean;
   canInvoice: boolean;
   onAccept: (r: Registration) => void;
   onReject: (r: Registration) => void;
@@ -141,10 +143,10 @@ export function CandidateDrawer({
                   <>
                     <Button type="button" variant="outline" shape="rounded" size="sm" disabled={!pending} onClick={() => actions.onCopyLink(pending?.paymentLink ?? null)}><Copy />Copier le lien</Button>
                     {actions.canManagePayments && (
-                      <>
-                        <Button type="button" variant="outline" shape="rounded" size="sm" disabled={!pending} onClick={() => pending && actions.onRemind(pending)}>Relancer</Button>
-                        <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => actions.onManualPayment(r)}>Paiement reçu hors site</Button>
-                      </>
+                      <Button type="button" variant="outline" shape="rounded" size="sm" disabled={!pending} onClick={() => pending && actions.onRemind(pending)}>Relancer</Button>
+                    )}
+                    {actions.canRecordPayments && (
+                      <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => actions.onManualPayment(r)}>Paiement reçu hors site</Button>
                     )}
                   </>
                 )}
@@ -156,7 +158,7 @@ export function CandidateDrawer({
                 )}
                 {stage === "ENROLLED" && (
                   <>
-                    {s && s.confirmedCount < s.installmentCount && actions.canManagePayments && (
+                    {s && s.confirmedCount < s.installmentCount && actions.canRecordPayments && (
                       <Button type="button" variant="outline" shape="rounded" size="sm" onClick={() => actions.onManualPayment(r)}>Paiement reçu hors site</Button>
                     )}
                     {r.status === "CONFIRMED" && actions.canDecide && (

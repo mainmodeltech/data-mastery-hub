@@ -84,6 +84,14 @@ export const paymentAdminService = {
   refund: async (paymentId: string, reason: string): Promise<AdminPayment> =>
     (await httpClient.post<ApiResponse<AdminPayment>>(`/admin/payments/${paymentId}/refund`, { reason })).data,
 
+  /** Valide une demande de remboursement faite par une autre personne. */
+  approveRefund: async (paymentId: string): Promise<AdminPayment> =>
+    (await httpClient.post<ApiResponse<AdminPayment>>(`/admin/payments/${paymentId}/refund/approve`)).data,
+
+  /** Refuse (ou retire) une demande de remboursement en attente. */
+  declineRefund: async (paymentId: string, reason: string): Promise<AdminPayment> =>
+    (await httpClient.post<ApiResponse<AdminPayment>>(`/admin/payments/${paymentId}/refund/decline`, { reason })).data,
+
   remind: async (paymentId: string): Promise<AdminPayment> =>
     (await httpClient.post<ApiResponse<AdminPayment>>(`/admin/payments/${paymentId}/remind`)).data,
 
