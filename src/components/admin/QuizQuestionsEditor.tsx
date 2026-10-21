@@ -3,8 +3,10 @@
  * Règles serveur : 2 à 8 choix par question, une seule bonne réponse. Avec `lockExisting`, une question déjà enregistrée
  * (qui a un `id`) se modifie mais ne se retire pas.
  */
+import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
+import { ImportQuizDialog } from "@/components/admin/import/ImportQuizDialog";
 import { Button, Card } from "@/components/shared";
 import { MAX_CHOICES, MIN_CHOICES, type QuizQuestionEdit } from "@/types/authoring.type";
 
@@ -34,6 +36,7 @@ export function QuizQuestionsEditor({ questions, onChange, lockExisting = false,
   lockExisting?: boolean;
   idPrefix?: string;
 }) {
+  const [importOpen, setImportOpen] = useState(false);
   const patch = (i: number, p: Partial<QuizQuestionEdit>) => onChange(questions.map((q, k) => (k === i ? { ...q, ...p } : q)));
 
   return (
@@ -105,9 +108,13 @@ export function QuizQuestionsEditor({ questions, onChange, lockExisting = false,
         </Card>
       ))}
 
-      <Button type="button" variant="navy" shape="rounded" className="w-fit" onClick={() => onChange([...questions, blankQuestion()])}>
-        <Plus className="h-4 w-4" /> Ajouter une question
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="navy" shape="rounded" className="w-fit" onClick={() => onChange([...questions, blankQuestion()])}>
+          <Plus className="h-4 w-4" /> Ajouter une question
+        </Button>
+        <Button type="button" variant="outline" shape="rounded" className="w-fit" onClick={() => setImportOpen(true)}>Importer</Button>
+      </div>
+      <ImportQuizDialog open={importOpen} onOpenChange={setImportOpen} questions={questions} onApply={onChange} />
     </>
   );
 }
