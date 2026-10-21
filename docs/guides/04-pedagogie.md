@@ -53,6 +53,19 @@ Depuis *Programme* : six onglets — **Informations**, **Programme**, **Projet f
 
 **Onglet Certificat — règles** : *Leçons terminées (%)*, *Réussite aux quiz (%)*, *Présence aux lives (%)*, *Projet final validé par le formateur* (case), *Modèle*. Un apprenant qui remplit **toutes** les conditions voit son certificat **préparé automatiquement** — mais **jamais envoyé** (voir §5).
 
+### 3.3 bis Valider les propositions des formateurs
+
+Les formateurs proposent des modifications du programme de leurs formations (ils ne modifient jamais le contenu en ligne eux-mêmes). Menu **Catalogue → Propositions** ; une pastille indique le nombre de propositions **à relire**.
+
+1. Filtrez la liste (par défaut : *À relire*) et ouvrez une proposition.
+2. L'écran de **différences** compare le contenu en ligne et la proposition : ce qui est **ajouté**, **modifié** (valeur avant → après) ou **passé en brouillon**, pour les modules, leçons, ressources et questions de quiz.
+3. Alerte **« Le contenu en ligne a été modifié depuis »** : vous ou un partenaire avez changé la formation après le début de la proposition. Ce n'est pas bloquant : la validation **fusionne** avec la version actuelle (rien de ce qui a été ajouté entre-temps n'est écrasé ni perdu).
+4. Décidez, pour **toute** la proposition :
+   - **Valider** : applique tout d'un coup. Case **« Publier les nouvelles leçons »** : décochée, elles arrivent en Brouillon et vous les publiez ensuite.
+   - **Demander des modifications** : commentaire obligatoire, le formateur corrige et resoumet.
+   - **Refuser** : commentaire obligatoire, la proposition est clôturée.
+5. Vous ne pouvez pas valider **votre propre** proposition (second regard obligatoire). Chaque décision est dans le **journal d'audit**.
+
 ### 3.4 Domaines et partenaires
 
 - **Domaines** : regroupements du catalogue (« Data & BI »…). Nom, identifiant d'URL, description, badge, ordre, *Visible sur le site*, *Bientôt disponible* (carte « prochain domaine »). Suppression refusée s'il reste des formations dedans.

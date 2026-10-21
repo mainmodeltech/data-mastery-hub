@@ -55,6 +55,8 @@ export interface Lesson {
   liveAt?: string | null;
   liveUrl?: string | null;
   quiz?: QuizSettings | null;
+  /** Propositions : identifiant stable d'une leçon NOUVELLE (sans id en ligne). Ignoré par le PUT du contenu. */
+  clientKey?: string;
   resources: LessonResource[];
 }
 

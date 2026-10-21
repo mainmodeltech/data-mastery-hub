@@ -6,34 +6,15 @@
  */
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ErrorNotice, errorMessage } from "@/components/admin/AdminKit";
 import { Button, Card, Pill } from "@/components/shared";
 import { useQuizBank, useSaveQuizBank } from "@/hooks/useAuthoring";
 import { useToast } from "@/hooks/use-toast";
-import { MAX_CHOICES, MIN_CHOICES, type QuizQuestionEdit } from "@/types/authoring.type";
-
-const fieldClass = "w-full rounded-[10px] border border-[#D6CEC0] bg-white px-3 py-2 text-sm text-ink outline-none focus:border-navy";
-
-const blankQuestion = (): QuizQuestionEdit => ({
-  text: "",
-  explanation: "",
-  choices: [{ label: "", correct: true }, { label: "", correct: false }],
-});
-
-/** Message d'erreur de la première question invalide, ou null. */
-function validate(questions: QuizQuestionEdit[]): string | null {
-  for (const [i, q] of questions.entries()) {
-    const n = i + 1;
-    if (!q.text.trim()) return `Question ${n} : l'énoncé est obligatoire.`;
-    if (q.choices.length < MIN_CHOICES || q.choices.length > MAX_CHOICES) return `Question ${n} : entre ${MIN_CHOICES} et ${MAX_CHOICES} choix.`;
-    if (q.choices.some((c) => !c.label.trim())) return `Question ${n} : tous les choix doivent être renseignés.`;
-    if (q.choices.filter((c) => c.correct).length !== 1) return `Question ${n} : une seule bonne réponse est attendue.`;
-  }
-  return null;
-}
+import { QuizQuestionsEditor, validateQuestions } from "@/components/admin/QuizQuestionsEditor";
+import type { QuizQuestionEdit } from "@/types/authoring.type";
 
 export default function AdminQuizBank() {
   const { lessonId } = useParams<{ lessonId: string }>();
@@ -50,12 +31,10 @@ export default function AdminQuizBank() {
     setDirty(false);
   }, [bank]);
 
-  const edit = (fn: (q: QuizQuestionEdit[]) => QuizQuestionEdit[]) => { setQuestions(fn); setDirty(true); };
-  const patch = (i: number, p: Partial<QuizQuestionEdit>) => edit((qs) => qs.map((q, k) => (k === i ? { ...q, ...p } : q)));
 
   const handleSave = () => {
     if (!bank) return;
-    const problem = validate(questions);
+    const problem = validateQuestions(questions);
     if (problem) {
       toast({ title: "Quiz incomplet", description: problem, variant: "destructive" });
       return;
@@ -100,72 +79,7 @@ export default function AdminQuizBank() {
               </div>
             )}
 
-            {questions.map((q, i) => (
-              <Card key={q.id ?? `n${i}`} radius="stat" className="flex flex-col gap-3 border border-[#E7E0D4] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="font-heading text-lg font-bold text-navy">Question {i + 1}</h2>
-                  <button type="button" aria-label={`Supprimer la question ${i + 1}`} onClick={() => edit((qs) => qs.filter((_, k) => k !== i))}>
-                    <Trash2 className="h-4 w-4 text-error" />
-                  </button>
-                </div>
-                <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary">
-                  Énoncé *
-                  <textarea rows={2} className={fieldClass} value={q.text} onChange={(e) => patch(i, { text: e.target.value })} />
-                </label>
-                <fieldset className="flex flex-col gap-2">
-                  <legend className="mb-1 text-xs font-semibold text-ink-secondary">Choix (cochez la bonne réponse)</legend>
-                  {q.choices.map((c, ci) => (
-                    <div key={c.id ?? `c${ci}`} className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name={`correct-${i}`}
-                        aria-label={`Bonne réponse : choix ${ci + 1}`}
-                        className="h-4 w-4 accent-[#1F6B4F]"
-                        checked={c.correct}
-                        onChange={() => patch(i, { choices: q.choices.map((x, k) => ({ ...x, correct: k === ci })) })}
-                      />
-                      <input
-                        aria-label={`Choix ${ci + 1}`}
-                        className={fieldClass}
-                        value={c.label}
-                        onChange={(e) => patch(i, { choices: q.choices.map((x, k) => (k === ci ? { ...x, label: e.target.value } : x)) })}
-                      />
-                      <button
-                        type="button"
-                        aria-label={`Supprimer le choix ${ci + 1}`}
-                        disabled={q.choices.length <= MIN_CHOICES}
-                        className="disabled:opacity-30"
-                        onClick={() => {
-                          const rest = q.choices.filter((_, k) => k !== ci);
-                          patch(i, { choices: rest.some((x) => x.correct) ? rest : rest.map((x, k) => ({ ...x, correct: k === 0 })) });
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-error" />
-                      </button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    shape="rounded"
-                    size="sm"
-                    className="w-fit"
-                    disabled={q.choices.length >= MAX_CHOICES}
-                    onClick={() => patch(i, { choices: [...q.choices, { label: "", correct: false }] })}
-                  >
-                    <Plus className="h-4 w-4" /> Ajouter un choix
-                  </Button>
-                </fieldset>
-                <label className="flex flex-col gap-1 text-xs font-semibold text-ink-secondary">
-                  Explication (affichée dans la correction)
-                  <textarea rows={2} className={fieldClass} value={q.explanation ?? ""} onChange={(e) => patch(i, { explanation: e.target.value })} />
-                </label>
-              </Card>
-            ))}
-
-            <Button type="button" variant="navy" shape="rounded" className="w-fit" onClick={() => edit((qs) => [...qs, blankQuestion()])}>
-              <Plus className="h-4 w-4" /> Ajouter une question
-            </Button>
+            <QuizQuestionsEditor questions={questions} onChange={(qs) => { setQuestions(qs); setDirty(true); }} />
           </>
         )}
       </div>

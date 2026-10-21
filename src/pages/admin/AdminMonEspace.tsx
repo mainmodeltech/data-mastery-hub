@@ -8,13 +8,16 @@
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { BookOpenCheck, CalendarDays, Loader2, Users } from "lucide-react";
+import { BookOpenCheck, CalendarDays, Loader2, PencilLine, Users } from "lucide-react";
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { EmptyState, ErrorNotice, errorMessage } from "@/components/admin/AdminKit";
 import { Button, Card, Pill } from "@/components/shared";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyFormations, useMySessions } from "@/hooks/useAdminMe";
+import { useProposableFormations } from "@/hooks/useProposals";
+import { PROPOSAL_VARIANT } from "@/components/admin/ProposalBar";
+import { PROPOSAL_STATUS_LABELS } from "@/types/proposal.type";
 import { profileTitle } from "@/lib/roles";
 
 const day = (iso: string | null) => (iso ? format(parseISO(iso), "d MMM yyyy", { locale: fr }) : "—");
@@ -30,6 +33,8 @@ export default function AdminMonEspace() {
   const partner = can("PROGRAM_MANAGE") && !can("SCOPE_ALL_FORMATIONS");  // ne gère que « ses » formations
   const sessions = useMySessions();
   const formations = useMyFormations();
+  const canPropose = can("PROGRAM_PROPOSE");
+  const proposable = useProposableFormations(canPropose);
 
   const showSessions = can("SESSIONS_VIEW");
   const showFormations = can("PROGRAM_MANAGE", "CATALOG_VIEW") || trainer;
@@ -64,6 +69,45 @@ export default function AdminMonEspace() {
                     <Pill variant="info">{STATUS_LABELS[s.status] ?? s.status}</Pill>
                     <Button asChild variant="navy" shape="rounded" size="sm">
                       <Link to={`/admin/sessions/${s.sessionId}`}>Suivi de session</Link>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        )}
+
+        {canPropose && (
+          <Card radius="stat" className="flex flex-col gap-4 border border-[#E7E0D4] p-5 lg:p-6">
+            <div className="flex flex-col gap-1">
+              <h2 className="font-heading text-xl font-bold text-navy">Mes formations</h2>
+              <p className="text-sm text-ink-secondary">
+                Proposez des modifications du programme des formations de vos sessions. Elles sont relues et validées par la pédagogie avant d'être publiées.
+              </p>
+            </div>
+            {proposable.isLoading && <Loader2 className="h-5 w-5 animate-spin text-ink-secondary" />}
+            {proposable.isError && <ErrorNotice>{errorMessage(proposable.error, "Impossible de charger vos formations.")}</ErrorNotice>}
+            {proposable.data && proposable.data.length === 0 && (
+              <EmptyState title="Aucune formation" text="Les formations dont une session vous est confiée apparaîtront ici." />
+            )}
+            {proposable.data && proposable.data.length > 0 && (
+              <ul className="flex flex-col">
+                {proposable.data.map((f) => (
+                  <li key={f.formationId} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[#E7E0D4] py-3 first:border-t-0">
+                    <div className="flex min-w-0 flex-1 basis-56 flex-col">
+                      <span className="truncate font-semibold text-ink">{f.formationTitle}</span>
+                      {f.proposal && <span className="text-xs text-ink-secondary">Proposition modifiée le {day(f.proposal.updatedAt)}</span>}
+                    </div>
+                    {f.proposal ? (
+                      <Pill variant={PROPOSAL_VARIANT[f.proposal.status]}>{PROPOSAL_STATUS_LABELS[f.proposal.status]}</Pill>
+                    ) : (
+                      <Pill variant="neutral">Aucune proposition</Pill>
+                    )}
+                    <Button asChild variant="navy" shape="rounded" size="sm">
+                      <Link to={`/admin/espace/formations/${f.formationId}/proposition`}>
+                        <PencilLine />
+                        {!f.proposal || ["APPROVED", "REJECTED"].includes(f.proposal.status) ? "Proposer des modifications" : f.proposal.status === "SUBMITTED" ? "Consulter" : "Continuer"}
+                      </Link>
                     </Button>
                   </li>
                 ))}
