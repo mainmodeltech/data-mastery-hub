@@ -22,6 +22,7 @@ import { errorMessage } from "@/components/admin/AdminKit";
 import { LessonForm, isSaved, newClientId, type LessonProposalMode } from "@/components/admin/LessonForm";
 import { ProposalActions, ProposalBanner } from "@/components/admin/ProposalBar";
 import { validateQuestions } from "@/components/admin/QuizQuestionsEditor";
+import { ImportProgramDialog } from "@/components/admin/import/ImportProgramDialog";
 import { ProjectBriefCard } from "@/components/admin/ProjectBriefCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCourseContent, useSaveAdminCourseContent } from "@/hooks/useCourse";
@@ -121,6 +122,7 @@ export default function AdminFormationEditor() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     if (!result) return;
@@ -271,6 +273,7 @@ export default function AdminFormationEditor() {
                       <Link to={`/espace/formations/${id}`}>Aperçu apprenant</Link>
                     </Button>
                   )}
+                  {!locked && <Button variant="outline" shape="rounded" size="sm" onClick={() => setImportOpen(true)}>Importer</Button>}
                   <Button
                     variant="navy"
                     shape="rounded"
@@ -282,6 +285,7 @@ export default function AdminFormationEditor() {
                 </div>
               </div>
 
+              <ImportProgramDialog open={importOpen} onOpenChange={setImportOpen} modules={modules} onApply={(next) => edit(() => next)} />
               {modules.length === 0 && <p className="text-sm text-ink-secondary">Aucun module. Ajoutez-en un pour commencer.</p>}
 
               {modules.map((m, mi) => {
