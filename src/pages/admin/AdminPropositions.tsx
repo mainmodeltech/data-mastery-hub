@@ -14,7 +14,6 @@ import { EmptyState, ErrorNotice, ReasonDialog, errorMessage, inputClass } from 
 import { PROPOSAL_VARIANT } from "@/components/admin/ProposalBar";
 import { Button, Card, Pill } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useProposalDetail, useProposals, useReviewProposal } from "@/hooks/useProposals";
 import { diffProposal, hasNewLessons, summarizeDiff, type DiffEntry, type DiffKind, type DiffScope } from "@/lib/proposalDiff";
@@ -116,7 +115,6 @@ function ApproveDialog({ newLessons, onClose, onSubmit }: {
 }
 
 function ProposalDetailView({ proposal, onDone }: { proposal: ProposalDetail; onDone: () => void }) {
-  const { user } = useAuth();
   const { toast } = useToast();
   const review = useReviewProposal();
   const [dialog, setDialog] = useState<"approve" | "changes" | "reject" | null>(null);
@@ -127,8 +125,8 @@ function ProposalDetailView({ proposal, onDone }: { proposal: ProposalDetail; on
   );
   const totals = summarizeDiff(entries);
   const reviewable = proposal.status === "SUBMITTED" && !!proposal.id;
-  // Le serveur refuse l'auto-validation (403) ; on masque aussi le bouton quand l'auteur est reconnaissable
-  const own = !!user?.email && !!proposal.authorName && proposal.authorName.trim().toLowerCase() === user.email.toLowerCase();
+  // Le serveur refuse l'auto-validation (403) ; le bouton est masqué pour l'auteur
+  const own = proposal.own;
 
   const run = async (fn: () => Promise<unknown>, title: string) => {
     try { await fn(); toast({ title }); setDialog(null); onDone(); }

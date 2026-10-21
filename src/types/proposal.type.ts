@@ -42,6 +42,10 @@ export interface ProposalPayload {
   baseContentUpdatedAt: string | null;
   liveContentUpdatedAt: string | null;
   stale: boolean;
+  /** L'utilisateur connecté est l'auteur de la proposition. */
+  own: boolean;
+  /** id de leçon en ligne -> statut en ligne */
+  liveLessonStatuses: Record<string, "PUBLISHED" | "SCHEDULED" | "DRAFT">;
   submittedAt: string | null;
   reviewedAt: string | null;
   updatedAt: string | null;

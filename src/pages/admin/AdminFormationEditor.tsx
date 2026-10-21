@@ -8,7 +8,7 @@
  * fiche formation existante. Le réordonnancement se fait par boutons haut/bas (accessible
  * au clavier) plutôt qu'au glisser-déposer.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useMatch, useParams } from "react-router-dom";
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -114,7 +114,6 @@ export default function AdminFormationEditor() {
   const proposalStatus = proposalData?.status ?? null;
   const locked = proposalMode && !PROPOSAL_EDITABLE.includes(proposalStatus);
   const [banks, setBanks] = useState<Record<string, QuizQuestionEdit[]>>({});
-  const liveStatus = useRef<Record<string, LessonStatus>>({});
 
   const [modules, setModules] = useState<CourseModule[]>([]);
   const [settings, setSettings] = useState<CourseSettings | null>(null);
@@ -130,7 +129,6 @@ export default function AdminFormationEditor() {
       const loaded = result.data.modules.map((m) => ({
         ...m,
         lessons: m.lessons.map((l) => {
-          if (isSaved(l.id) && l.status !== "DRAFT" && !liveStatus.current[l.id]) liveStatus.current[l.id] = l.status;
           return !isSaved(l.id) && !l.clientKey ? { ...l, clientKey: l.id } : l;
         }),
       }));
@@ -153,7 +151,10 @@ export default function AdminFormationEditor() {
 
   const bankRef = (l: Lesson) => (isSaved(l.id) ? l.id : l.clientKey ?? l.id);
   const lessonProposal = (l: Lesson): LessonProposalMode => ({
-    allowedStatuses: isSaved(l.id) && liveStatus.current[l.id] ? [liveStatus.current[l.id], "DRAFT"] : ["DRAFT"],
+    allowedStatuses: (() => {
+      const live = isSaved(l.id) ? proposalData?.liveLessonStatuses?.[l.id] : undefined;
+      return live && live !== "DRAFT" ? [live, "DRAFT"] : ["DRAFT"];
+    })(),
     questions: banks[bankRef(l)] ?? [],
     onQuestions: (q) => { setBanks((b) => ({ ...b, [bankRef(l)]: q })); setDirty(true); },
   });
