@@ -1,4 +1,4 @@
-/** Import d'un programme (modules / leçons) depuis un fichier CSV : aperçu, rapport d'erreurs, ajout à l'état local. */
+/** Import d'un programme (modules / leçons) depuis un fichier Excel ou CSV : aperçu, rapport d'erreurs, ajout à l'état local. */
 import { useRef } from "react";
 
 import { applyProgramImport, lessonTypeLabel, parseProgramRows, previewProgramImport, type ParsedProgram } from "@/lib/import/programImport";
@@ -47,8 +47,8 @@ export function ImportProgramDialog({ open, onOpenChange, modules, onApply }: Pr
       open={open}
       onOpenChange={onOpenChange}
       title="Importer un programme"
-      description="Un fichier CSV, une ligne par leçon. Les éléments sont ajoutés au programme actuel sans rien remplacer ; pensez à enregistrer ensuite."
-      templateHref="/modeles/modele-programme.csv"
+      description="Un fichier Excel (.xlsx) ou CSV, une ligne par leçon. Les éléments sont ajoutés au programme actuel sans rien remplacer ; pensez à enregistrer ensuite."
+      templateBase="/modeles/modele-programme"
       analyse={analyse}
       applyLabel="Ajouter au programme"
       onApply={() => { if (parsed.current) onApply(applyProgramImport(modules, parsed.current)); }}

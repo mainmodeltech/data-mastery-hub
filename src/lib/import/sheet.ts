@@ -38,17 +38,41 @@ export function toRecords(rows: string[][]): { headers: string[]; records: Sheet
 export class SpreadsheetError extends Error {}
 
 /**
- * Point d'extension tableur : le CSV est lu ici. Pour le format Excel (.xlsx), brancher la
- * bibliothèque choisie dans `readExcel` (non installée : à valider avant) ; le reste du code ne change pas.
+ * Valeur d'une cellule Excel -> texte, comme si la ligne venait d'un CSV. Les dates (lues en UTC = heure
+ * affichée dans Excel) deviennent « 25/12/2026 18:30 », le format attendu pour la date du live.
  */
-async function readExcel(_file: File): Promise<string[][]> {
-  throw new SpreadsheetError("Le format Excel sera bientôt disponible : enregistrez votre fichier au format CSV (Fichier > Enregistrer sous > CSV) puis réessayez.");
+export function cellToText(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return "";
+    const p = (n: number) => String(n).padStart(2, "0");
+    const day = `${p(value.getUTCDate())}/${p(value.getUTCMonth() + 1)}/${value.getUTCFullYear()}`;
+    const h = value.getUTCHours(), mi = value.getUTCMinutes();
+    return h || mi ? `${day} ${p(h)}:${p(mi)}` : day;
+  }
+  if (typeof value === "boolean") return value ? "oui" : "non";
+  return String(value).trim();
+}
+
+/** Première feuille du classeur ; la bibliothèque est chargée à la demande (hors du bundle principal). */
+async function readExcel(file: File): Promise<string[][]> {
+  if (/\.xls$/i.test(file.name)) {
+    throw new SpreadsheetError("L'ancien format Excel (.xls) n'est pas pris en charge : enregistrez le fichier au format .xlsx ou CSV puis réessayez.");
+  }
+  const { readSheet } = await import("read-excel-file/browser");
+  let rows: unknown[][];
+  try {
+    rows = await readSheet(file);
+  } catch {
+    throw new SpreadsheetError("Impossible de lire ce classeur : vérifiez qu'il s'agit d'un fichier .xlsx non protégé par mot de passe.");
+  }
+  return rows.map((r) => r.map(cellToText));
 }
 
 export async function readSpreadsheet(file: File): Promise<string[][]> {
   const name = file.name.toLowerCase();
   if (/\.xlsx?$/.test(name)) return readExcel(file);
-  if (!/\.(csv|txt)$/.test(name)) throw new SpreadsheetError("Format non reconnu : choisissez un fichier .csv.");
+  if (!/\.(csv|txt)$/.test(name)) throw new SpreadsheetError("Format non reconnu : choisissez un fichier .xlsx ou .csv.");
   const buffer = await file.arrayBuffer();
   let text = new TextDecoder("utf-8").decode(buffer);
   // Excel français enregistre souvent en Windows-1252 : repli si le texte n'est pas de l'UTF-8 valide.

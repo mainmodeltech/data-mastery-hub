@@ -1,4 +1,4 @@
-/** Import des questions d'un quiz depuis un fichier CSV : aperçu, rapport d'erreurs, ajout à la banque (sans rien remplacer). */
+/** Import des questions d'un quiz depuis un fichier Excel ou CSV : aperçu, rapport d'erreurs, ajout à la banque (sans rien remplacer). */
 import { useRef } from "react";
 
 import { applyQuizImport, parseQuizRows, type ParsedQuiz } from "@/lib/import/quizImport";
@@ -42,8 +42,8 @@ export function ImportQuizDialog({ open, onOpenChange, questions, onApply }: Pro
       open={open}
       onOpenChange={onOpenChange}
       title="Importer des questions"
-      description="Un fichier CSV, une ligne par question (2 à 8 choix, une seule bonne réponse indiquée par sa lettre). Les questions sont ajoutées à la banque sans rien remplacer ; pensez à enregistrer ensuite."
-      templateHref="/modeles/modele-quiz.csv"
+      description="Un fichier Excel (.xlsx) ou CSV, une ligne par question (2 à 8 choix, une seule bonne réponse indiquée par sa lettre). Les questions sont ajoutées à la banque sans rien remplacer ; pensez à enregistrer ensuite."
+      templateBase="/modeles/modele-quiz"
       analyse={analyse}
       applyLabel="Ajouter à la banque"
       onApply={() => { if (parsed.current) onApply(applyQuizImport(questions, parsed.current)); }}

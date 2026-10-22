@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:unit": "node --experimental-strip-types --test tests/unit/lib.test.ts tests/unit/richText.test.ts tests/unit/proposalDiff.test.ts tests/unit/csv.test.ts tests/unit/programImport.test.ts tests/unit/quizImport.test.ts",
+    "test:unit": "node --experimental-strip-types --test tests/unit/lib.test.ts tests/unit/richText.test.ts tests/unit/proposalDiff.test.ts tests/unit/csv.test.ts tests/unit/programImport.test.ts tests/unit/quizImport.test.ts tests/unit/excelImport.test.ts",
     "build:seo": "vite build && tsx scripts/prerender.ts",
     "preview:seo": "vite preview"
   },
@@ -60,6 +60,7 @@
     "react-hook-form": "^7.61.1",
     "react-resizable-panels": "^2.1.9",
     "react-router-dom": "^6.30.1",
+    "read-excel-file": "9.3.10",
     "recharts": "^2.15.4",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
