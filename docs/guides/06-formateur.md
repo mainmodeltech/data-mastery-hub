@@ -55,9 +55,21 @@ Si un apprenant a épuisé ses tentatives, **ouvrir l'apprenant → Quiz → Acc
 
 ## 4. Ce que vous ne pouvez pas faire (normal)
 
-Modifier le programme (pédagogie / partenaire) · Délivrer un certificat · Ajouter un apprenant à la session (admissions) · Affecter un formateur · Voir les paiements · Voir les sessions des autres formateurs.
+Modifier directement le programme en ligne (vous le **proposez**, voir §4 bis) · Supprimer un module, une leçon, une ressource ou une question existants · Délivrer un certificat · Ajouter un apprenant à la session (admissions) · Affecter un formateur · Voir les paiements · Voir les sessions des autres formateurs.
 
 Pour toute demande de ce type, passez par la pédagogie.
+
+## 4 bis. Proposer une modification du programme
+
+Vous voyez une erreur ou une amélioration dans une formation dont une session vous est confiée ? Vous la **proposez** ; la pédagogie la relit et la valide. Rien n'est publié avant.
+
+1. **Mon espace** → **Mes formations** → **Proposer des modifications** (ou **Continuer** si une proposition est déjà commencée).
+2. L'éditeur s'ouvre sur une **copie** du programme. Vous pouvez : modifier titres, descriptions, liens, durées, ressources et questions de quiz ; **ajouter** modules, leçons, ressources et questions ; réordonner.
+3. **Règles** : vous ne **supprimez** rien de ce qui est en ligne (pas de poubelle sur l'existant) — pour retirer une leçon, passez-la en **Brouillon** (ou **Tout passer en brouillon** sur un module). Ce que vous avez créé dans votre proposition, vous pouvez l'enlever. Vos **nouvelles leçons arrivent toujours en Brouillon**. Réglages du parcours et règles du certificat sont en **lecture seule**.
+4. **Enregistrer** garde votre brouillon (reprenez-le quand vous voulez). **Soumettre** l'envoie à la pédagogie ; **Retirer** la reprend tant qu'elle n'est pas traitée.
+5. Le bandeau en haut indique l'état : *Brouillon*, *Soumise*, *Modifications demandées* (le commentaire de la pédagogie s'affiche : corrigez puis soumettez à nouveau), *Validée* ou *Refusée*.
+
+Une seule proposition active par formation et par personne.
 
 ## 5. À faire régulièrement
 

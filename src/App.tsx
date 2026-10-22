@@ -78,6 +78,7 @@ const AdminEmails = lazy(() => import('./pages/admin/AdminEmails'));
 const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
 const AdminProfils = lazy(() => import('./pages/admin/AdminProfils'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
+const AdminPropositions = lazy(() => import('./pages/admin/AdminPropositions'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
 const AdminPartenaires = lazy(() => import('./pages/admin/AdminPartenaires'));
 const AdminTemoignages = lazy(() => import('./pages/admin/AdminTemoignages'));
@@ -203,6 +204,8 @@ const App = () => (
 
                   {/* Autres sections */}
                   <Route path="/admin/lessons/:lessonId/quiz" element={<ProtectedRoute permissions={ACCESS.PROGRAM}><AdminQuizBank /></ProtectedRoute>} />
+                  <Route path="/admin/espace/formations/:id/proposition" element={<ProtectedRoute permissions={ACCESS.PROGRAM_PROPOSE}><AdminFormationEditor /></ProtectedRoute>} />
+                  <Route path="/admin/propositions" element={<ProtectedRoute permissions={ACCESS.PROPOSALS_REVIEW}><AdminPropositions /></ProtectedRoute>} />
                   <Route path="/admin/formations/:id" element={<ProtectedRoute permissions={ACCESS.PROGRAM}><AdminFormationEditor /></ProtectedRoute>} />
                   <Route path="/admin/apprenants" element={<ProtectedRoute permissions={ACCESS.LEARNERS}><AdminApprenants /></ProtectedRoute>} />
                   <Route path="/admin/newsletter" element={<ProtectedRoute permissions={ACCESS.NEWSLETTER}><AdminNewsletter /></ProtectedRoute>} />

@@ -1,0 +1,4 @@
+﻿Question;Choix A;Choix B;Choix C;Choix D;Choix E;Choix F;Choix G;Choix H;Bonne réponse;Explication
+Quelle fonction SQL compte les lignes ?;SUM;COUNT;AVG;;;;;;B;COUNT renvoie le nombre de lignes.
+Power BI est un outil de visualisation de données.;Vrai;Faux;;;;;;;A;
+Quel langage est utilisé pour interroger une base relationnelle ?;SQL;HTML;CSS;;;;;;A;SQL signifie Structured Query Language.

@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { profileTitle } from "@/lib/roles";
 import { ACCESS } from "@/lib/permissions";
 import { useAdminActions } from "@/hooks/useAdminStats";
+import { usePendingProposalCount } from "@/hooks/useProposals";
 import { AppLayout, type AppNavItem } from "@/components/layouts/AppLayout";
 import {
   LayoutDashboard,
@@ -34,6 +35,7 @@ import {
   Send,
   Video,
   ScrollText,
+  ClipboardCheck,
 } from "lucide-react";
 
 type PermNavItem = AppNavItem & { access: readonly string[] };
@@ -46,6 +48,7 @@ const navItems: PermNavItem[] = [
   { href: "/admin/domaines", label: "Domaines", icon: Layers, section: "Catalogue", access: ACCESS.CATALOG },
   { href: "/admin/partenaires", label: "Partenaires", icon: Handshake, section: "Catalogue", access: ACCESS.PARTNERS },
   { href: "/admin/bootcamp-sessions", label: "Sessions", icon: CalendarDays, section: "Catalogue", access: ACCESS.CATALOG },
+  { href: "/admin/propositions", label: "Propositions", icon: ClipboardCheck, section: "Catalogue", access: ACCESS.PROPOSALS_REVIEW },
   { href: "/admin/candidatures", label: "Candidatures", icon: Wallet, section: "Admissions", access: ACCESS.APPLICATIONS },
   { href: "/admin/paiements", label: "Paiements", icon: Banknote, section: "Admissions", access: ACCESS.PAYMENTS },
   { href: "/admin/factures", label: "Factures", icon: Receipt, section: "Admissions", access: ACCESS.INVOICES },
@@ -85,6 +88,8 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
   const initials = (user?.email ?? "AD").slice(0, 2).toUpperCase();
   // Chaque entrée n'apparaît que si l'un des profils du compte donne le droit correspondant (le serveur vérifie aussi)
   const { data: todo } = useAdminActions();
+  // Pastille « propositions à relire » : réservée à la pédagogie (portée toutes formations)
+  const { data: pendingProposals } = usePendingProposalCount(can("PROGRAM_MANAGE") && can("SCOPE_ALL_FORMATIONS"));
   const badges: Record<string, number> = todo
     ? {
         // Un compteur absent = la personne ne traite pas cette file (le serveur ne le renvoie pas)
@@ -96,8 +101,9 @@ export const AdminLayout = ({ children, title, description, actions }: AdminLayo
         "/admin/communaute": todo.openQuestions ?? 0,
       }
     : {};
+  if (pendingProposals?.count) badges["/admin/propositions"] = pendingProposals.count;
   const visibleNav: AppNavItem[] = navItems
-    .filter((i) => can(...i.access))
+    .filter((i) => can(...i.access) && (i.href !== "/admin/propositions" || can("SCOPE_ALL_FORMATIONS")))
     .map(({ access: _access, ...item }) => (badges[item.href] ? { ...item, badge: badges[item.href] } : item));
 
   return (

@@ -12,6 +12,8 @@ import { Link } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/shared";
+import { QuizQuestionsEditor } from "@/components/admin/QuizQuestionsEditor";
+import type { QuizQuestionEdit } from "@/types/authoring.type";
 import {
   LESSON_STATUS_LABELS, LESSON_TYPE_LABELS,
   type Lesson, type LessonResource, type LessonStatus, type LessonType,
@@ -25,7 +27,14 @@ const FILE_TYPES = ["PDF", "XLSX", "PBIX", "DOCX", "PPTX", "ZIP", "CSV", "LIEN"]
 export const newClientId = () => `new-${crypto.randomUUID()}`;
 export const isSaved = (id: string) => !id.startsWith("new-");
 
-export function LessonForm({ lesson, onChange }: { lesson: Lesson; onChange: (l: Lesson) => void }) {
+/** Mode « proposition » (formateur) : statuts restreints, ressources en ligne non retirables, questions éditées sur place. */
+export interface LessonProposalMode {
+  allowedStatuses: LessonStatus[];
+  questions: QuizQuestionEdit[];
+  onQuestions: (q: QuizQuestionEdit[]) => void;
+}
+
+export function LessonForm({ lesson, onChange, proposal }: { lesson: Lesson; onChange: (l: Lesson) => void; proposal?: LessonProposalMode }) {
   const set = <K extends keyof Lesson>(k: K, v: Lesson[K]) => onChange({ ...lesson, [k]: v });
 
   const changeType = (type: LessonType) =>
@@ -56,7 +65,7 @@ export function LessonForm({ lesson, onChange }: { lesson: Lesson; onChange: (l:
       <label className={labelClass}>
         Statut
         <select className={fieldClass} value={lesson.status} onChange={(e) => set("status", e.target.value as LessonStatus)}>
-          {(Object.keys(LESSON_STATUS_LABELS) as LessonStatus[]).map((s) => <option key={s} value={s}>{LESSON_STATUS_LABELS[s]}</option>)}
+          {(proposal ? proposal.allowedStatuses : (Object.keys(LESSON_STATUS_LABELS) as LessonStatus[])).map((s) => <option key={s} value={s}>{LESSON_STATUS_LABELS[s]}</option>)}
         </select>
         <span className="font-normal">Brouillon : invisible des apprenants. Programmé : visible sans vidéo.</span>
       </label>
@@ -134,7 +143,9 @@ export function LessonForm({ lesson, onChange }: { lesson: Lesson; onChange: (l:
               onChange={(e) => setQuiz({ maxAttempts: e.target.value ? Number(e.target.value) : null })} />
           </label>
           <div className="flex items-end">
-            {isSaved(lesson.id) ? (
+            {proposal ? (
+              <p className="text-xs text-ink-secondary">Les questions se modifient plus bas.</p>
+            ) : isSaved(lesson.id) ? (
               <Button asChild variant="navy" shape="rounded" size="sm">
                 <Link to={`/admin/lessons/${lesson.id}/quiz`}>Gérer les questions</Link>
               </Button>
@@ -171,9 +182,13 @@ export function LessonForm({ lesson, onChange }: { lesson: Lesson; onChange: (l:
               {FILE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
             <input aria-label="Adresse du fichier" type="url" placeholder="https://…" className={fieldClass} value={r.url ?? ""} onChange={(e) => setResource(r.id, { url: e.target.value })} />
-            <button type="button" aria-label="Supprimer la ressource" className="justify-self-end p-2" onClick={() => set("resources", lesson.resources.filter((x) => x.id !== r.id))}>
-              <Trash2 className="h-4 w-4 text-error" />
-            </button>
+            {proposal && isSaved(r.id) ? (
+              <span className="justify-self-end p-2 text-xs text-ink-secondary">En ligne</span>
+            ) : (
+              <button type="button" aria-label="Supprimer la ressource" className="justify-self-end p-2" onClick={() => set("resources", lesson.resources.filter((x) => x.id !== r.id))}>
+                <Trash2 className="h-4 w-4 text-error" />
+              </button>
+            )}
             <label className="flex items-center gap-2 text-xs text-ink-secondary sm:col-span-4">
               <input type="checkbox" className="h-4 w-4 accent-[#1A3A5B]" checked={!!r.lockedUntilQuiz} onChange={(e) => setResource(r.id, { lockedUntilQuiz: e.target.checked })} />
               Débloquer seulement après la réussite du quiz du module
@@ -181,6 +196,13 @@ export function LessonForm({ lesson, onChange }: { lesson: Lesson; onChange: (l:
           </div>
         ))}
       </div>
+
+      {proposal && lesson.type === "QUIZ" && (
+        <div className="flex flex-col gap-3 sm:col-span-2">
+          <span className="text-xs font-semibold text-ink-secondary">Banque de questions ({proposal.questions.length})</span>
+          <QuizQuestionsEditor questions={proposal.questions} onChange={proposal.onQuestions} lockExisting idPrefix={lesson.id} />
+        </div>
+      )}
     </div>
   );
 }

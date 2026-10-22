@@ -8,3 +8,4 @@ export { registrationService } from './registrationService';
 export { testimonialService } from './testimonialService';
 export { contactService } from './contactService';
 export { promoCodeService } from './promoCodeService';
+export { proposalService } from './proposalService';

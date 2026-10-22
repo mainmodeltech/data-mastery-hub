@@ -33,6 +33,10 @@ export const ACCESS = {
   ACCOUNTS: ["ACCOUNTS_MANAGE"],
   PROFILES: ["PROFILES_MANAGE"],
   AUDIT: ["AUDIT_VIEW"],
+  /** Formateur : proposer des modifications du programme de ses formations. */
+  PROGRAM_PROPOSE: ["PROGRAM_PROPOSE"],
+  /** Pédagogie : valider les propositions des formateurs. */
+  PROPOSALS_REVIEW: ["PROGRAM_MANAGE"],
 } as const satisfies Record<string, readonly string[]>;
 
 export function hasAnyPermission(granted: readonly string[] | undefined, required: readonly string[]): boolean {

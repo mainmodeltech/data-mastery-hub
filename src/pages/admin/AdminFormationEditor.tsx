@@ -9,7 +9,7 @@
  * au clavier) plutôt qu'au glisser-déposer.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useMatch, useParams } from "react-router-dom";
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -19,14 +19,20 @@ import {
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button, Card, Pill } from "@/components/shared";
 import { errorMessage } from "@/components/admin/AdminKit";
-import { LessonForm, newClientId } from "@/components/admin/LessonForm";
+import { LessonForm, isSaved, newClientId, type LessonProposalMode } from "@/components/admin/LessonForm";
+import { ProposalActions, ProposalBanner } from "@/components/admin/ProposalBar";
+import { validateQuestions } from "@/components/admin/QuizQuestionsEditor";
+import { ImportProgramDialog } from "@/components/admin/import/ImportProgramDialog";
 import { ProjectBriefCard } from "@/components/admin/ProjectBriefCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCourseContent, useSaveAdminCourseContent } from "@/hooks/useCourse";
 import { useFormations } from "@/hooks/useFormations";
+import { useMyProposal, useSaveProposal, useSubmitProposal, useWithdrawProposal } from "@/hooks/useProposals";
 import { useToast } from "@/hooks/use-toast";
 import { moduleDurationLabel } from "@/lib/course";
 import { ApiError } from "@/services/httpClient";
+import type { QuizQuestionEdit } from "@/types/authoring.type";
+import { PROPOSAL_EDITABLE, type QuizBankDraft } from "@/types/proposal.type";
 import {
   LESSON_STATUS_LABELS, LESSON_TYPE_LABELS, formatDuration,
   type CertificateRules, type CourseContent, type CourseModule, type CourseSettings, type Lesson, type LessonStatus, type LessonType,
@@ -91,8 +97,24 @@ export default function AdminFormationEditor() {
   const { data: formations = [] } = useFormations();
   const formation = formations.find((f) => f.id === id);
 
-  const { data: result, isLoading, isError } = useAdminCourseContent(id, formation?.title);
+  // Mode proposition (formateur) : même éditeur, sur une copie du programme soumise à la pédagogie
+  const proposalMode = !!useMatch("/admin/espace/formations/:id/proposition");
+  const adminContent = useAdminCourseContent(proposalMode ? undefined : id, formation?.title);
+  const proposalQuery = useMyProposal(proposalMode ? id : undefined);
+  const proposalData = proposalQuery.data;
+  const result = useMemo(
+    () => (proposalMode ? (proposalData ? { data: proposalData.content, demo: false } : undefined) : adminContent.data),
+    [proposalMode, proposalData, adminContent.data]
+  );
+  const isLoading = proposalMode ? proposalQuery.isLoading : adminContent.isLoading;
+  const isError = proposalMode ? proposalQuery.isError : adminContent.isError;
   const save = useSaveAdminCourseContent(id ?? "");
+  const saveProposal = useSaveProposal(id ?? "");
+  const submitProposal = useSubmitProposal(id ?? "");
+  const withdrawProposal = useWithdrawProposal(id ?? "");
+  const proposalStatus = proposalData?.status ?? null;
+  const locked = proposalMode && !PROPOSAL_EDITABLE.includes(proposalStatus);
+  const [banks, setBanks] = useState<Record<string, QuizQuestionEdit[]>>({});
 
   const [modules, setModules] = useState<CourseModule[]>([]);
   const [settings, setSettings] = useState<CourseSettings | null>(null);
@@ -100,14 +122,25 @@ export default function AdminFormationEditor() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     if (!result) return;
-    setModules(result.data.modules);
+    if (proposalMode && proposalData) {
+      // Une leçon nouvelle (id « new-… ») garde un identifiant stable : sa clientKey
+      const loaded = result.data.modules.map((m) => ({
+        ...m,
+        lessons: m.lessons.map((l) => {
+          return !isSaved(l.id) && !l.clientKey ? { ...l, clientKey: l.id } : l;
+        }),
+      }));
+      setModules(loaded);
+      setBanks(Object.fromEntries(proposalData.quizBanks.map((b) => [b.lessonRef, b.questions ?? []])));
+    } else setModules(result.data.modules);
     setSettings(result.data.settings);
     setRules(result.data.certificateRules);
     setDirty(false);
-  }, [result]);
+  }, [result]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const content: CourseContent | null = useMemo(
     () => (result && settings && rules ? { ...result.data, title: formation?.title ?? result.data.title, settings, certificateRules: rules, modules: reorder(modules) } : null),
@@ -117,6 +150,50 @@ export default function AdminFormationEditor() {
   const edit = (fn: (m: CourseModule[]) => CourseModule[]) => { setModules(fn); setDirty(true); };
   const patchModule = (mid: string, fn: (m: CourseModule) => CourseModule) => edit((ms) => ms.map((m) => (m.id === mid ? fn(m) : m)));
   const toggle = (mid: string) => setCollapsed((s) => { const n = new Set(s); n.has(mid) ? n.delete(mid) : n.add(mid); return n; });
+
+  const bankRef = (l: Lesson) => (isSaved(l.id) ? l.id : l.clientKey ?? l.id);
+  const lessonProposal = (l: Lesson): LessonProposalMode => ({
+    allowedStatuses: (() => {
+      const live = isSaved(l.id) ? proposalData?.liveLessonStatuses?.[l.id] : undefined;
+      return live && live !== "DRAFT" ? [live, "DRAFT"] : ["DRAFT"];
+    })(),
+    questions: banks[bankRef(l)] ?? [],
+    onQuestions: (q) => { setBanks((b) => ({ ...b, [bankRef(l)]: q })); setDirty(true); },
+  });
+
+  /** Corps de la proposition : programme + une banque de questions par leçon quiz. Renvoie aussi le 1er problème de saisie. */
+  const proposalBody = (): { body: { content: CourseContent; quizBanks: QuizBankDraft[] }; problem: string | null } | null => {
+    if (!content) return null;
+    let problem = validateContent(content.modules);
+    const quizBanks: QuizBankDraft[] = [];
+    for (const m of content.modules) for (const l of m.lessons) {
+      if (l.type !== "QUIZ") continue;
+      const questions = banks[bankRef(l)] ?? [];
+      const q = validateQuestions(questions);
+      if (q && !problem) problem = `Quiz « ${l.title} » : ${q}`;
+      quizBanks.push({ lessonRef: bankRef(l), questions: questions.map((x) => ({ ...x, explanation: x.explanation?.trim() || null })) });
+    }
+    return { body: { content, quizBanks }, problem };
+  };
+
+  const saveDraftProposal = async (): Promise<boolean> => {
+    const p = proposalBody();
+    if (!p) return false;
+    if (p.problem) { toast({ title: "Proposition incomplète", description: p.problem, variant: "destructive" }); return false; }
+    try { await saveProposal.mutateAsync(p.body); setDirty(false); return true; }
+    catch (e) { toast({ title: "Enregistrement impossible", description: errorMessage(e, "Réessayez dans un instant."), variant: "destructive" }); return false; }
+  };
+
+  const handleProposalSave = async () => { if (await saveDraftProposal()) toast({ title: "Proposition enregistrée" }); };
+  const handleProposalSubmit = async () => {
+    if ((dirty || !proposalData?.id) && !(await saveDraftProposal())) return;
+    try { await submitProposal.mutateAsync(); toast({ title: "Proposition soumise à la pédagogie" }); }
+    catch (e) { toast({ title: "Envoi impossible", description: errorMessage(e, "Réessayez dans un instant."), variant: "destructive" }); }
+  };
+  const handleProposalWithdraw = async () => {
+    try { await withdrawProposal.mutateAsync(); toast({ title: "Proposition retirée", description: "Vous pouvez à nouveau la modifier." }); }
+    catch (e) { toast({ title: "Retrait impossible", description: errorMessage(e, "Réessayez dans un instant."), variant: "destructive" }); }
+  };
 
   const handleSave = () => {
     if (!content) return;
@@ -143,27 +220,38 @@ export default function AdminFormationEditor() {
 
   return (
     <AdminLayout
-      title={formation?.title ?? "Formation"}
+      title={formation?.title ?? proposalData?.formationTitle ?? "Formation"}
       description={`${breadcrumb}${updatedAt ? ` · dernière modification ${updatedAt}` : ""}`}
-      actions={
+      actions={proposalMode ? (
+        <ProposalActions
+          status={proposalStatus} dirty={dirty}
+          busy={saveProposal.isPending || submitProposal.isPending || withdrawProposal.isPending}
+          onSave={handleProposalSave} onSubmit={handleProposalSubmit} onWithdraw={handleProposalWithdraw}
+        />
+      ) : (
         <>
           {formation && <Pill variant={formation.published ? "success" : "warning"}>{formation.published ? "Publiée" : "Brouillon"}</Pill>}
           <Button variant="primary" shape="rounded" size="sm" onClick={handleSave} disabled={!dirty || save.isPending}>
             {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enregistrer"}
           </Button>
         </>
-      }
+      )}
     >
       <div className="flex min-w-0 max-w-full flex-col gap-6">
         <div role="tablist" className="flex max-w-full gap-7 overflow-x-auto border-b border-[#E7E0D4] text-[0.9375rem] font-semibold">
-          {id && canManageCatalog && <Link to={`/admin/bootcamps/${id}/edit`} className="whitespace-nowrap py-3 text-ink-secondary">Informations</Link>}
+          {id && canManageCatalog && !proposalMode && <Link to={`/admin/bootcamps/${id}/edit`} className="whitespace-nowrap py-3 text-ink-secondary">Informations</Link>}
           <span role="tab" aria-selected="true" className="-mb-px whitespace-nowrap border-b-2 border-cta py-3 font-bold text-navy">Programme</span>
-          <a href="#projet" className="whitespace-nowrap py-3 text-ink-secondary">Projet final</a>
-          <a href="#certificat" className="whitespace-nowrap py-3 text-ink-secondary">Certificat</a>
-          {canManageCatalog && <Link to={`/admin/bootcamp-sessions?bootcamp=${id}`} className="whitespace-nowrap py-3 text-ink-secondary">Sessions</Link>}
-          {formation && <Link to={`/formations/${formation.slug}`} className="whitespace-nowrap py-3 text-ink-secondary">Page du site</Link>}
+          {!proposalMode && (
+            <>
+              <a href="#projet" className="whitespace-nowrap py-3 text-ink-secondary">Projet final</a>
+              <a href="#certificat" className="whitespace-nowrap py-3 text-ink-secondary">Certificat</a>
+              {canManageCatalog && <Link to={`/admin/bootcamp-sessions?bootcamp=${id}`} className="whitespace-nowrap py-3 text-ink-secondary">Sessions</Link>}
+              {formation && <Link to={`/formations/${formation.slug}`} className="whitespace-nowrap py-3 text-ink-secondary">Page du site</Link>}
+            </>
+          )}
         </div>
 
+        {proposalMode && proposalData && <ProposalBanner proposal={proposalData} />}
         {result?.demo && (
           <div role="status" className="rounded-card bg-warning-bg px-4 py-3 text-sm text-warning">
             <span className="font-bold">Aperçu :</span> programme de démonstration — le contenu de cours n'est pas encore disponible
@@ -174,14 +262,18 @@ export default function AdminFormationEditor() {
         {isError && <div role="alert" className="rounded-card bg-error-bg px-5 py-4 text-sm text-error">Impossible de charger le programme de cette formation.</div>}
 
         {content && settings && (
+          <fieldset disabled={locked} className="m-0 min-w-0 border-0 p-0">
           <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr),360px]">
             <Card radius="stat" className="flex min-w-0 flex-col gap-4 p-5 lg:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-heading text-xl font-bold text-navy">Programme</h2>
                 <div className="flex flex-wrap gap-2">
-                  <Button asChild variant="outline" shape="rounded" size="sm">
-                    <Link to={`/espace/formations/${id}`}>Aperçu apprenant</Link>
-                  </Button>
+                  {!proposalMode && (
+                    <Button asChild variant="outline" shape="rounded" size="sm">
+                      <Link to={`/espace/formations/${id}`}>Aperçu apprenant</Link>
+                    </Button>
+                  )}
+                  {!locked && <Button variant="outline" shape="rounded" size="sm" onClick={() => setImportOpen(true)}>Importer</Button>}
                   <Button
                     variant="navy"
                     shape="rounded"
@@ -193,6 +285,7 @@ export default function AdminFormationEditor() {
                 </div>
               </div>
 
+              <ImportProgramDialog open={importOpen} onOpenChange={setImportOpen} modules={modules} onApply={(next) => edit(() => next)} />
               {modules.length === 0 && <p className="text-sm text-ink-secondary">Aucun module. Ajoutez-en un pour commencer.</p>}
 
               {modules.map((m, mi) => {
@@ -218,7 +311,8 @@ export default function AdminFormationEditor() {
                         shape="rounded"
                         size="sm"
                         onClick={() => {
-                          const lesson: Lesson = { id: newId(), order: m.lessons.length + 1, title: "Nouvelle leçon", type: "VIDEO", status: "DRAFT", resources: [] };
+                          const lessonId = newId();
+                          const lesson: Lesson = { id: lessonId, order: m.lessons.length + 1, title: "Nouvelle leçon", type: "VIDEO", status: "DRAFT", resources: [], ...(proposalMode ? { clientKey: lessonId } : {}) };
                           patchModule(m.id, (x) => ({ ...x, lessons: [...x.lessons, lesson] }));
                           setEditing(lesson.id);
                           setCollapsed((s) => { const n = new Set(s); n.delete(m.id); return n; });
@@ -226,13 +320,23 @@ export default function AdminFormationEditor() {
                       >
                         <Plus className="h-4 w-4" /> Ajouter
                       </Button>
-                      <button
-                        type="button"
-                        aria-label="Supprimer le module"
-                        onClick={() => { if (window.confirm(`Supprimer « ${m.title} » et ses ${m.lessons.length} éléments ?`)) edit((ms) => ms.filter((x) => x.id !== m.id)); }}
-                      >
-                        <Trash2 className="h-4 w-4 text-error" />
-                      </button>
+                      {proposalMode && (
+                        <Button
+                          variant="outline" shape="rounded" size="sm"
+                          onClick={() => patchModule(m.id, (x) => ({ ...x, lessons: x.lessons.map((l) => ({ ...l, status: "DRAFT" as const })) }))}
+                        >
+                          Tout passer en brouillon
+                        </Button>
+                      )}
+                      {!(proposalMode && isSaved(m.id)) && (
+                        <button
+                          type="button"
+                          aria-label="Supprimer le module"
+                          onClick={() => { if (window.confirm(`Supprimer « ${m.title} » et ses ${m.lessons.length} éléments ?`)) edit((ms) => ms.filter((x) => x.id !== m.id)); }}
+                        >
+                          <Trash2 className="h-4 w-4 text-error" />
+                        </button>
+                      )}
                     </div>
 
                     {open && m.lessons.map((l, li) => (
@@ -252,16 +356,18 @@ export default function AdminFormationEditor() {
                           <button type="button" className="text-sm font-semibold text-navy hover:text-cta" onClick={() => setEditing(editing === l.id ? null : l.id)}>
                             {editing === l.id ? "Fermer" : "Modifier"}
                           </button>
-                          <button
-                            type="button"
-                            aria-label="Supprimer la leçon"
-                            onClick={() => patchModule(m.id, (x) => ({ ...x, lessons: reorder(x.lessons.filter((y) => y.id !== l.id)) }))}
-                          >
-                            <Trash2 className="h-4 w-4 text-error" />
-                          </button>
+                          {!(proposalMode && isSaved(l.id)) && (
+                            <button
+                              type="button"
+                              aria-label="Supprimer la leçon"
+                              onClick={() => patchModule(m.id, (x) => ({ ...x, lessons: reorder(x.lessons.filter((y) => y.id !== l.id)) }))}
+                            >
+                              <Trash2 className="h-4 w-4 text-error" />
+                            </button>
+                          )}
                         </div>
                         {editing === l.id && (
-                          <LessonForm lesson={l} onChange={(nl) => patchModule(m.id, (x) => ({ ...x, lessons: x.lessons.map((y) => (y.id === l.id ? nl : y)) }))} />
+                          <LessonForm lesson={l} proposal={proposalMode ? lessonProposal(l) : undefined} onChange={(nl) => patchModule(m.id, (x) => ({ ...x, lessons: x.lessons.map((y) => (y.id === l.id ? nl : y)) }))} />
                         )}
                       </div>
                     ))}
@@ -283,7 +389,8 @@ export default function AdminFormationEditor() {
                 </dl>
                 {id && canManageCatalog && <Link to={`/admin/bootcamps/${id}/edit`} className="text-sm font-semibold text-navy hover:text-cta">Modifier dans la fiche formation →</Link>}
 
-                <div className="flex flex-col gap-3 rounded-card border border-[#E7E0D4] p-3">
+                {proposalMode && <p className="text-xs text-ink-secondary">Réglages et certificat : en lecture seule, ils ne se modifient pas dans une proposition.</p>}
+                <fieldset disabled={proposalMode} className="m-0 flex min-w-0 flex-col gap-3 rounded-card border border-[#E7E0D4] p-3">
                   <label className="flex items-center justify-between gap-3 text-sm">
                     Débloquer les modules dans l'ordre
                     <input type="checkbox" className="h-[18px] w-[18px] accent-[#1A3A5B]" checked={settings.sequentialUnlock}
@@ -297,11 +404,12 @@ export default function AdminFormationEditor() {
                       <option value="LIFETIME">À vie</option>
                     </select>
                   </label>
-                </div>
+                </fieldset>
               </Card>
 
               {rules && (
                 <Card id="certificat" radius="stat" className="flex flex-col gap-3 p-5">
+                  <fieldset disabled={proposalMode} className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0">
                   <h2 className="font-heading text-lg font-bold text-navy">Règles du certificat</h2>
                   {([
                     ["lessonsCompletedPercent", "Leçons terminées (%)"],
@@ -335,12 +443,14 @@ export default function AdminFormationEditor() {
                     Dès que toutes les conditions sont remplies, le certificat est généré et envoyé par e-mail à l'apprenant.
                     Pensez à enregistrer le programme.
                   </p>
+                  </fieldset>
                 </Card>
               )}
 
-              {id && <ProjectBriefCard formationId={id} />}
+              {id && !proposalMode && <ProjectBriefCard formationId={id} />}
             </div>
           </div>
+          </fieldset>
         )}
       </div>
     </AdminLayout>
