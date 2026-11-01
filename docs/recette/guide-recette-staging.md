@@ -224,6 +224,30 @@ Prévoir **deux comptes** habilités sur l'argent (par exemple Finance et Direct
 | S13 | Tenter de **modifier ou supprimer** une ligne du journal (base de données) | Refus : « Le journal d'audit est en ajout seul » | ☐ |
 | S14 | Modifier un **prix**, un **code parrainage**, une **part de revenu**, les **droits d'un profil**, créer un **compte**, **réinitialiser un MFA**, **valider un certificat**, **accorder des tentatives**, **modifier une page du site** | Chaque action produit une ligne d'audit (catégories Tarifs, Comptes et droits, Pédagogie, Site) | ☐ |
 
+### Simulateur PL-300 (lots S0 et S1)
+
+Prévoir **deux comptes** avec les droits du simulateur (profil Pédagogie ou Direction) : un auteur et un relecteur/publieur.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P1 | Ouvrir `/simulateur-pl-300` (visiteur) | Page complète : public visé, couverture des 4 domaines avec pondérations et date du guide, fonctionnalités (labs et plan de révision marqués « Après l'ouverture »), forfaits avec tarifs **prévisionnels**, FAQ, mentions « non affilié à Microsoft » | ☐ |
+| P2 | Remplir la liste d'attente **sans cocher** l'accord | Envoi impossible (case obligatoire) | ☐ |
+| P3 | Remplir la liste d'attente avec l'accord | Message de confirmation ; la demande apparaît dans *Messages → Simulateur* avec forfait et échéance | ☐ |
+| P4 | *Pages du site → Simulateur PL-300* : changer un tarif, enregistrer, recharger la page publique | Le nouveau tarif s'affiche ; *Restaurer* revient à la version d'origine | ☐ |
+| P5 | *Catalogue → Simulateur* (auteur) : **Nouvelle question** à choix unique (4 choix, une bonne réponse), enregistrer | Brouillon `PL300-MOD-001` créé ; deux bonnes réponses refusées avec un message clair | ☐ |
+| P6 | Créer aussi un choix multiple (2 bonnes réponses) et une série Oui/Non | Chaque type se valide selon ses règles | ☐ |
+| P7 | **Soumettre à relecture** sans explication française | Refusé (explication obligatoire, 20 caractères au moins) ; avec explication : « En relecture » | ☐ |
+| P8 | L'**auteur** tente de relire sa propre question | Aucun bouton *Relire* ; appel direct refusé (403) | ☐ |
+| P9 | Le **relecteur** : *Relire* → **sans** cocher la vérification technique | *Approuver* grisé ; « Demander des corrections » exige un commentaire | ☐ |
+| P10 | Le relecteur approuve avec la vérification technique | Statut « Approuvée » ; ligne d'audit « Question du simulateur approuvée » | ☐ |
+| P11 | L'**auteur** tente de **publier** | Aucun bouton ; message « une autre personne doit la publier » | ☐ |
+| P12 | Le relecteur **publie** | Statut « Publiée » ; la fiche n'est plus modifiable | ☐ |
+| P13 | L'auteur ouvre une **nouvelle version** (v2), la soumet, la fait approuver et publier | v2 publiée, **v1 devient « Retirée »** automatiquement ; deux versions visibles dans la fiche | ☐ |
+| P14 | **Retirer** une version publiée avec un motif | Statut « Retirée » ; motif conservé ; ligne d'audit | ☐ |
+| P15 | Onglet **Couverture** | Une ligne par compétence (11), cible, brouillons / relecture / approuvées / publiées, barre d'avancement | ☐ |
+| P16 | **Importer** un JSON de 3 questions dont une invalide | 2 brouillons créés, la 3e signalée avec son rang et son motif | ☐ |
+| P17 | Un compte **Admissions**, **Finance** ou **Formateur** ouvre `/admin/simulateur` | Entrée absente du menu, accès refusé | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |
