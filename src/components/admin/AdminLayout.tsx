@@ -35,6 +35,7 @@ import {
   Send,
   Video,
   ScrollText,
+  FileQuestion,
   ClipboardCheck,
 } from "lucide-react";
 
@@ -49,6 +50,7 @@ const navItems: PermNavItem[] = [
   { href: "/admin/partenaires", label: "Partenaires", icon: Handshake, section: "Catalogue", access: ACCESS.PARTNERS },
   { href: "/admin/bootcamp-sessions", label: "Sessions", icon: CalendarDays, section: "Catalogue", access: ACCESS.CATALOG },
   { href: "/admin/propositions", label: "Propositions", icon: ClipboardCheck, section: "Catalogue", access: ACCESS.PROPOSALS_REVIEW },
+  { href: "/admin/simulateur", label: "Simulateur", icon: FileQuestion, section: "Catalogue", access: ACCESS.SIMULATOR },
   { href: "/admin/candidatures", label: "Candidatures", icon: Wallet, section: "Admissions", access: ACCESS.APPLICATIONS },
   { href: "/admin/paiements", label: "Paiements", icon: Banknote, section: "Admissions", access: ACCESS.PAYMENTS },
   { href: "/admin/factures", label: "Factures", icon: Receipt, section: "Admissions", access: ACCESS.INVOICES },

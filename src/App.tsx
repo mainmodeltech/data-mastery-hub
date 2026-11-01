@@ -78,6 +78,7 @@ const EspacePaiements = lazy(() => import('./pages/EspacePaiements'));
 const AdminEmails = lazy(() => import('./pages/admin/AdminEmails'));
 const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
 const AdminProfils = lazy(() => import('./pages/admin/AdminProfils'));
+const AdminSimulateur = lazy(() => import('./pages/admin/AdminSimulateur'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
 const AdminPropositions = lazy(() => import('./pages/admin/AdminPropositions'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
@@ -217,6 +218,7 @@ const App = () => (
                   <Route path="/admin/certificats" element={<ProtectedRoute permissions={ACCESS.CERTIFICATES}><AdminCertificats /></ProtectedRoute>} />
                   <Route path="/admin/emails" element={<ProtectedRoute permissions={ACCESS.EMAILS}><AdminEmails /></ProtectedRoute>} />
                   <Route path="/admin/comptes" element={<ProtectedRoute permissions={ACCESS.ACCOUNTS}><AdminComptes /></ProtectedRoute>} />
+                  <Route path="/admin/simulateur" element={<ProtectedRoute permissions={ACCESS.SIMULATOR}><AdminSimulateur /></ProtectedRoute>} />
                   <Route path="/admin/profils" element={<ProtectedRoute permissions={ACCESS.PROFILES}><AdminProfils /></ProtectedRoute>} />
                   <Route path="/admin/audit" element={<ProtectedRoute permissions={ACCESS.AUDIT}><AdminAudit /></ProtectedRoute>} />
                   <Route path="/admin/domaines" element={<ProtectedRoute permissions={ACCESS.CATALOG}><AdminDomaines /></ProtectedRoute>} />

@@ -33,6 +33,7 @@ export const ACCESS = {
   ACCOUNTS: ["ACCOUNTS_MANAGE"],
   PROFILES: ["PROFILES_MANAGE"],
   AUDIT: ["AUDIT_VIEW"],
+  SIMULATOR: ["SIMULATOR_VIEW"],
   /** Formateur : proposer des modifications du programme de ses formations. */
   PROGRAM_PROPOSE: ["PROGRAM_PROPOSE"],
   /** Pédagogie : valider les propositions des formateurs. */
