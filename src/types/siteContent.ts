@@ -333,6 +333,42 @@ export interface PageOrientation {
 }
 
 /** Clés connues → forme du contenu. Complété page par page. */
+/** Page « Simulateur de certification » (liste d'attente puis offre). Un tarif ou un badge vide est masqué. */
+export interface PageSimulateur {
+  hero: {
+    badge: string; eyebrow: string; title: string; description: string;
+    primary: LinkItem; secondary: LinkItem; points: string[];
+    /** `url` vide = pas d'image. */
+    image: { url: string; alt: string };
+  };
+  audience: { eyebrow: string; title: string; items: { title: string; description: string }[] };
+  coverage: {
+    eyebrow: string; title: string; version: string; intro: string;
+    domains: { name: string; weight: string; topics: string[] }[];
+  };
+  features: {
+    eyebrow: string; title: string;
+    /** `status` vide = disponible à l'ouverture ; sinon étiquette (ex. « Après l'ouverture »). */
+    items: { title: string; description: string; status: string }[];
+  };
+  plans: {
+    eyebrow: string; title: string; note: string;
+    items: {
+      code: string; name: string; price: string; duration: string;
+      highlighted: boolean; badge: string; features: string[];
+    }[];
+  };
+  steps: { eyebrow: string; title: string; items: { title: string; description: string }[] };
+  faq: FaqBlock;
+  waitlist: {
+    eyebrow: string; title: string; points: string[];
+    namePlaceholder: string; emailPlaceholder: string; phonePlaceholder: string; companyPlaceholder: string;
+    planPlaceholder: string; horizonPlaceholder: string; contextPlaceholder: string;
+    consentLabel: string; submitLabel: string; successTitle: string; successText: string; note: string;
+  };
+  disclaimer: string;
+}
+
 export interface SiteContentMap {
   "site.company": SiteCompany;
   "site.nav": SiteNav;
@@ -347,6 +383,7 @@ export interface SiteContentMap {
   "page.masterclass": PageMasterclass;
   "page.formations": PageFormations;
   "page.orientation": PageOrientation;
+  "page.simulateur": PageSimulateur;
 }
 
 export type SiteContentKey = keyof SiteContentMap;

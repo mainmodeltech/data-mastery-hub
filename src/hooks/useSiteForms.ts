@@ -3,8 +3,13 @@ import { useMutation } from "@tanstack/react-query";
 import {
   siteFormsService,
   type DiagnosticRequestPayload,
+  type SimulatorWaitlistPayload,
   type PartnerApplicationPayload,
 } from "@/services/api/siteFormsService";
+
+export function useSendSimulatorWaitlist() {
+  return useMutation({ mutationFn: (p: SimulatorWaitlistPayload) => siteFormsService.sendSimulatorWaitlist(p) });
+}
 
 export function useSendDiagnostic() {
   return useMutation({ mutationFn: (p: DiagnosticRequestPayload) => siteFormsService.sendDiagnostic(p) });

@@ -46,6 +46,7 @@ const EspaceRessources = lazy(() => import('./pages/EspaceRessources'));
 const EspaceProfil = lazy(() => import('./pages/EspaceProfil'));
 const Coaching = lazy(() => import('./pages/Coaching'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
+const Simulateur = lazy(() => import('./pages/Simulateur'));
 const Ressources = lazy(() => import('./pages/Ressources'));
 const Partenaires = lazy(() => import('./pages/Partenaires'));
 const Paiement = lazy(() => import('./pages/Paiement'));
@@ -149,6 +150,7 @@ const App = () => (
                   {/* Lot 2 — nouvelles pages publiques (docs/design/README.md §2) */}
                   <Route path="/coaching" element={<Coaching />} />
                   <Route path="/entreprises" element={<Entreprises />} />
+                  <Route path="/simulateur-pl-300" element={<Simulateur />} />
                   <Route path="/ressources" element={<Ressources />} />
                   <Route path="/partenaires" element={<Partenaires />} />
                   <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />

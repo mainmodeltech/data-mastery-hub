@@ -133,6 +133,11 @@ export const PAGE_SEO = {
         description: "Coaching 1:1 sur vos propres fichiers Excel et Power BI. Appel diagnostic offert, séances en visio ou à Dakar.",
         path:        "/coaching",
     },
+    simulateur: {
+        title:       "Simulateur PL-300 — Préparez la certification Power BI Data Analyst",
+        description: "Examens blancs chronométrés, entraînement par domaine et résultats par compétence pour préparer le PL-300. Liste d'attente ouverte.",
+        path:        "/simulateur-pl-300",
+    },
     entreprises: {
         title:       "Formations Data pour Entreprises à Dakar",
         description: "Formations Excel, Power BI et data sur-mesure pour vos équipes. Diagnostic gratuit, facturation entreprise.",
