@@ -4,13 +4,15 @@
  * elles ne servent qu'au personnel habilité. Enveloppe ApiResponse<T>.
  */
 
-export type ItemType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "YES_NO_SERIES";
+export type ItemType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "YES_NO_SERIES" | "MATCHING" | "SHORT_ANSWER";
 export type ItemStatus = "DRAFT" | "IN_REVIEW" | "APPROVED" | "PUBLISHED" | "RETIRED";
 
 export const ITEM_TYPE_LABELS: Record<ItemType, string> = {
   SINGLE_CHOICE: "Choix unique",
   MULTIPLE_CHOICE: "Choix multiples",
   YES_NO_SERIES: "Série Oui/Non",
+  MATCHING: "Correspondance (glisser-déposer)",
+  SHORT_ANSWER: "Réponse libre (mots-clés)",
 };
 
 export const ITEM_STATUS_LABELS: Record<ItemStatus, string> = {
@@ -42,7 +44,15 @@ export interface ItemSummary {
 
 export interface Choice { id: string; text: string; correct: boolean }
 export interface Statement { id: string; text: string; answer: boolean }
-export interface ItemPayload { choices?: Choice[]; statements?: Statement[]; selectCount?: number }
+export interface MatchElement { id: string; text: string }
+export interface KeywordGroup { id: string; accept: string[] }
+export interface ItemPayload {
+  choices?: Choice[]; statements?: Statement[]; selectCount?: number;
+  /** Correspondance : éléments (P1…), options (O1…, des leurres sont possibles) et option attendue pour chaque élément. */
+  prompts?: MatchElement[]; options?: MatchElement[]; pairs?: Record<string, string>; reuse?: boolean;
+  /** Réponse libre : chaque mot-clé accepte plusieurs formulations ; tous doivent être présents. */
+  keywords?: KeywordGroup[]; partialCredit?: boolean; maxLength?: number;
+}
 
 export interface ItemVersion {
   code: string; versionNo: number; domainCode: string; skillCode: string; type: ItemType; difficulty: number;

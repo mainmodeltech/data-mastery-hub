@@ -18,7 +18,7 @@ Document de travail pour **Cedric** (responsable contenu) et le PO. Il fixe les 
 |---|---|
 | Identifiant | `PL300-<domaine>-<n°>` (ex. `PL300-MOD-014`) |
 | Domaine / sous-compétence | Voir la matrice §3 |
-| Type | Choix unique · Choix multiples (préciser « Choose two ») · Série Oui/Non · Ordonnancement · Complétion de code · Étude de cas |
+| Type | Choix unique · Choix multiples (préciser « Choose two ») · Série Oui/Non · **Correspondance (glisser-déposer)** · **Réponse libre (mots-clés)** · *(à venir : ordonnancement, complétion de code, étude de cas)* |
 | Difficulté | 1 facile · 2 moyen · 3 difficile |
 | Énoncé (EN) | Contexte court, puis la question. Une exigence par question |
 | Choix (EN) | 4 choix (A à D) ; la bonne réponse marquée |
@@ -49,11 +49,44 @@ Pondérations du guide : Préparer 25–30 % · Modéliser 25–30 % · Visualis
 
 Répartition par type visée : ≈ 60 % choix unique, 15 % choix multiples, 10 % Oui/Non, 8 % ordonnancement ou complétion de code, 7 % études de cas (6 à 8 cas de 4 à 5 questions).
 
+### Les deux types « glisser-déposer » et « réponse libre »
+
+**Correspondance (glisser-déposer).** Le candidat associe chaque *élément* (2 à 6) à une *option* (2 à 8). Ajoutez **1 ou 2 options en trop (leurres)** : c'est ce qui rend la question difficile. Chaque option ne sert qu'une fois, sauf si vous cochez « réutilisation permise » (utile pour des séries du type Oui/Non/Parfois). Note = part d'éléments correctement associés (crédit partiel). L'ordre des options est **mélangé à chaque affichage** : peu importe l'ordre de saisie.
+
+**Réponse libre (mots-clés).** Le candidat rédige quelques mots ou une phrase ; la réponse est juste si elle contient **tous** les mots-clés (1 à 8). Pour chaque mot-clé, indiquez **toutes les formulations acceptées**, séparées par des virgules (ex. `measure, mesure`).
+- La casse et les accents sont ignorés ; la ponctuation compte pour un espace (`Sales[Amount]` = « sales amount »).
+- Un mot-clé est reconnu **au début d'un mot** : `mesure` reconnaît « mesures », `calculate` reconnaît « calculated ». Il ne reconnaît pas un mot qui le contient en son milieu (`pivot` ne reconnaît pas « unpivot »).
+- Une expression (`filter context`) doit apparaître telle quelle, mots contigus.
+- Option « note proportionnelle » : sans elle, il faut **tous** les mots-clés (tout ou rien).
+- Posez-vous la question : *une réponse correcte mais formulée autrement serait-elle refusée ?* Si oui, ajoutez la formulation. Privilégiez des mots-clés **objectifs** (noms de fonctions, termes officiels) plutôt que des mots courants.
+
+**Import (JSON).** Exemples valides pour *Simulateur → Importer* :
+
+```json
+{ "items": [
+  { "skillCode": "MOD-DAX", "type": "MATCHING", "difficulty": 2,
+    "stemEn": "Match each DAX function to what it does.",
+    "explanationFr": "SUM additionne… CALCULATE modifie le contexte de filtre…",
+    "payload": {
+      "prompts": [ { "id": "P1", "text": "SUM" }, { "id": "P2", "text": "CALCULATE" } ],
+      "options": [ { "id": "O1", "text": "Adds the values of a column" }, { "id": "O2", "text": "Evaluates an expression in a modified filter context" },
+                   { "id": "O3", "text": "Sorts a table by a column" } ],
+      "pairs": { "P1": "O1", "P2": "O2" }, "reuse": false } },
+  { "skillCode": "SEC-SECURITY", "type": "SHORT_ANSWER", "difficulty": 2,
+    "stemEn": "Which feature restricts the rows each user can see, and what must users be assigned to after publishing?",
+    "explanationFr": "La RLS se définit par des rôles ; il faut affecter les utilisateurs au rôle.",
+    "payload": {
+      "keywords": [ { "id": "K1", "accept": ["row-level security", "row level security", "RLS"] }, { "id": "K2", "accept": ["role"] } ],
+      "partialCredit": true, "maxLength": 400 } }
+] }
+```
+
 ## 4. Liste de contrôle de relecture
 
 - [ ] L'énoncé ne contient qu'une exigence et aucune information inutile.
 - [ ] Une seule réponse est correcte, et je peux le **démontrer** (capture ou DAX exécuté).
 - [ ] Les trois autres choix sont faux **pour une raison précise** décrite dans l'explication.
+- [ ] *Correspondance* : chaque leurre est plausible mais faux, et l'explication dit pourquoi. *Réponse libre* : j'ai testé 3 formulations correctes différentes et 2 réponses fausses plausibles.
 - [ ] La terminologie est celle de l'interface en vigueur (noms de menus, de fonctions).
 - [ ] La question mesure bien la sous-compétence indiquée.
 - [ ] Aucun élément ne ressemble à une question connue d'un site tiers (recherche rapide).

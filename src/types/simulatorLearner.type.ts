@@ -7,7 +7,7 @@ import type { PlanCode } from "@/types/simulator.type";
 
 export type AttemptMode = "EXAM" | "STUDY";
 export type AttemptStatus = "IN_PROGRESS" | "SUBMITTED" | "EXPIRED";
-export type QuestionType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "YES_NO_SERIES";
+export type QuestionType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "YES_NO_SERIES" | "MATCHING" | "SHORT_ANSWER";
 
 export interface AccessView {
   certification: string; planCode: PlanCode; startsAt: string; expiresAt: string;
@@ -26,12 +26,20 @@ export interface CatalogView {
 export interface StartRequest { mode: AttemptMode; domain?: string; skill?: string; count?: number }
 
 /** Réponse enregistrée : `{ selected: ["A"] }` (choix) ou `{ answers: { S1: true } }` (série Oui/Non). */
-export type AnswerValue = { selected?: string[]; answers?: Record<string, boolean> };
+/** + `{ pairs: { P1: "O2" } }` (correspondance) et `{ text }` (réponse libre) ; la correction d'une réponse libre porte `keywords`. */
+export type AnswerValue = {
+  selected?: string[]; answers?: Record<string, boolean>;
+  pairs?: Record<string, string>; text?: string; keywords?: { id: string; accept: string[] }[];
+};
+
+/** Détail de correction propre au type (réponse libre : mots-clés trouvés et manquants). */
+export type ReviewDetail = { found?: string[]; missing?: string[] };
 
 export interface QuestionPayload {
   choices?: { id: string; text: string }[];
   statements?: { id: string; text: string }[];
   selectCount?: number;
+  prompts?: { id: string; text: string }[]; options?: { id: string; text: string }[]; reuse?: boolean; maxLength?: number;
 }
 
 export interface QuestionView {
@@ -45,7 +53,7 @@ export interface AttemptView {
 }
 
 export interface AnswerRequest { answer?: AnswerValue | null; flagged?: boolean; timeSpentSeconds?: number }
-export interface Feedback { score: number; correctAnswer: AnswerValue; explanationFr: string | null }
+export interface Feedback { score: number; correctAnswer: AnswerValue; explanationFr: string | null; detail: ReviewDetail | null }
 export interface AnswerResult { saved: boolean; feedback: Feedback | null }
 
 export interface AttemptSummary {
@@ -60,7 +68,7 @@ export interface QuestionReport {
   payload: QuestionPayload; yourAnswer: AnswerValue | null;
   /** Essai gratuit : `locked` = correction non offerte ; le serveur n'envoie alors ni corrigé, ni explication, ni note. */
   correctAnswer: AnswerValue | null; score: number | null;
-  explanationFr: string | null; timeSpentSeconds: number; locked: boolean;
+  explanationFr: string | null; timeSpentSeconds: number; locked: boolean; detail: ReviewDetail | null;
 }
 
 export interface ReportView {

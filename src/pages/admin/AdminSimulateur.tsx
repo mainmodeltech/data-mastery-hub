@@ -11,6 +11,8 @@ import { CheckCircle2, FileUp, Loader2, Pencil, Plus, Search, Trash2, XCircle } 
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { SimulatorGrants } from "@/components/admin/SimulatorGrants";
+import { AdvancedPayloadPreview, MatchingFields, ShortAnswerFields } from "@/components/admin/SimulatorTypeEditors";
+import { blankMatching, blankShortAnswer } from "@/lib/simulatorEditor";
 import { EmptyState, ErrorNotice, errorMessage, Field, inputClass, Pager, ReasonDialog } from "@/components/admin/AdminKit";
 import { Button, Card, Pill, ProgressBar } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -34,6 +36,8 @@ const LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 // ── Éditeur ───────────────────────────────────────────────────────────
 
 function blankPayload(type: ItemType): ItemPayload {
+  if (type === "MATCHING") return blankMatching();
+  if (type === "SHORT_ANSWER") return blankShortAnswer();
   if (type === "YES_NO_SERIES") return { statements: [{ id: "S1", text: "", answer: true }, { id: "S2", text: "", answer: false }] };
   const n = type === "MULTIPLE_CHOICE" ? 5 : 4;
   return { choices: LETTERS.slice(0, n).map((id, i) => ({ id, text: "", correct: type === "SINGLE_CHOICE" ? i === 0 : i < 2 })) };
@@ -110,7 +114,11 @@ function ItemEditor({ item, onClose, onSaved }: { item: ItemVersion | null; onCl
             <textarea id="sq-stem" rows={4} required maxLength={4000} className={inputClass} value={stem} onChange={(e) => setStem(e.target.value)} />
           </Field>
 
-          {type !== "YES_NO_SERIES" ? (
+          {type === "MATCHING" ? (
+            <MatchingFields payload={payload} setPayload={setPayload} />
+          ) : type === "SHORT_ANSWER" ? (
+            <ShortAnswerFields payload={payload} setPayload={setPayload} />
+          ) : type !== "YES_NO_SERIES" ? (
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-1 text-sm font-semibold text-ink">
                 Choix (EN) — {type === "SINGLE_CHOICE" ? "cochez la seule bonne réponse" : "cochez au moins deux bonnes réponses"}
@@ -339,6 +347,7 @@ function ItemSheet({ code, onClose }: { code: string | null; onClose: () => void
                 ))}
               </ul>
               {item.payload.selectCount ? <p className="text-xs text-ink-secondary">Choose {item.payload.selectCount}</p> : null}
+              <AdvancedPayloadPreview payload={item.payload} />
             </section>
 
             <section className="flex flex-col gap-1">

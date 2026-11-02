@@ -14,7 +14,7 @@ import { RichText } from "@/components/rich/RichText";
 import { Button, Card, Pill, ProgressBar } from "@/components/shared";
 import { useToast } from "@/hooks/use-toast";
 import { useSimReport, useStartAttempt } from "@/hooks/useSimulatorLearner";
-import { percentTone } from "@/lib/simulator";
+import { formatAnswer, percentTone } from "@/lib/simulator";
 import { cn } from "@/lib/utils";
 import { MODE_LABELS, STATUS_LABELS, type AnswerValue, type QuestionReport, type ScoreBucket } from "@/types/simulatorLearner.type";
 
@@ -41,11 +41,43 @@ function Buckets({ title, items, weakFirst }: { title: string; items: ScoreBucke
   );
 }
 
-function describe(answer: AnswerValue | null | undefined): string {
-  if (!answer) return "Aucune réponse";
-  if (answer.selected) return answer.selected.length ? answer.selected.join(", ") : "Aucune réponse";
-  const entries = Object.entries(answer.answers ?? {});
-  return entries.length ? entries.map(([k, v]) => `${k} : ${v ? "Oui" : "Non"}`).join(" · ") : "Aucune réponse";
+function MatchingReview({ r }: { r: QuestionReport }) {
+  const options = new Map((r.payload.options ?? []).map((o) => [o.id, o.text]));
+  return (
+    <ul className="flex flex-col gap-1.5">
+      {(r.payload.prompts ?? []).map((p) => {
+        const given = r.yourAnswer?.pairs?.[p.id];
+        const expected = r.correctAnswer?.pairs?.[p.id];
+        const ok = given === expected;
+        return (
+          <li key={p.id} className={cn("flex flex-col gap-0.5 rounded-lg border px-3 py-2 text-sm", ok ? "border-success/50 bg-success-bg" : "border-error/50 bg-error-bg")}>
+            <span className="font-semibold text-ink">{p.text}</span>
+            <span className="text-xs">Vous : {given ? options.get(given) : "—"}{!ok && expected ? ` · Attendu : ${options.get(expected)}` : ""}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function ShortReview({ r }: { r: QuestionReport }) {
+  const text = r.yourAnswer?.text?.trim();
+  return (
+    <div className="flex flex-col gap-2">
+      <blockquote className="whitespace-pre-wrap rounded-lg border border-[#E7E0D4] bg-white px-3 py-2 text-sm text-ink">{text || "Aucune réponse"}</blockquote>
+      <p className="flex flex-wrap items-center gap-1.5 text-xs">
+        <span className="font-semibold text-ink-secondary">Mots-clés attendus :</span>
+        {(r.correctAnswer?.keywords ?? []).map((k) => {
+          const missing = r.detail?.missing?.includes(k.id);
+          return (
+            <span key={k.id} className={cn("rounded-pill px-2 py-0.5", missing ? "bg-error-bg text-error" : "bg-success-bg text-success")}>
+              {missing ? "✗" : "✓"} {k.accept.join(" / ")}
+            </span>
+          );
+        })}
+      </p>
+    </div>
+  );
 }
 
 function LockedQuestion({ r }: { r: QuestionReport }) {
@@ -57,7 +89,7 @@ function LockedQuestion({ r }: { r: QuestionReport }) {
         <Pill variant="neutral">{r.domainCode} · {r.skillCode}</Pill>
       </div>
       <RichText source={r.stem} />
-      <p className="text-sm text-ink-secondary">Votre réponse : <strong>{describe(r.yourAnswer)}</strong></p>
+      <p className="text-sm text-ink-secondary">Votre réponse : <strong>{formatAnswer(r.payload, r.yourAnswer)}</strong></p>
       <div className="flex flex-wrap items-center gap-3 rounded-card bg-surface-sand p-3 text-sm text-ink">
         <span className="min-w-48 flex-1">La correction et l'explication de cette question sont réservées au simulateur complet.</span>
         <Button asChild size="sm" shape="rounded"><Link to="/simulateur-pl-300#forfaits">Débloquer</Link></Button>
@@ -82,7 +114,11 @@ function QuestionReview({ r }: { r: QuestionReport }) {
         <span className="ml-auto text-xs text-ink-secondary">{r.itemCode}</span>
       </div>
       <RichText source={r.stem} />
-      {r.payload.choices ? (
+      {r.type === "MATCHING" ? (
+        <MatchingReview r={r} />
+      ) : r.type === "SHORT_ANSWER" ? (
+        <ShortReview r={r} />
+      ) : r.payload.choices ? (
         <ul className="flex flex-col gap-1.5">
           {r.payload.choices.map((c) => {
             const isCorrect = correctIds.has(c.id);
@@ -112,7 +148,7 @@ function QuestionReview({ r }: { r: QuestionReport }) {
           })}
         </ul>
       )}
-      <p className="sr-only">Votre réponse : {describe(r.yourAnswer)}. Bonne réponse : {describe(r.correctAnswer)}.</p>
+      <p className="sr-only">Votre réponse : {formatAnswer(r.payload, r.yourAnswer)}. Bonne réponse : {formatAnswer(r.payload, r.correctAnswer)}.</p>
       {r.explanationFr && (
         <div className="rounded-card bg-surface-sand p-3">
           <p className="mb-1 text-xs font-bold uppercase tracking-wide text-ink-secondary">Explication</p>

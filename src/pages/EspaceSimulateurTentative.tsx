@@ -12,11 +12,12 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { ErrorNotice, errorMessage } from "@/components/admin/AdminKit";
 import { LearnerShell } from "@/components/learner/LearnerShell";
 import { RichText } from "@/components/rich/RichText";
+import { MatchingInput, ShortAnswerInput } from "@/components/simulator/AnswerInputs";
 import { Button, Card, Pill, ProgressBar } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useSaveAnswer, useSimAttempt, useSubmitAttempt } from "@/hooks/useSimulatorLearner";
-import { clockOffsetMs, formatClock, isAnswered, questionHint, remainingSeconds, toggleChoice } from "@/lib/simulator";
+import { clockOffsetMs, formatAnswer, formatClock, isAnswered, questionHint, remainingSeconds, toggleChoice } from "@/lib/simulator";
 import { cn } from "@/lib/utils";
 import type { AnswerValue, AttemptView, Feedback, QuestionView } from "@/types/simulatorLearner.type";
 
@@ -28,6 +29,8 @@ const letter = (id: string) => id;
 // ── Saisie d'une réponse ───────────────────────────────────────────────
 
 function AnswerInput({ q, value, disabled, onChange }: { q: QuestionView; value: AnswerValue | null; disabled: boolean; onChange: (v: AnswerValue) => void }) {
+  if (q.type === "MATCHING") return <MatchingInput payload={q.payload} value={value} disabled={disabled} onChange={onChange} />;
+  if (q.type === "SHORT_ANSWER") return <ShortAnswerInput payload={q.payload} value={value} disabled={disabled} onChange={onChange} />;
   if (q.type === "YES_NO_SERIES") {
     const current = value?.answers ?? {};
     return (
@@ -79,14 +82,23 @@ function AnswerInput({ q, value, disabled, onChange }: { q: QuestionView; value:
 
 function FeedbackPanel({ q, fb }: { q: QuestionView; fb: Feedback }) {
   const right = fb.score >= 1;
-  const correct = fb.correctAnswer.selected?.join(", ") ?? Object.entries(fb.correctAnswer.answers ?? {}).map(([k, v]) => `${k} : ${v ? "Oui" : "Non"}`).join(" · ");
+  const correct = formatAnswer(q.payload, fb.correctAnswer);
   return (
     <Card radius="stat" variant="sand" className="flex flex-col gap-2 p-4" role="status">
       <div className="flex items-center gap-2">
         {right ? <CheckCircle2 className="h-5 w-5 text-success" aria-hidden="true" /> : <AlertTriangle className="h-5 w-5 text-warning" aria-hidden="true" />}
         <p className="font-semibold text-ink">{right ? "Bonne réponse" : fb.score > 0 ? `Partiellement juste (${Math.round(fb.score * 100)} %)` : "Réponse incorrecte"}</p>
       </div>
-      {!right && <p className="text-sm text-ink">Bonne réponse : <strong>{correct}</strong></p>}
+      {!right && <p className="text-sm text-ink">{q.type === "SHORT_ANSWER" ? "Mots-clés attendus" : "Bonne réponse"} : <strong>{correct}</strong></p>}
+      {q.type === "SHORT_ANSWER" && fb.detail && (
+        <p className="flex flex-wrap gap-1.5 text-xs">
+          {(fb.correctAnswer.keywords ?? []).map((k) => (
+            <span key={k.id} className={fb.detail?.missing?.includes(k.id) ? "rounded-pill bg-error-bg px-2 py-0.5 text-error" : "rounded-pill bg-success-bg px-2 py-0.5 text-success"}>
+              {fb.detail?.missing?.includes(k.id) ? "✗" : "✓"} {k.accept[0]}
+            </span>
+          ))}
+        </p>
+      )}
       {fb.explanationFr && <RichText source={fb.explanationFr} />}
       <span className="sr-only">Question {q.position}</span>
     </Card>
@@ -117,6 +129,9 @@ function Runner({ attempt }: { attempt: AttemptView }) {
   const chain = useRef<Promise<unknown>>(Promise.resolve());
   const inFlight = useRef(0);
   const finishing = useRef(false);
+  /** Réponse libre : l'envoi attend une courte pause de frappe ; ce rappel l'exécute tout de suite (changement de question, remise). */
+  const flushTyping = useRef<(() => void) | null>(null);
+  const typingTimer = useRef<number | null>(null);
 
   const q = questions[index];
   const remaining = remainingSeconds(attempt.deadlineAt, offset, now);
@@ -146,7 +161,14 @@ function Runner({ attempt }: { attempt: AttemptView }) {
 
   const setAnswer = (value: AnswerValue | null) => {
     setAnswers((a) => ({ ...a, [q.ref]: value }));
-    if (exam) save(q.ref, value, flags[q.ref] ?? false, timeFor(q.ref), false);
+    if (!exam) return;
+    if (q.type !== "SHORT_ANSWER") return save(q.ref, value, flags[q.ref] ?? false, timeFor(q.ref), false);
+    const ref = q.ref;
+    const flagged = flags[ref] ?? false;
+    if (typingTimer.current) window.clearTimeout(typingTimer.current);
+    const send = () => { typingTimer.current = null; flushTyping.current = null; save(ref, value, flagged, timeFor(ref), false); };
+    flushTyping.current = send;
+    typingTimer.current = window.setTimeout(send, 700);
   };
 
   const toggleFlag = () => {
@@ -157,7 +179,13 @@ function Runner({ attempt }: { attempt: AttemptView }) {
 
   const validateStudy = () => save(q.ref, answers[q.ref] ?? null, false, timeFor(q.ref), true);
 
+  const flushPendingTyping = () => {
+    if (typingTimer.current) window.clearTimeout(typingTimer.current);
+    flushTyping.current?.();
+  };
+
   const go = (to: number) => {
+    flushPendingTyping();
     spent.current[q.ref] = timeFor(q.ref);
     enteredAt.current = Date.now();
     setIndex(Math.min(Math.max(to, 0), questions.length - 1));
@@ -166,6 +194,8 @@ function Runner({ attempt }: { attempt: AttemptView }) {
   const finish = useCallback(async () => {
     if (finishing.current) return;
     finishing.current = true;
+    if (typingTimer.current) window.clearTimeout(typingTimer.current);
+    flushTyping.current?.();
     try {
       await chain.current;
       await submitter.mutateAsync(attempt.id);

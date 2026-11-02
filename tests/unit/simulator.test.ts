@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { clockOffsetMs, formatClock, isAnswered, percentTone, remainingSeconds, toggleChoice } from "../../src/lib/simulator.ts";
+import {
+  clearOption, clockOffsetMs, formatAnswer, formatClock, isAnswered, percentTone, placeOption, remainingSeconds, toggleChoice,
+} from "../../src/lib/simulator.ts";
 
 test("le chronomètre suit l'horloge du serveur, pas celle du navigateur", () => {
   const localNow = 1_000_000;
@@ -44,4 +46,28 @@ test("percentTone", () => {
   assert.equal(percentTone(80), "success");
   assert.equal(percentTone(65), "warning");
   assert.equal(percentTone(40), "error");
+});
+
+test("isAnswered reconnaît une correspondance et une réponse libre", () => {
+  assert.equal(isAnswered({ pairs: {} }), false);
+  assert.equal(isAnswered({ pairs: { P1: "O1" } }), true);
+  assert.equal(isAnswered({ text: "   " }), false);
+  assert.equal(isAnswered({ text: "a measure" }), true);
+});
+
+test("placeOption déplace une option déjà placée, sauf si la réutilisation est permise", () => {
+  assert.deepEqual(placeOption({ P1: "O1" }, "P2", "O1", false), { P2: "O1" });
+  assert.deepEqual(placeOption({ P1: "O1" }, "P2", "O1", true), { P1: "O1", P2: "O1" });
+  assert.deepEqual(placeOption({ P1: "O1" }, "P1", "O2", false), { P1: "O2" });
+  assert.deepEqual(clearOption({ P1: "O1", P2: "O2" }, "P1"), { P2: "O2" });
+});
+
+test("formatAnswer met les réponses en clair", () => {
+  const payload = { prompts: [{ id: "P1", text: "SUM" }], options: [{ id: "O1", text: "Adds values" }] };
+  assert.equal(formatAnswer(payload, { pairs: { P1: "O1" } }), "SUM → Adds values");
+  assert.equal(formatAnswer(payload, { text: "  my answer " }), "my answer");
+  assert.equal(formatAnswer(payload, { keywords: [{ id: "K1", accept: ["measure", "mesure"] }, { id: "K2", accept: ["filter context"] }] }),
+    "measure / mesure · filter context");
+  assert.equal(formatAnswer(payload, null), "Aucune réponse");
+  assert.equal(formatAnswer(payload, { selected: ["A", "C"] }), "A, C");
 });

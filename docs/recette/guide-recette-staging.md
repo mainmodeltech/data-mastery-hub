@@ -265,6 +265,12 @@ Prévoir **deux comptes** avec les droits du simulateur (profil Pédagogie ou Di
 | P33 | Retourner sur le simulateur après le test | « Vous avez utilisé votre essai gratuit » ; impossible de recommencer ; le lien vers les forfaits fonctionne | ☐ |
 | P34 | *Simulateur → Questions* : ouvrir une question **publiée** → **Ajouter à l'essai gratuit** ; cocher le filtre « Échantillons essai gratuit » | Le compteur augmente ; l'étiquette « Essai » s'affiche ; une question non publiée ne peut pas être ajoutée ; sans le droit de gestion, le bouton est absent | ☐ |
 | P35 | Accorder ensuite un forfait payant à ce visiteur (*Droits d'usage*) | Il retrouve le simulateur complet (examens blancs, entraînement par domaine) | ☐ |
+| P36 | *Simulateur → Nouvelle question* : choisir le type **Correspondance (glisser-déposer)** ; saisir 3 éléments, 4 options dont 1 leurre, l'option attendue de chaque élément | Brouillon créé ; une option attendue oubliée est refusée avec un message qui nomme l'élément | ☐ |
+| P37 | Même écran, type **Réponse libre (mots-clés)** : 2 mots-clés, l'un avec 2 formulations (`measure, mesure`) ; laisser un mot-clé vide | Brouillon créé ; un mot-clé sans formulation est refusé (« indiquez de 1 à 6 formulations ») | ☐ |
+| P38 | Publier ces deux questions (relecture par une autre personne), puis les voir dans une **série d'étude** | Correspondance : on **glisse** chaque option sur son élément (ou on la choisit dans la liste sous l'élément, sur téléphone) ; les options sont mélangées d'un affichage à l'autre | ☐ |
+| P39 | Valider une correspondance partiellement juste, puis une réponse libre avec un seul des deux mots-clés | Correspondance : correction avec les bonnes associations ; réponse libre : « incorrecte » avec ✓ pour le mot-clé trouvé et ✗ pour le manquant, plus l'explication | ☐ |
+| P40 | **Examen blanc** contenant ces questions : taper une réponse libre puis changer de question immédiatement, recharger la page | La réponse est conservée (enregistrée à la pause de frappe ou au changement de question) ; aucun corrigé n'est visible pendant l'examen | ☐ |
+| P41 | Fiche d'une question publiée de ces types | On voit les associations attendues (leurres signalés) ou les mots-clés attendus et le mode de notation | ☐ |
 
 ### Espace apprenant
 
