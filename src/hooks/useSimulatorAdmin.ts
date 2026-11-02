@@ -1,0 +1,148 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { simulatorAdminService } from "@/services/api/simulatorAdminService";
+import type { GrantRequest, ItemFilters, ItemRequest } from "@/types/simulator.type";
+import type { OrderStatus, PlanUpdate } from "@/types/simulatorShop.type";
+
+export const SIM_KEYS = {
+  all: ["admin", "simulator"] as const,
+  blueprint: ["admin", "simulator", "blueprint"] as const,
+  coverage: ["admin", "simulator", "coverage"] as const,
+  items: ["admin", "simulator", "items"] as const,
+  grants: ["admin", "simulator", "grants"] as const,
+  plans: ["admin", "simulator", "plans"] as const,
+  orders: ["admin", "simulator", "orders"] as const,
+  gateway: ["admin", "simulator", "gateway"] as const,
+  item: (code: string, version?: number) => ["admin", "simulator", "item", code, version ?? "latest"] as const,
+};
+
+export function useSimBlueprint() {
+  return useQuery({ queryKey: SIM_KEYS.blueprint, queryFn: simulatorAdminService.blueprint, staleTime: 5 * 60 * 1000 });
+}
+
+export function useSimCoverage() {
+  return useQuery({ queryKey: SIM_KEYS.coverage, queryFn: simulatorAdminService.coverage });
+}
+
+export function useSimItems(filters: ItemFilters, page: number) {
+  return useQuery({
+    queryKey: [...SIM_KEYS.items, filters, page],
+    queryFn: () => simulatorAdminService.search(filters, page),
+    placeholderData: (prev) => prev,
+    staleTime: 0,
+  });
+}
+
+export function useSimItem(code: string | null, version?: number) {
+  return useQuery({
+    queryKey: SIM_KEYS.item(code ?? "", version),
+    queryFn: () => simulatorAdminService.get(code as string, version),
+    enabled: !!code,
+    staleTime: 0,
+  });
+}
+
+/** Toute écriture rafraîchit la liste, la couverture et les fiches ouvertes. */
+function useRefresh() {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: SIM_KEYS.all });
+}
+
+export function useCreateSimItem() {
+  const refresh = useRefresh();
+  return useMutation({ mutationFn: (body: ItemRequest) => simulatorAdminService.create(body), onSuccess: refresh });
+}
+
+export function useUpdateSimItem() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (a: { code: string; version: number; body: ItemRequest }) => simulatorAdminService.update(a.code, a.version, a.body),
+    onSuccess: refresh,
+  });
+}
+
+export function useSimWorkflow() {
+  const refresh = useRefresh();
+  const onSuccess = refresh;
+  return {
+    newVersion: useMutation({ mutationFn: (code: string) => simulatorAdminService.newVersion(code), onSuccess }),
+    submit: useMutation({ mutationFn: (a: { code: string; version: number }) => simulatorAdminService.submit(a.code, a.version), onSuccess }),
+    review: useMutation({
+      mutationFn: (a: { code: string; version: number; approve: boolean; verified: boolean; note?: string }) =>
+        simulatorAdminService.review(a.code, a.version, { approve: a.approve, verified: a.verified, note: a.note }),
+      onSuccess,
+    }),
+    publish: useMutation({ mutationFn: (a: { code: string; version: number }) => simulatorAdminService.publish(a.code, a.version), onSuccess }),
+    retire: useMutation({
+      mutationFn: (a: { code: string; version: number; reason: string }) => simulatorAdminService.retire(a.code, a.version, a.reason),
+      onSuccess,
+    }),
+    setTrialSample: useMutation({ mutationFn: (a: { code: string; value: boolean }) => simulatorAdminService.setTrialSample(a.code, a.value), onSuccess }),
+    deleteDraft: useMutation({ mutationFn: (a: { code: string; version: number }) => simulatorAdminService.deleteDraft(a.code, a.version), onSuccess }),
+    importItems: useMutation({ mutationFn: (items: ItemRequest[]) => simulatorAdminService.importItems(items), onSuccess }),
+  };
+}
+
+export function useSimGrants(page: number) {
+  return useQuery({
+    queryKey: [...SIM_KEYS.grants, page],
+    queryFn: () => simulatorAdminService.grants(page),
+    placeholderData: (prev) => prev,
+    staleTime: 0,
+  });
+}
+
+export function useGrantAccess() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: GrantRequest) => simulatorAdminService.grant(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SIM_KEYS.grants }),
+  });
+}
+
+export function useRevokeGrant() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => simulatorAdminService.revokeGrant(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SIM_KEYS.grants }),
+  });
+}
+
+export function useAdminPlans() {
+  return useQuery({ queryKey: SIM_KEYS.plans, queryFn: simulatorAdminService.plans, staleTime: 0 });
+}
+
+export function useUpdatePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ code, body }: { code: string; body: PlanUpdate }) => simulatorAdminService.updatePlan(code, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SIM_KEYS.plans });
+      qc.invalidateQueries({ queryKey: ["simulator", "plans"] });
+    },
+  });
+}
+
+export function useSimOrders(status: OrderStatus | undefined, page: number) {
+  return useQuery({
+    queryKey: [...SIM_KEYS.orders, status ?? "all", page],
+    queryFn: () => simulatorAdminService.orders(status, page),
+    placeholderData: (prev) => prev,
+    staleTime: 0,
+  });
+}
+
+export function useVerifyOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => simulatorAdminService.verifyOrder(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SIM_KEYS.orders });
+      qc.invalidateQueries({ queryKey: SIM_KEYS.grants });
+    },
+  });
+}
+
+export function useGatewayStatus() {
+  return useQuery({ queryKey: SIM_KEYS.gateway, queryFn: simulatorAdminService.gatewayStatus, staleTime: 30 * 1000, retry: false });
+}

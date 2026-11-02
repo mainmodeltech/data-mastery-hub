@@ -30,6 +30,21 @@ export const PARTNER_DOMAINS = [
   { code: "OTHER", label: "Autre domaine" },
 ] as const;
 
+export const SIMULATOR_PLANS = [
+  { code: "ESSENTIEL", label: "Essentiel" },
+  { code: "PRO", label: "Pro" },
+  { code: "PRO_COACHING", label: "Pro + coaching" },
+  { code: "ENTREPRISE", label: "Entreprise ou école" },
+  { code: "UNDECIDED", label: "Je ne sais pas encore" },
+] as const;
+
+export const EXAM_HORIZONS = [
+  { code: "WITHIN_1_MONTH", label: "Dans le mois" },
+  { code: "WITHIN_3_MONTHS", label: "Dans les 3 mois" },
+  { code: "LATER", label: "Plus tard" },
+  { code: "UNDECIDED", label: "Je ne sais pas encore" },
+] as const;
+
 /** Sépare « Prénom Nom » ; le nom de famille est facultatif côté backend. */
 export function splitName(fullName: string): { firstName: string; lastName?: string } {
   const [first, ...rest] = fullName.trim().split(/\s+/);
@@ -48,6 +63,28 @@ export interface DiagnosticRequestPayload {
   context?: string;
 }
 
+export interface SimulatorWaitlistPayload {
+  firstName: string;
+  lastName?: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  plan: (typeof SIMULATOR_PLANS)[number]["code"];
+  examHorizon: (typeof EXAM_HORIZONS)[number]["code"];
+  context?: string;
+  /** Doit être vrai : accord pour être contacté au sujet du simulateur. */
+  consent: boolean;
+}
+
+export interface SimulatorTrialPayload {
+  firstName: string;
+  lastName?: string;
+  email: string;
+  phone?: string;
+  /** Doit être vrai : accord pour être contacté au sujet du simulateur. */
+  consent: boolean;
+}
+
 export interface PartnerApplicationPayload {
   firstName: string;
   lastName?: string;
@@ -63,6 +100,12 @@ export interface PartnerApplicationPayload {
 export const siteFormsService = {
   sendDiagnostic: (payload: DiagnosticRequestPayload) =>
     httpClient.post<unknown>("/diagnostic-requests", payload, { skipAuth: true }),
+
+  sendSimulatorWaitlist: (payload: SimulatorWaitlistPayload) =>
+    httpClient.post<unknown>("/simulator/waitlist", payload, { skipAuth: true }),
+
+  sendSimulatorTrial: (payload: SimulatorTrialPayload) =>
+    httpClient.post<unknown>("/simulator/trial", payload, { skipAuth: true }),
 
   sendPartnerApplication: (payload: PartnerApplicationPayload) =>
     httpClient.post<unknown>("/partner-applications", payload, { skipAuth: true }),

@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { useAuth } from "@/hooks/useAuth";
 import { useContactMessages, useDeleteContactMessage, useUpdateContactStatus } from "@/hooks/useContacts";
 import { cn } from "@/lib/utils";
-import { PARTNER_DOMAINS, PEOPLE_COUNTS, TRAINING_NEEDS } from "@/services/api/siteFormsService";
+import { EXAM_HORIZONS, PARTNER_DOMAINS, PEOPLE_COUNTS, SIMULATOR_PLANS, TRAINING_NEEDS } from "@/services/api/siteFormsService";
 import type { ContactMessage, ContactMessageStatus, ContactMessageType } from "@/types";
 
 const STATUS: Record<ContactMessageStatus, { label: string; pill: "error" | "neutral" | "success" | "info" }> = {
@@ -37,6 +37,8 @@ const TYPE_LABELS: Record<ContactMessageType, string> = {
   CONTACT: "Contact",
   DIAGNOSTIC: "Diagnostic entreprise",
   PARTNER_APPLICATION: "Candidature partenaire",
+  SIMULATOR_WAITLIST: "Liste d'attente simulateur",
+  SIMULATOR_TRIAL: "Essai gratuit simulateur",
 };
 
 const TYPE_TABS: { value: string; label: string }[] = [
@@ -44,17 +46,19 @@ const TYPE_TABS: { value: string; label: string }[] = [
   { value: "CONTACT", label: "Contacts" },
   { value: "DIAGNOSTIC", label: "Diagnostics" },
   { value: "PARTNER_APPLICATION", label: "Partenaires" },
+  { value: "SIMULATOR", label: "Simulateur (attente et essais)" },
 ];
 
 /** Libellés lisibles des détails structurés renvoyés par le backend. */
 const DETAIL_LABELS: Record<string, string> = {
   role: "Fonction", peopleCount: "Personnes à former", need: "Besoin principal", context: "Contexte",
+  plan: "Forfait", examHorizon: "Examen envisagé", consent: "Accord de contact",
   organization: "Organisme", domain: "Domaine", linkedinUrl: "Profil LinkedIn", proposal: "Formation proposée", references: "Références",
 };
 
 /** Codes d'énumération du backend → libellés affichés dans le formulaire du site. */
 const CODE_LABELS: Record<string, string> = Object.fromEntries(
-  [...PEOPLE_COUNTS, ...TRAINING_NEEDS, ...PARTNER_DOMAINS].map((o) => [o.code, o.label]),
+  [...PEOPLE_COUNTS, ...TRAINING_NEEDS, ...PARTNER_DOMAINS, ...SIMULATOR_PLANS, ...EXAM_HORIZONS].map((o) => [o.code, o.label]),
 );
 
 function detailValue(v: unknown): string {
@@ -91,7 +95,7 @@ export default function AdminMessages() {
     const q = search.trim().toLowerCase();
     return messages.filter((m) =>
       (filterStatus === "all" || m.status === filterStatus)
-      && (filterType === "all" || (m.type ?? "CONTACT") === filterType)
+      && (filterType === "all" || (filterType === "SIMULATOR" ? (m.type ?? "").startsWith("SIMULATOR_") : (m.type ?? "CONTACT") === filterType))
       && (!q || `${m.firstName} ${m.lastName} ${m.email} ${m.subject ?? ""} ${m.company ?? ""} ${m.message}`.toLowerCase().includes(q)));
   }, [messages, filterStatus, filterType, search]);
 

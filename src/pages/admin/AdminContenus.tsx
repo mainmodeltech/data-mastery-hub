@@ -39,6 +39,7 @@ const KEY_LABELS: Record<string, { label: string; hint: string }> = {
   "page.about": { label: "À propos", hint: "Mission, parcours, valeurs, équipe, partenaires" },
   "page.contact": { label: "Contact", hint: "Formulaire, FAQ, photo" },
   "page.masterclass": { label: "Masterclass", hint: "Textes de la page, programme, formateur (la date, le lieu et les inscriptions se gèrent dans Masterclass)" },
+  "page.simulateur": { label: "Simulateur PL-300", hint: "Page d'offre : public visé, couverture de l'examen, forfaits et tarifs prévisionnels, FAQ, liste d'attente" },
   "page.orientation": { label: "Quiz d'orientation", hint: "Questions, règles de recommandation, résultats" },
 };
 

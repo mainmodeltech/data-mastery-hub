@@ -224,6 +224,65 @@ Prévoir **deux comptes** habilités sur l'argent (par exemple Finance et Direct
 | S13 | Tenter de **modifier ou supprimer** une ligne du journal (base de données) | Refus : « Le journal d'audit est en ajout seul » | ☐ |
 | S14 | Modifier un **prix**, un **code parrainage**, une **part de revenu**, les **droits d'un profil**, créer un **compte**, **réinitialiser un MFA**, **valider un certificat**, **accorder des tentatives**, **modifier une page du site** | Chaque action produit une ligne d'audit (catégories Tarifs, Comptes et droits, Pédagogie, Site) | ☐ |
 
+### Simulateur PL-300 (lots S0 et S1)
+
+Prévoir **deux comptes** avec les droits du simulateur (profil Pédagogie ou Direction) : un auteur et un relecteur/publieur.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P1 | Ouvrir `/simulateur-pl-300` (visiteur) | Page complète : public visé, couverture des 4 domaines avec pondérations et date du guide, fonctionnalités (labs et plan de révision marqués « Après l'ouverture »), forfaits avec tarifs **prévisionnels**, FAQ, mentions « non affilié à Microsoft » | ☐ |
+| P2 | Remplir la liste d'attente **sans cocher** l'accord | Envoi impossible (case obligatoire) | ☐ |
+| P3 | Remplir la liste d'attente avec l'accord | Message de confirmation ; la demande apparaît dans *Messages → Simulateur* avec forfait et échéance | ☐ |
+| P4 | *Pages du site → Simulateur PL-300* : changer un tarif, enregistrer, recharger la page publique | Le nouveau tarif s'affiche ; *Restaurer* revient à la version d'origine | ☐ |
+| P5 | *Catalogue → Simulateur* (auteur) : **Nouvelle question** à choix unique (4 choix, une bonne réponse), enregistrer | Brouillon `PL300-MOD-001` créé ; deux bonnes réponses refusées avec un message clair | ☐ |
+| P6 | Créer aussi un choix multiple (2 bonnes réponses) et une série Oui/Non | Chaque type se valide selon ses règles | ☐ |
+| P7 | **Soumettre à relecture** sans explication française | Refusé (explication obligatoire, 20 caractères au moins) ; avec explication : « En relecture » | ☐ |
+| P8 | L'**auteur** tente de relire sa propre question | Aucun bouton *Relire* ; appel direct refusé (403) | ☐ |
+| P9 | Le **relecteur** : *Relire* → **sans** cocher la vérification technique | *Approuver* grisé ; « Demander des corrections » exige un commentaire | ☐ |
+| P10 | Le relecteur approuve avec la vérification technique | Statut « Approuvée » ; ligne d'audit « Question du simulateur approuvée » | ☐ |
+| P11 | L'**auteur** tente de **publier** | Aucun bouton ; message « une autre personne doit la publier » | ☐ |
+| P12 | Le relecteur **publie** | Statut « Publiée » ; la fiche n'est plus modifiable | ☐ |
+| P13 | L'auteur ouvre une **nouvelle version** (v2), la soumet, la fait approuver et publier | v2 publiée, **v1 devient « Retirée »** automatiquement ; deux versions visibles dans la fiche | ☐ |
+| P14 | **Retirer** une version publiée avec un motif | Statut « Retirée » ; motif conservé ; ligne d'audit | ☐ |
+| P15 | Onglet **Couverture** | Une ligne par compétence (11), cible, brouillons / relecture / approuvées / publiées, barre d'avancement | ☐ |
+| P16 | **Importer** un JSON de 3 questions dont une invalide | 2 brouillons créés, la 3e signalée avec son rang et son motif | ☐ |
+| P17 | Un compte **Admissions**, **Finance** ou **Formateur** ouvre `/admin/simulateur` | Entrée absente du menu, accès refusé | ☐ |
+| P18 | *Simulateur → Droits d'usage → Accorder un droit* à un apprenant existant (forfait Pro, 90 jours, 5 examens, avec un motif) | Droit « Actif » dans la liste ; ligne `SIM_ACCESS_GRANTED` dans l'audit ; sans motif ou avec un e-mail inconnu : refus explicite | ☐ |
+| P19 | L'apprenant ouvre **Simulateur PL-300** dans son espace | Forfait, date de fin, examens restants, domaines avec leur nombre de questions ; sans droit : message « pas d'accès actif » et lien vers l'offre | ☐ |
+| P20 | **Démarrer un examen** (50 questions, 100 min) | Compte à rebours décompté ; questions réparties 14/14/14/8 ; **aucune bonne réponse n'apparaît** nulle part pendant l'examen | ☐ |
+| P21 | Répondre, **marquer** une question, recharger la page, fermer et rouvrir l'onglet | Réponses et marques conservées ; le temps restant continue de courir (pas de remise à zéro) | ☐ |
+| P22 | **Terminer l'examen** avec des questions sans réponse | Confirmation indiquant le nombre de questions vides ; rapport : score /1000, réussite à 700, résultats par domaine et compétence, revue avec corrigé et explication FR | ☐ |
+| P23 | Laisser le temps s'écouler (en recette : demander à l'équipe technique de reculer l'échéance) | Examen remis automatiquement, statut « Temps écoulé », rapport disponible | ☐ |
+| P24 | Épuiser le quota d'examens, puis **S'entraîner par domaine** | Démarrage d'examen refusé avec un message clair ; l'entraînement par domaine reste possible | ☐ |
+| P25 | **Mode étude** : valider une réponse | Correction immédiate (bonne réponse + explication FR) ; la question se verrouille | ☐ |
+| P26 | Ouvrir l'adresse d'une tentative d'**un autre apprenant** | « Introuvable » (jamais de contenu) | ☐ |
+| P27 | **Révoquer** le droit (motif obligatoire) | L'apprenant perd l'accès immédiatement ; ses tentatives passées restent consultables ; ligne `SIM_ACCESS_REVOKED` dans l'audit | ☐ |
+| P28 | *Pages du site → Menu & pied de page* puis *Simulateur PL-300* : **Restaurer** chacun (à faire une fois par environnement, les contenus déjà enregistrés ne changent pas tout seuls) | Le menu du site affiche « Simulateur PL-300 » à la place de « Ressources » ; « Ressources » reste dans le pied de page ; la page du simulateur propose « Essayer gratuitement » | ☐ |
+| P29 | Visiteur : page *Simulateur PL-300* → section **Essai gratuit** : nom, e-mail, accord → envoyer | Message « Vérifiez votre boîte mail » ; un e-mail avec lien et code de connexion arrive ; la demande apparaît dans *Messages* (filtre « Simulateur ») | ☐ |
+| P30 | Refaire la demande avec la même adresse, puis avec une adresse jetable (mailinator…) | Même message neutre, aucun doublon dans *Droits d'usage* ni dans *Messages* ; l'adresse jetable est refusée avec un message clair | ☐ |
+| P31 | Se connecter avec le lien reçu → **Simulateur PL-300** | Carte « Essai gratuit » (1 essai, 15 min), pas d'entraînement par domaine, bandeau « simulateur complet » | ☐ |
+| P32 | Passer le **mini-test**, le terminer | Pourcentage (pas de note sur 1000 ni « réussi »), résultats par domaine et par compétence, **3 corrections** détaillées, les autres questions verrouillées avec le bouton « Débloquer » | ☐ |
+| P33 | Retourner sur le simulateur après le test | « Vous avez utilisé votre essai gratuit » ; impossible de recommencer ; le lien vers les forfaits fonctionne | ☐ |
+| P34 | *Simulateur → Questions* : ouvrir une question **publiée** → **Ajouter à l'essai gratuit** ; cocher le filtre « Échantillons essai gratuit » | Le compteur augmente ; l'étiquette « Essai » s'affiche ; une question non publiée ne peut pas être ajoutée ; sans le droit de gestion, le bouton est absent | ☐ |
+| P35 | Accorder ensuite un forfait payant à ce visiteur (*Droits d'usage*) | Il retrouve le simulateur complet (examens blancs, entraînement par domaine) | ☐ |
+| P36 | *Simulateur → Nouvelle question* : choisir le type **Correspondance (glisser-déposer)** ; saisir 3 éléments, 4 options dont 1 leurre, l'option attendue de chaque élément | Brouillon créé ; une option attendue oubliée est refusée avec un message qui nomme l'élément | ☐ |
+| P37 | Même écran, type **Réponse libre (mots-clés)** : 2 mots-clés, l'un avec 2 formulations (`measure, mesure`) ; laisser un mot-clé vide | Brouillon créé ; un mot-clé sans formulation est refusé (« indiquez de 1 à 6 formulations ») | ☐ |
+| P38 | Publier ces deux questions (relecture par une autre personne), puis les voir dans une **série d'étude** | Correspondance : on **glisse** chaque option sur son élément (ou on la choisit dans la liste sous l'élément, sur téléphone) ; les options sont mélangées d'un affichage à l'autre | ☐ |
+| P39 | Valider une correspondance partiellement juste, puis une réponse libre avec un seul des deux mots-clés | Correspondance : correction avec les bonnes associations ; réponse libre : « incorrecte » avec ✓ pour le mot-clé trouvé et ✗ pour le manquant, plus l'explication | ☐ |
+| P40 | **Examen blanc** contenant ces questions : taper une réponse libre puis changer de question immédiatement, recharger la page | La réponse est conservée (enregistrée à la pause de frappe ou au changement de question) ; aucun corrigé n'est visible pendant l'examen | ☐ |
+| P41 | Fiche d'une question publiée de ces types | On voit les associations attendues (leurres signalés) ou les mots-clés attendus et le mode de notation | ☐ |
+| P42 | *Simulateur → Commandes* | Bannière « PayDunya — Mode test (sandbox) : aucun argent réel » et l'adresse de notification (IPN) ; en production : « Mode production » | ☐ |
+| P43 | *Simulateur → Forfaits* : changer le prix d'un forfait | La page publique affiche aussitôt le nouveau prix ; une commande déjà ouverte garde l'ancien ; ligne dans l'audit | ☐ |
+| P44 | Visiteur : page *Simulateur PL-300* → forfait → **Acheter ce forfait** (nom, e-mail, case des conditions) | Redirection vers la page de paiement PayDunya avec le **bon montant** | ☐ |
+| P45 | Payer avec un **compte de test fictif** PayDunya | Retour sur le site : « Paiement confirmé », forfait et montant corrects, adresse e-mail masquée (`a***@…`) | ☐ |
+| P46 | Ouvrir la boîte mail de l'acheteur | **Deux e-mails** : confirmation d'achat (forfait, montant, validité, reçu) et lien de connexion ; le lien ouvre l'espace avec le forfait actif et le bon nombre d'examens | ☐ |
+| P47 | *Commandes* | La commande est « Payée » (mention « test »), le droit apparaît dans *Droits d'usage* avec la source « paiement-en-ligne » | ☐ |
+| P48 | Refaire un achat et **annuler** sur la page PayDunya | Retour « Paiement non finalisé / annulé », **aucun accès** ouvert, commande « Annulée » | ☐ |
+| P49 | Payer puis **fermer l'onglet** avant le retour sur le site | L'accès s'ouvre quand même (notification) : commande « Payée » au bout de quelques instants | ☐ |
+| P50 | Commande restée « En attente » alors que le paiement est encaissé | Bouton **Revérifier** : la commande passe à « Payée » ; sinon elle l'est d'elle-même sous 5 minutes | ☐ |
+| P51 | Retirer un forfait de la vente (*Forfaits*), recharger la page publique | Le forfait n'a plus de bouton « Acheter » ; impossible de retirer le dernier forfait en vente | ☐ |
+| P52 | Environnement **sans clés** PayDunya | Aucun bouton « Acheter » sur la page publique ; la liste d'attente reste disponible | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |

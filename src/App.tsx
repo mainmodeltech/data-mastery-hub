@@ -40,12 +40,17 @@ const CoursePlayer = lazy(() => import('./pages/CoursePlayer'));
 const Evaluations = lazy(() => import('./pages/Evaluations'));
 const QuizRunner = lazy(() => import('./pages/QuizRunner'));
 const EspaceEvaluations = lazy(() => import('./pages/EspaceEvaluations'));
+const EspaceSimulateur = lazy(() => import('./pages/EspaceSimulateur'));
+const EspaceSimulateurTentative = lazy(() => import('./pages/EspaceSimulateurTentative'));
+const EspaceSimulateurRapport = lazy(() => import('./pages/EspaceSimulateurRapport'));
 const EspaceCertificats = lazy(() => import('./pages/EspaceCertificats'));
 const EspaceCalendrier = lazy(() => import('./pages/EspaceCalendrier'));
 const EspaceRessources = lazy(() => import('./pages/EspaceRessources'));
 const EspaceProfil = lazy(() => import('./pages/EspaceProfil'));
 const Coaching = lazy(() => import('./pages/Coaching'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
+const Simulateur = lazy(() => import('./pages/Simulateur'));
+const SimulateurPaiement = lazy(() => import('./pages/SimulateurPaiement'));
 const Ressources = lazy(() => import('./pages/Ressources'));
 const Partenaires = lazy(() => import('./pages/Partenaires'));
 const Paiement = lazy(() => import('./pages/Paiement'));
@@ -77,6 +82,7 @@ const EspacePaiements = lazy(() => import('./pages/EspacePaiements'));
 const AdminEmails = lazy(() => import('./pages/admin/AdminEmails'));
 const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
 const AdminProfils = lazy(() => import('./pages/admin/AdminProfils'));
+const AdminSimulateur = lazy(() => import('./pages/admin/AdminSimulateur'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
 const AdminPropositions = lazy(() => import('./pages/admin/AdminPropositions'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
@@ -149,6 +155,8 @@ const App = () => (
                   {/* Lot 2 — nouvelles pages publiques (docs/design/README.md §2) */}
                   <Route path="/coaching" element={<Coaching />} />
                   <Route path="/entreprises" element={<Entreprises />} />
+                  <Route path="/simulateur-pl-300" element={<Simulateur />} />
+                  <Route path="/simulateur-pl-300/paiement" element={<SimulateurPaiement />} />
                   <Route path="/ressources" element={<Ressources />} />
                   <Route path="/partenaires" element={<Partenaires />} />
                   <Route path="/masterclass/power-bi-dashboard" element={<MasterclassPage />} />
@@ -177,6 +185,9 @@ const App = () => (
                   <Route path="/espace/profil" element={<ProtectedRoute learnerArea><EspaceProfil /></ProtectedRoute>} />
                   <Route path="/espace/certificats" element={<ProtectedRoute learnerArea><EspaceCertificats /></ProtectedRoute>} />
                   <Route path="/espace/evaluations" element={<ProtectedRoute learnerArea><EspaceEvaluations /></ProtectedRoute>} />
+                  <Route path="/espace/simulateur" element={<ProtectedRoute learnerArea><EspaceSimulateur /></ProtectedRoute>} />
+                  <Route path="/espace/simulateur/tentatives/:id" element={<ProtectedRoute learnerArea><EspaceSimulateurTentative /></ProtectedRoute>} />
+                  <Route path="/espace/simulateur/tentatives/:id/rapport" element={<ProtectedRoute learnerArea><EspaceSimulateurRapport /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/evaluations" element={<ProtectedRoute learnerArea><Evaluations /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/evaluations/:quizId" element={<ProtectedRoute learnerArea><QuizRunner /></ProtectedRoute>} />
 
@@ -215,6 +226,7 @@ const App = () => (
                   <Route path="/admin/certificats" element={<ProtectedRoute permissions={ACCESS.CERTIFICATES}><AdminCertificats /></ProtectedRoute>} />
                   <Route path="/admin/emails" element={<ProtectedRoute permissions={ACCESS.EMAILS}><AdminEmails /></ProtectedRoute>} />
                   <Route path="/admin/comptes" element={<ProtectedRoute permissions={ACCESS.ACCOUNTS}><AdminComptes /></ProtectedRoute>} />
+                  <Route path="/admin/simulateur" element={<ProtectedRoute permissions={ACCESS.SIMULATOR}><AdminSimulateur /></ProtectedRoute>} />
                   <Route path="/admin/profils" element={<ProtectedRoute permissions={ACCESS.PROFILES}><AdminProfils /></ProtectedRoute>} />
                   <Route path="/admin/audit" element={<ProtectedRoute permissions={ACCESS.AUDIT}><AdminAudit /></ProtectedRoute>} />
                   <Route path="/admin/domaines" element={<ProtectedRoute permissions={ACCESS.CATALOG}><AdminDomaines /></ProtectedRoute>} />
