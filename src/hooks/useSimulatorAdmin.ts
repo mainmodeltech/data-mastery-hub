@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { simulatorAdminService } from "@/services/api/simulatorAdminService";
 import type { GrantRequest, ItemFilters, ItemRequest } from "@/types/simulator.type";
+import type { OrderStatus, PlanUpdate } from "@/types/simulatorShop.type";
 
 export const SIM_KEYS = {
   all: ["admin", "simulator"] as const,
@@ -9,6 +10,9 @@ export const SIM_KEYS = {
   coverage: ["admin", "simulator", "coverage"] as const,
   items: ["admin", "simulator", "items"] as const,
   grants: ["admin", "simulator", "grants"] as const,
+  plans: ["admin", "simulator", "plans"] as const,
+  orders: ["admin", "simulator", "orders"] as const,
+  gateway: ["admin", "simulator", "gateway"] as const,
   item: (code: string, version?: number) => ["admin", "simulator", "item", code, version ?? "latest"] as const,
 };
 
@@ -102,4 +106,43 @@ export function useRevokeGrant() {
     mutationFn: ({ id, reason }: { id: string; reason: string }) => simulatorAdminService.revokeGrant(id, reason),
     onSuccess: () => qc.invalidateQueries({ queryKey: SIM_KEYS.grants }),
   });
+}
+
+export function useAdminPlans() {
+  return useQuery({ queryKey: SIM_KEYS.plans, queryFn: simulatorAdminService.plans, staleTime: 0 });
+}
+
+export function useUpdatePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ code, body }: { code: string; body: PlanUpdate }) => simulatorAdminService.updatePlan(code, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SIM_KEYS.plans });
+      qc.invalidateQueries({ queryKey: ["simulator", "plans"] });
+    },
+  });
+}
+
+export function useSimOrders(status: OrderStatus | undefined, page: number) {
+  return useQuery({
+    queryKey: [...SIM_KEYS.orders, status ?? "all", page],
+    queryFn: () => simulatorAdminService.orders(status, page),
+    placeholderData: (prev) => prev,
+    staleTime: 0,
+  });
+}
+
+export function useVerifyOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => simulatorAdminService.verifyOrder(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SIM_KEYS.orders });
+      qc.invalidateQueries({ queryKey: SIM_KEYS.grants });
+    },
+  });
+}
+
+export function useGatewayStatus() {
+  return useQuery({ queryKey: SIM_KEYS.gateway, queryFn: simulatorAdminService.gatewayStatus, staleTime: 30 * 1000, retry: false });
 }

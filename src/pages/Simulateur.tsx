@@ -12,12 +12,16 @@ import { Check, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card, ContentGate, FaqAccordion, Pill, SectionHeader } from "@/components/shared";
+import { PurchaseDialog } from "@/components/simulator/PurchaseDialog";
+import { usePlans } from "@/hooks/useSimulatorShop";
 import { useSendSimulatorTrial, useSendSimulatorWaitlist } from "@/hooks/useSiteForms";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EXAM_HORIZONS, SIMULATOR_PLANS, splitName, type SimulatorTrialPayload, type SimulatorWaitlistPayload } from "@/services/api/siteFormsService";
 import { submitErrorMessage } from "@/lib/formErrors";
 import { cn } from "@/lib/utils";
+import { formatAmount } from "@/types/payment.type";
 import type { PageSimulateur } from "@/types/siteContent";
+import type { ShopPlan } from "@/types/simulatorShop.type";
 
 const inputClass =
   "w-full rounded-card border border-[#D6CEC0] bg-white px-4 py-2.5 font-sans text-sm text-ink outline-none focus:border-navy";
@@ -59,6 +63,8 @@ function SimulateurBody({ c }: { c: PageSimulateur }) {
   const send = useSendSimulatorWaitlist();
   const w = c.waitlist;
   const [trialSent, setTrialSent] = useState(false);
+  const shop = usePlans();
+  const [buying, setBuying] = useState<ShopPlan | null>(null);
   const sendTrial = useSendSimulatorTrial();
   const t = c.trial ?? DEFAULT_TRIAL;
 
@@ -220,15 +226,19 @@ function SimulateurBody({ c }: { c: PageSimulateur }) {
       <section id="forfaits" className="bg-surface-sand px-6 py-16 lg:px-20">
         <SectionHeader eyebrow={c.plans.eyebrow} title={c.plans.title} description={c.plans.note} />
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {c.plans.items.map((p) => (
+          {c.plans.items.map((p) => {
+            // Le prix affiché est celui que le serveur facturera ; à défaut (serveur injoignable), le texte de la page.
+            const live = shop.data?.plans.find((x) => x.code === p.code);
+            const canBuy = !!live && shop.data?.paymentsEnabled;
+            return (
             <Card key={p.code} radius="card" className={cn("flex flex-col gap-4 p-6", p.highlighted && "border-2 border-navy")}>
               <div className="flex flex-col gap-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-heading text-lg font-bold text-navy">{p.name}</h3>
                   {p.badge && <Pill variant="warning">{p.badge}</Pill>}
                 </div>
-                {p.price && <p className="font-heading text-2xl font-extrabold text-ink">{p.price}</p>}
-                <p className="text-xs text-ink-secondary">{p.duration}</p>
+                {(live || p.price) && <p className="font-heading text-2xl font-extrabold text-ink">{live ? formatAmount(live.priceXof) : p.price}</p>}
+                <p className="text-xs text-ink-secondary">{live ? `${live.durationDays} jours · ${live.examAttempts} examen${live.examAttempts > 1 ? "s" : ""} blanc${live.examAttempts > 1 ? "s" : ""}` : p.duration}</p>
               </div>
               <ul className="flex flex-col gap-1.5">
                 {p.features.map((f) => (
@@ -237,8 +247,10 @@ function SimulateurBody({ c }: { c: PageSimulateur }) {
                   </li>
                 ))}
               </ul>
+              {canBuy && live && <Button type="button" variant={p.highlighted ? "primary" : "navy"} shape="pill" className="mt-auto" onClick={() => setBuying(live)}>Acheter ce forfait</Button>}
             </Card>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -319,6 +331,7 @@ function SimulateurBody({ c }: { c: PageSimulateur }) {
       <section className="px-6 pb-16 lg:px-20">
         <p className="text-xs leading-relaxed text-ink-secondary">{c.disclaimer}</p>
       </section>
+      {buying && <PurchaseDialog plan={buying} termsLabel="J'accepte les conditions d'utilisation et de vente du simulateur." onClose={() => setBuying(null)} />}
     </>
   );
 }

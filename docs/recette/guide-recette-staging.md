@@ -271,6 +271,17 @@ Prévoir **deux comptes** avec les droits du simulateur (profil Pédagogie ou Di
 | P39 | Valider une correspondance partiellement juste, puis une réponse libre avec un seul des deux mots-clés | Correspondance : correction avec les bonnes associations ; réponse libre : « incorrecte » avec ✓ pour le mot-clé trouvé et ✗ pour le manquant, plus l'explication | ☐ |
 | P40 | **Examen blanc** contenant ces questions : taper une réponse libre puis changer de question immédiatement, recharger la page | La réponse est conservée (enregistrée à la pause de frappe ou au changement de question) ; aucun corrigé n'est visible pendant l'examen | ☐ |
 | P41 | Fiche d'une question publiée de ces types | On voit les associations attendues (leurres signalés) ou les mots-clés attendus et le mode de notation | ☐ |
+| P42 | *Simulateur → Commandes* | Bannière « PayDunya — Mode test (sandbox) : aucun argent réel » et l'adresse de notification (IPN) ; en production : « Mode production » | ☐ |
+| P43 | *Simulateur → Forfaits* : changer le prix d'un forfait | La page publique affiche aussitôt le nouveau prix ; une commande déjà ouverte garde l'ancien ; ligne dans l'audit | ☐ |
+| P44 | Visiteur : page *Simulateur PL-300* → forfait → **Acheter ce forfait** (nom, e-mail, case des conditions) | Redirection vers la page de paiement PayDunya avec le **bon montant** | ☐ |
+| P45 | Payer avec un **compte de test fictif** PayDunya | Retour sur le site : « Paiement confirmé », forfait et montant corrects, adresse e-mail masquée (`a***@…`) | ☐ |
+| P46 | Ouvrir la boîte mail de l'acheteur | **Deux e-mails** : confirmation d'achat (forfait, montant, validité, reçu) et lien de connexion ; le lien ouvre l'espace avec le forfait actif et le bon nombre d'examens | ☐ |
+| P47 | *Commandes* | La commande est « Payée » (mention « test »), le droit apparaît dans *Droits d'usage* avec la source « paiement-en-ligne » | ☐ |
+| P48 | Refaire un achat et **annuler** sur la page PayDunya | Retour « Paiement non finalisé / annulé », **aucun accès** ouvert, commande « Annulée » | ☐ |
+| P49 | Payer puis **fermer l'onglet** avant le retour sur le site | L'accès s'ouvre quand même (notification) : commande « Payée » au bout de quelques instants | ☐ |
+| P50 | Commande restée « En attente » alors que le paiement est encaissé | Bouton **Revérifier** : la commande passe à « Payée » ; sinon elle l'est d'elle-même sous 5 minutes | ☐ |
+| P51 | Retirer un forfait de la vente (*Forfaits*), recharger la page publique | Le forfait n'a plus de bouton « Acheter » ; impossible de retirer le dernier forfait en vente | ☐ |
+| P52 | Environnement **sans clés** PayDunya | Aucun bouton « Acheter » sur la page publique ; la liste d'attente reste disponible | ☐ |
 
 ### Espace apprenant
 

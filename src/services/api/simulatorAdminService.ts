@@ -3,6 +3,7 @@
  * Contrat : AdminSimulatorController. Les droits sont vérifiés par le serveur (SIMULATOR_VIEW / AUTHOR / REVIEW / MANAGE).
  */
 import { httpClient } from "@/services/httpClient";
+import type { AdminOrder, AdminPlan, GatewayStatus, OrderStatus, PlanUpdate } from "@/types/simulatorShop.type";
 import type {
   CoverageRow, GrantRequest, GrantView, ImportResult, ItemFilters, ItemRequest, ItemSummary, ItemVersion, SimBlueprint,
 } from "@/types/simulator.type";
@@ -74,6 +75,20 @@ export const simulatorAdminService = {
       totalPages: res.pagination?.totalPages ?? 1,
     };
   },
+
+  plans: async (): Promise<AdminPlan[]> => (await httpClient.get<ApiResponse<AdminPlan[]>>(`${base}/plans`)).data ?? [],
+
+  updatePlan: async (code: string, body: PlanUpdate): Promise<AdminPlan> =>
+    (await httpClient.put<ApiResponse<AdminPlan>>(`${base}/plans/${encodeURIComponent(code)}`, body)).data,
+
+  orders: async (status: OrderStatus | undefined, page: number, size = 20): Promise<{ items: AdminOrder[]; totalElements: number; totalPages: number }> => {
+    const res = await httpClient.get<ApiResponse<AdminOrder[]>>(`${base}/orders`, { params: { status, page, size } });
+    return { items: res.data ?? [], totalElements: res.pagination?.totalElements ?? res.data?.length ?? 0, totalPages: res.pagination?.totalPages ?? 1 };
+  },
+
+  verifyOrder: async (id: string): Promise<AdminOrder> => (await httpClient.post<ApiResponse<AdminOrder>>(`${base}/orders/${id}/verify`)).data,
+
+  gatewayStatus: async (): Promise<GatewayStatus> => (await httpClient.get<ApiResponse<GatewayStatus>>(`${base}/payments/status`)).data,
 
   grant: async (body: GrantRequest): Promise<GrantView> => (await httpClient.post<ApiResponse<GrantView>>(`${base}/grants`, body)).data,
 

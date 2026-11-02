@@ -11,6 +11,7 @@ import { CheckCircle2, FileUp, Loader2, Pencil, Plus, Search, Trash2, XCircle } 
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { SimulatorGrants } from "@/components/admin/SimulatorGrants";
+import { SimulatorOrders, SimulatorPlans } from "@/components/admin/SimulatorShopAdmin";
 import { AdvancedPayloadPreview, MatchingFields, ShortAnswerFields } from "@/components/admin/SimulatorTypeEditors";
 import { blankMatching, blankShortAnswer } from "@/lib/simulatorEditor";
 import { EmptyState, ErrorNotice, errorMessage, Field, inputClass, Pager, ReasonDialog } from "@/components/admin/AdminKit";
@@ -410,7 +411,7 @@ function ItemSheet({ code, onClose }: { code: string | null; onClose: () => void
 
 export default function AdminSimulateur() {
   const { can } = useAuth();
-  const [tab, setTab] = useState<"questions" | "coverage" | "grants">("questions");
+  const [tab, setTab] = useState<"questions" | "coverage" | "grants" | "plans" | "orders">("questions");
   const [filters, setFilters] = useState<ItemFilters>({});
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -447,9 +448,17 @@ export default function AdminSimulateur() {
           {can("SIMULATOR_MANAGE") && (
             <Button type="button" role="tab" aria-selected={tab === "grants"} size="sm" shape="pill" variant={tab === "grants" ? "navy" : "outline"} onClick={() => setTab("grants")}>Droits d'usage</Button>
           )}
+          {can("SIMULATOR_MANAGE") && (
+            <Button type="button" role="tab" aria-selected={tab === "plans"} size="sm" shape="pill" variant={tab === "plans" ? "navy" : "outline"} onClick={() => setTab("plans")}>Forfaits</Button>
+          )}
+          {(can("SIMULATOR_MANAGE") || can("PAYMENTS_VIEW")) && (
+            <Button type="button" role="tab" aria-selected={tab === "orders"} size="sm" shape="pill" variant={tab === "orders" ? "navy" : "outline"} onClick={() => setTab("orders")}>Commandes</Button>
+          )}
         </div>
 
         {tab === "grants" && can("SIMULATOR_MANAGE") && <SimulatorGrants />}
+        {tab === "plans" && can("SIMULATOR_MANAGE") && <SimulatorPlans />}
+        {tab === "orders" && (can("SIMULATOR_MANAGE") || can("PAYMENTS_VIEW")) && <SimulatorOrders canVerify={can("SIMULATOR_MANAGE")} />}
 
         {tab === "questions" && (
           <>
