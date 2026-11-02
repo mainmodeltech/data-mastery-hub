@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { simulatorAdminService } from "@/services/api/simulatorAdminService";
-import type { ItemFilters, ItemRequest } from "@/types/simulator.type";
+import type { GrantRequest, ItemFilters, ItemRequest } from "@/types/simulator.type";
 
 export const SIM_KEYS = {
   all: ["admin", "simulator"] as const,
   blueprint: ["admin", "simulator", "blueprint"] as const,
   coverage: ["admin", "simulator", "coverage"] as const,
   items: ["admin", "simulator", "items"] as const,
+  grants: ["admin", "simulator", "grants"] as const,
   item: (code: string, version?: number) => ["admin", "simulator", "item", code, version ?? "latest"] as const,
 };
 
@@ -75,4 +76,29 @@ export function useSimWorkflow() {
     deleteDraft: useMutation({ mutationFn: (a: { code: string; version: number }) => simulatorAdminService.deleteDraft(a.code, a.version), onSuccess }),
     importItems: useMutation({ mutationFn: (items: ItemRequest[]) => simulatorAdminService.importItems(items), onSuccess }),
   };
+}
+
+export function useSimGrants(page: number) {
+  return useQuery({
+    queryKey: [...SIM_KEYS.grants, page],
+    queryFn: () => simulatorAdminService.grants(page),
+    placeholderData: (prev) => prev,
+    staleTime: 0,
+  });
+}
+
+export function useGrantAccess() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: GrantRequest) => simulatorAdminService.grant(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SIM_KEYS.grants }),
+  });
+}
+
+export function useRevokeGrant() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => simulatorAdminService.revokeGrant(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SIM_KEYS.grants }),
+  });
 }

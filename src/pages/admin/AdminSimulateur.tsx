@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale";
 import { CheckCircle2, FileUp, Loader2, Pencil, Plus, Search, Trash2, XCircle } from "lucide-react";
 
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { SimulatorGrants } from "@/components/admin/SimulatorGrants";
 import { EmptyState, ErrorNotice, errorMessage, Field, inputClass, Pager, ReasonDialog } from "@/components/admin/AdminKit";
 import { Button, Card, Pill, ProgressBar } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -387,7 +388,7 @@ function ItemSheet({ code, onClose }: { code: string | null; onClose: () => void
 
 export default function AdminSimulateur() {
   const { can } = useAuth();
-  const [tab, setTab] = useState<"questions" | "coverage">("questions");
+  const [tab, setTab] = useState<"questions" | "coverage" | "grants">("questions");
   const [filters, setFilters] = useState<ItemFilters>({});
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -420,7 +421,12 @@ export default function AdminSimulateur() {
           <Button type="button" role="tab" aria-selected={tab === "coverage"} size="sm" shape="pill" variant={tab === "coverage" ? "navy" : "outline"} onClick={() => setTab("coverage")}>
             Couverture<span className="ml-1.5 rounded-pill bg-surface-sand px-1.5 text-[0.6875rem] font-bold text-ink-secondary">{totals.published}/{totals.target}</span>
           </Button>
+          {can("SIMULATOR_MANAGE") && (
+            <Button type="button" role="tab" aria-selected={tab === "grants"} size="sm" shape="pill" variant={tab === "grants" ? "navy" : "outline"} onClick={() => setTab("grants")}>Droits d'usage</Button>
+          )}
         </div>
+
+        {tab === "grants" && can("SIMULATOR_MANAGE") && <SimulatorGrants />}
 
         {tab === "questions" && (
           <>

@@ -40,6 +40,9 @@ const CoursePlayer = lazy(() => import('./pages/CoursePlayer'));
 const Evaluations = lazy(() => import('./pages/Evaluations'));
 const QuizRunner = lazy(() => import('./pages/QuizRunner'));
 const EspaceEvaluations = lazy(() => import('./pages/EspaceEvaluations'));
+const EspaceSimulateur = lazy(() => import('./pages/EspaceSimulateur'));
+const EspaceSimulateurTentative = lazy(() => import('./pages/EspaceSimulateurTentative'));
+const EspaceSimulateurRapport = lazy(() => import('./pages/EspaceSimulateurRapport'));
 const EspaceCertificats = lazy(() => import('./pages/EspaceCertificats'));
 const EspaceCalendrier = lazy(() => import('./pages/EspaceCalendrier'));
 const EspaceRessources = lazy(() => import('./pages/EspaceRessources'));
@@ -180,6 +183,9 @@ const App = () => (
                   <Route path="/espace/profil" element={<ProtectedRoute learnerArea><EspaceProfil /></ProtectedRoute>} />
                   <Route path="/espace/certificats" element={<ProtectedRoute learnerArea><EspaceCertificats /></ProtectedRoute>} />
                   <Route path="/espace/evaluations" element={<ProtectedRoute learnerArea><EspaceEvaluations /></ProtectedRoute>} />
+                  <Route path="/espace/simulateur" element={<ProtectedRoute learnerArea><EspaceSimulateur /></ProtectedRoute>} />
+                  <Route path="/espace/simulateur/tentatives/:id" element={<ProtectedRoute learnerArea><EspaceSimulateurTentative /></ProtectedRoute>} />
+                  <Route path="/espace/simulateur/tentatives/:id/rapport" element={<ProtectedRoute learnerArea><EspaceSimulateurRapport /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/evaluations" element={<ProtectedRoute learnerArea><Evaluations /></ProtectedRoute>} />
                   <Route path="/espace/formations/:id/evaluations/:quizId" element={<ProtectedRoute learnerArea><QuizRunner /></ProtectedRoute>} />
 

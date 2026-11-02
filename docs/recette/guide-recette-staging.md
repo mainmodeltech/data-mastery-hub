@@ -247,6 +247,16 @@ Prévoir **deux comptes** avec les droits du simulateur (profil Pédagogie ou Di
 | P15 | Onglet **Couverture** | Une ligne par compétence (11), cible, brouillons / relecture / approuvées / publiées, barre d'avancement | ☐ |
 | P16 | **Importer** un JSON de 3 questions dont une invalide | 2 brouillons créés, la 3e signalée avec son rang et son motif | ☐ |
 | P17 | Un compte **Admissions**, **Finance** ou **Formateur** ouvre `/admin/simulateur` | Entrée absente du menu, accès refusé | ☐ |
+| P18 | *Simulateur → Droits d'usage → Accorder un droit* à un apprenant existant (forfait Pro, 90 jours, 5 examens, avec un motif) | Droit « Actif » dans la liste ; ligne `SIM_ACCESS_GRANTED` dans l'audit ; sans motif ou avec un e-mail inconnu : refus explicite | ☐ |
+| P19 | L'apprenant ouvre **Simulateur PL-300** dans son espace | Forfait, date de fin, examens restants, domaines avec leur nombre de questions ; sans droit : message « pas d'accès actif » et lien vers l'offre | ☐ |
+| P20 | **Démarrer un examen** (50 questions, 100 min) | Compte à rebours décompté ; questions réparties 14/14/14/8 ; **aucune bonne réponse n'apparaît** nulle part pendant l'examen | ☐ |
+| P21 | Répondre, **marquer** une question, recharger la page, fermer et rouvrir l'onglet | Réponses et marques conservées ; le temps restant continue de courir (pas de remise à zéro) | ☐ |
+| P22 | **Terminer l'examen** avec des questions sans réponse | Confirmation indiquant le nombre de questions vides ; rapport : score /1000, réussite à 700, résultats par domaine et compétence, revue avec corrigé et explication FR | ☐ |
+| P23 | Laisser le temps s'écouler (en recette : demander à l'équipe technique de reculer l'échéance) | Examen remis automatiquement, statut « Temps écoulé », rapport disponible | ☐ |
+| P24 | Épuiser le quota d'examens, puis **S'entraîner par domaine** | Démarrage d'examen refusé avec un message clair ; l'entraînement par domaine reste possible | ☐ |
+| P25 | **Mode étude** : valider une réponse | Correction immédiate (bonne réponse + explication FR) ; la question se verrouille | ☐ |
+| P26 | Ouvrir l'adresse d'une tentative d'**un autre apprenant** | « Introuvable » (jamais de contenu) | ☐ |
+| P27 | **Révoquer** le droit (motif obligatoire) | L'apprenant perd l'accès immédiatement ; ses tentatives passées restent consultables ; ligne `SIM_ACCESS_REVOKED` dans l'audit | ☐ |
 
 ### Espace apprenant
 

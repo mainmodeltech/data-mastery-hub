@@ -64,3 +64,24 @@ export interface ItemRequest {
 export interface ItemFilters { status?: ItemStatus; domain?: string; skill?: string; type?: ItemType; q?: string; mine?: boolean }
 
 export interface ImportResult { created: number; codes: string[]; errors: { index: number; message: string }[] }
+
+// ── Droits d'usage (administration) ─────────────────────────────────────
+
+export type PlanCode = "TRIAL" | "ESSENTIEL" | "PRO" | "PRO_COACHING" | "ENTREPRISE";
+export type GrantStatus = "ACTIVE" | "REVOKED";
+
+export const PLAN_LABELS: Record<PlanCode, string> = {
+  TRIAL: "Essai",
+  ESSENTIEL: "Essentiel",
+  PRO: "Pro",
+  PRO_COACHING: "Pro + coaching",
+  ENTREPRISE: "Entreprise",
+};
+
+export interface GrantView {
+  id: string; learnerEmail: string; learnerName: string; plan: PlanCode; startsAt: string; expiresAt: string;
+  examAttemptsTotal: number; examAttemptsUsed: number; status: GrantStatus; grantedBy: string; reason: string;
+  createdAt: string; revokedAt: string | null; revokeReason: string | null;
+}
+
+export interface GrantRequest { learnerEmail: string; plan: PlanCode; days: number; examAttempts: number; reason: string }

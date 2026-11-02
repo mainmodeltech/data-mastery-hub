@@ -4,7 +4,7 @@
  */
 import { httpClient } from "@/services/httpClient";
 import type {
-  CoverageRow, ImportResult, ItemFilters, ItemRequest, ItemSummary, ItemVersion, SimBlueprint,
+  CoverageRow, GrantRequest, GrantView, ImportResult, ItemFilters, ItemRequest, ItemSummary, ItemVersion, SimBlueprint,
 } from "@/types/simulator.type";
 
 interface ApiResponse<T> {
@@ -62,4 +62,18 @@ export const simulatorAdminService = {
 
   importItems: async (items: ItemRequest[]): Promise<ImportResult> =>
     (await httpClient.post<ApiResponse<ImportResult>>(`${base}/items/import`, { items })).data,
+
+  grants: async (page: number, size = 20): Promise<{ items: GrantView[]; totalElements: number; totalPages: number }> => {
+    const res = await httpClient.get<ApiResponse<GrantView[]>>(`${base}/grants`, { params: { page, size } });
+    return {
+      items: res.data ?? [],
+      totalElements: res.pagination?.totalElements ?? res.data?.length ?? 0,
+      totalPages: res.pagination?.totalPages ?? 1,
+    };
+  },
+
+  grant: async (body: GrantRequest): Promise<GrantView> => (await httpClient.post<ApiResponse<GrantView>>(`${base}/grants`, body)).data,
+
+  revokeGrant: async (id: string, reason: string): Promise<GrantView> =>
+    (await httpClient.post<ApiResponse<GrantView>>(`${base}/grants/${id}/revoke`, { reason })).data,
 };
