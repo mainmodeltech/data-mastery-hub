@@ -76,6 +76,15 @@ export interface SimulatorWaitlistPayload {
   consent: boolean;
 }
 
+export interface SimulatorTrialPayload {
+  firstName: string;
+  lastName?: string;
+  email: string;
+  phone?: string;
+  /** Doit être vrai : accord pour être contacté au sujet du simulateur. */
+  consent: boolean;
+}
+
 export interface PartnerApplicationPayload {
   firstName: string;
   lastName?: string;
@@ -94,6 +103,9 @@ export const siteFormsService = {
 
   sendSimulatorWaitlist: (payload: SimulatorWaitlistPayload) =>
     httpClient.post<unknown>("/simulator/waitlist", payload, { skipAuth: true }),
+
+  sendSimulatorTrial: (payload: SimulatorTrialPayload) =>
+    httpClient.post<unknown>("/simulator/trial", payload, { skipAuth: true }),
 
   sendPartnerApplication: (payload: PartnerApplicationPayload) =>
     httpClient.post<unknown>("/partner-applications", payload, { skipAuth: true }),

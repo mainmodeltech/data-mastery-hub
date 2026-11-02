@@ -297,6 +297,7 @@ function ItemSheet({ code, onClose }: { code: string | null; onClose: () => void
                 <Pill variant="info">{ITEM_TYPE_LABELS[item.type]}</Pill>
                 <Pill variant="neutral">{DIFFICULTY_LABELS[item.difficulty]}</Pill>
                 <span className="text-xs">{item.skillCode}</span>
+                {item.trialSample && <Pill variant="warning">Échantillon essai gratuit</Pill>}
               </SheetDescription>
             </SheetHeader>
 
@@ -306,6 +307,18 @@ function ItemSheet({ code, onClose }: { code: string | null; onClose: () => void
                   <Button key={n} type="button" size="sm" shape="pill" variant={n === item.versionNo ? "navy" : "outline"} onClick={() => setVersion(n)}>v{n}</Button>
                 ))}
               </div>
+            )}
+
+            {can("SIMULATOR_MANAGE") && (item.status === "PUBLISHED" || item.trialSample) && (
+              <section className="flex flex-wrap items-center gap-3 rounded-card bg-surface-sand p-3">
+                <p className="min-w-48 flex-1 text-xs text-ink-secondary">
+                  Les candidats en <strong>essai gratuit</strong> ne voient que les questions marquées « échantillon » (toujours les mêmes). Choisissez des questions représentatives, pas les meilleures de la banque.
+                </p>
+                <Button type="button" size="sm" shape="rounded" variant={item.trialSample ? "outline" : "navy"} disabled={w.setTrialSample.isPending}
+                  onClick={() => run(() => w.setTrialSample.mutateAsync({ code: item.code, value: !item.trialSample }), item.trialSample ? "Retirée de l'essai gratuit" : "Ajoutée à l'essai gratuit")}>
+                  {item.trialSample ? "Retirer de l'essai gratuit" : "Ajouter à l'essai gratuit"}
+                </Button>
+              </section>
             )}
 
             <section className="flex flex-col gap-2">
@@ -399,6 +412,7 @@ export default function AdminSimulateur() {
   const { data: blueprint } = useSimBlueprint();
   const { data: coverage = [] } = useSimCoverage();
   const query = useSimItems({ ...filters, q: search.trim() || undefined }, page);
+  const samples = useSimItems({ trialSample: true }, 0);
   const skills = useMemo(() => blueprint?.domains.flatMap((d) => d.skills.map((s) => ({ ...s, domain: d.code }))) ?? [], [blueprint]);
   const set = (patch: Partial<ItemFilters>) => { setFilters((f) => ({ ...f, ...patch })); setPage(0); };
 
@@ -451,6 +465,10 @@ export default function AdminSimulateur() {
               <label className="flex items-center gap-2 text-sm text-ink">
                 <input type="checkbox" checked={!!filters.mine} onChange={(e) => set({ mine: e.target.checked || undefined })} className="h-4 w-4 accent-[#1A3A5B]" />Mes questions
               </label>
+              <label className="flex items-center gap-2 text-sm text-ink">
+                <input type="checkbox" checked={!!filters.trialSample} onChange={(e) => set({ trialSample: e.target.checked || undefined })} className="h-4 w-4 accent-[#1A3A5B]" />
+                Échantillons essai gratuit ({samples.data?.totalElements ?? 0})
+              </label>
             </Card>
 
             {query.isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
@@ -467,6 +485,7 @@ export default function AdminSimulateur() {
                         <span className="flex flex-wrap items-center gap-1.5">
                           <Pill variant="info">{ITEM_TYPE_LABELS[it.type]}</Pill>
                           <Pill variant={STATUS_VARIANT[it.status]}>{ITEM_STATUS_LABELS[it.status]}</Pill>
+                          {it.trialSample && <Pill variant="warning">Essai</Pill>}
                         </span>
                         <span className="w-36 shrink-0 truncate text-xs text-ink-secondary">{it.skillCode} · {it.author}</span>
                       </button>

@@ -37,7 +37,7 @@ export interface CoverageRow {
 
 export interface ItemSummary {
   code: string; versionNo: number; domainCode: string; skillCode: string; type: ItemType; difficulty: number;
-  status: ItemStatus; author: string; stemPreview: string; updatedAt: string;
+  status: ItemStatus; author: string; stemPreview: string; updatedAt: string; trialSample: boolean;
 }
 
 export interface Choice { id: string; text: string; correct: boolean }
@@ -49,7 +49,7 @@ export interface ItemVersion {
   stemEn: string; payload: ItemPayload; explanationFr: string | null; status: ItemStatus; blueprintLabel: string;
   author: string; reviewer: string | null; reviewNote: string | null; verifiedBy: string | null; verifiedAt: string | null;
   publisher: string | null; createdAt: string; publishedAt: string | null; retiredAt: string | null; retireReason: string | null;
-  versions: number[];
+  versions: number[]; trialSample: boolean;
 }
 
 export interface ItemRequest {
@@ -61,7 +61,7 @@ export interface ItemRequest {
   explanationFr?: string;
 }
 
-export interface ItemFilters { status?: ItemStatus; domain?: string; skill?: string; type?: ItemType; q?: string; mine?: boolean }
+export interface ItemFilters { status?: ItemStatus; domain?: string; skill?: string; type?: ItemType; q?: string; mine?: boolean; trialSample?: boolean }
 
 export interface ImportResult { created: number; codes: string[]; errors: { index: number; message: string }[] }
 

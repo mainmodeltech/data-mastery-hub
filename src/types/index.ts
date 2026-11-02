@@ -180,7 +180,7 @@ export interface ContactMessage {
   message: string;
   status: ContactMessageStatus;
   notes: string | null;
-  /** CONTACT | DIAGNOSTIC | PARTNER_APPLICATION | SIMULATOR_WAITLIST */
+  /** CONTACT | DIAGNOSTIC | PARTNER_APPLICATION | SIMULATOR_WAITLIST | SIMULATOR_TRIAL */
   type?: ContactMessageType;
   requesterType?: 'PARTICULIER' | 'ENTREPRISE' | null;
   /** Détails structurés (diagnostic entreprise, candidature partenaire) */
@@ -189,7 +189,7 @@ export interface ContactMessage {
   updatedAt: string;
 }
 
-export type ContactMessageType = 'CONTACT' | 'DIAGNOSTIC' | 'PARTNER_APPLICATION' | 'SIMULATOR_WAITLIST';
+export type ContactMessageType = 'CONTACT' | 'DIAGNOSTIC' | 'PARTNER_APPLICATION' | 'SIMULATOR_WAITLIST' | 'SIMULATOR_TRIAL';
 
 
 export interface ContactMessage {

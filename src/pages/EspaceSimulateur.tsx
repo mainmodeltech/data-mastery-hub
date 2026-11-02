@@ -20,7 +20,8 @@ const day = (iso: string) => format(new Date(iso), "d MMM yyyy", { locale: fr })
 
 function resultOf(a: AttemptSummary): { label: string; variant: "success" | "error" | "neutral" | "info" } {
   if (a.status === "IN_PROGRESS") return { label: "En cours", variant: "info" };
-  if (a.mode === "EXAM") return a.passed ? { label: `${a.scaledScore}/1000 · réussi`, variant: "success" } : { label: `${a.scaledScore}/1000 · non atteint`, variant: "error" };
+  // Un mini-test d'essai n'a pas de seuil de réussite : on affiche le pourcentage.
+  if (a.mode === "EXAM" && a.passed !== null) return a.passed ? { label: `${a.scaledScore}/1000 · réussi`, variant: "success" } : { label: `${a.scaledScore}/1000 · non atteint`, variant: "error" };
   return { label: a.scorePercent == null ? "—" : `${Math.round(a.scorePercent)} %`, variant: "neutral" };
 }
 
@@ -45,6 +46,7 @@ export default function EspaceSimulateur() {
   const examsLeft = access.reduce((n, a) => n + a.examAttemptsRemaining, 0);
   const openExam = attempts.data?.find((a) => a.mode === "EXAM" && a.status === "IN_PROGRESS");
   const earliestExpiry = access.length ? access.map((a) => a.expiresAt).sort()[0] : null;
+  const trial = !!c?.trial;
 
   return (
     <LearnerShell title="Simulateur PL-300" description="Entraînez-vous dans les conditions de l'examen Microsoft, avec correction détaillée en français.">
@@ -65,35 +67,52 @@ export default function EspaceSimulateur() {
             <Card radius="callout" variant="navy" className="flex flex-wrap items-center gap-x-8 gap-y-4 p-6">
               <div className="min-w-48 flex-1">
                 <p className="text-sm text-[#D5DEE8]">{c.name} · {c.blueprintLabel}</p>
-                <h2 className="font-heading text-2xl font-bold">{PLAN_LABELS[access[0].planCode]}</h2>
+                <h2 className="font-heading text-2xl font-bold">{trial ? "Essai gratuit" : PLAN_LABELS[access[0].planCode]}</h2>
                 {earliestExpiry && <p className="mt-1 text-sm text-[#D5DEE8]">Accès jusqu'au {day(earliestExpiry)}</p>}
               </div>
               <dl className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
-                <div><dt className="text-[#D5DEE8]">Examens blancs restants</dt><dd className="font-heading text-2xl font-bold">{examsLeft}</dd></div>
-                <div><dt className="text-[#D5DEE8]">Durée d'un examen</dt><dd className="font-heading text-2xl font-bold">{c.durationMinutes} min</dd></div>
-                <div><dt className="text-[#D5DEE8]">Réussite à partir de</dt><dd className="font-heading text-2xl font-bold">{c.passScore}/1000</dd></div>
+                <div><dt className="text-[#D5DEE8]">{trial ? "Essai restant" : "Examens blancs restants"}</dt><dd className="font-heading text-2xl font-bold">{examsLeft}</dd></div>
+                <div><dt className="text-[#D5DEE8]">{trial ? "Durée du mini-test" : "Durée d'un examen"}</dt><dd className="font-heading text-2xl font-bold">{c.durationMinutes} min</dd></div>
+                {!trial && <div><dt className="text-[#D5DEE8]">Réussite à partir de</dt><dd className="font-heading text-2xl font-bold">{c.passScore}/1000</dd></div>}
               </dl>
             </Card>
 
             <Card radius="stat" className="flex flex-wrap items-center gap-4 p-5">
               <Timer className="h-8 w-8 shrink-0 text-cta" aria-hidden="true" />
               <div className="min-w-56 flex-1">
-                <h3 className="font-heading text-lg font-bold text-navy">Examen blanc</h3>
+                <h3 className="font-heading text-lg font-bold text-navy">{trial ? "Mini-test d'essai" : "Examen blanc"}</h3>
                 <p className="text-sm text-ink-secondary">
-                  {c.examQuestions} questions réparties comme à l'examen, {c.durationMinutes} minutes. La correction n'apparaît qu'à la fin ; le temps est décompté par le serveur.
+                  {trial
+                    ? `${c.examQuestions} questions représentatives de l'examen, ${c.durationMinutes} minutes, une seule tentative. Vous verrez votre niveau par domaine, avec ${c.trialCorrections} corrections détaillées offertes.`
+                    : `${c.examQuestions} questions réparties comme à l'examen, ${c.durationMinutes} minutes. La correction n'apparaît qu'à la fin ; le temps est décompté par le serveur.`}
                 </p>
               </div>
               {openExam ? (
-                <Button asChild shape="rounded"><Link to={`/espace/simulateur/tentatives/${openExam.id}`}><PlayCircle />Reprendre l'examen</Link></Button>
+                <Button asChild shape="rounded"><Link to={`/espace/simulateur/tentatives/${openExam.id}`}><PlayCircle />{trial ? "Reprendre l'essai" : "Reprendre l'examen"}</Link></Button>
               ) : (
                 <Button type="button" shape="rounded" disabled={start.isPending || examsLeft <= 0} onClick={() => launch({ mode: "EXAM" })}>
-                  {start.isPending ? <Loader2 className="animate-spin" /> : <PlayCircle />}Démarrer un examen
+                  {start.isPending ? <Loader2 className="animate-spin" /> : <PlayCircle />}{trial ? "Démarrer l'essai" : "Démarrer un examen"}
                 </Button>
               )}
-              {!openExam && examsLeft <= 0 && <p className="basis-full text-sm text-warning">Vous avez utilisé tous vos examens blancs. L'entraînement par domaine reste illimité.</p>}
+              {!openExam && examsLeft <= 0 && (
+                <p className="basis-full text-sm text-warning">
+                  {trial ? "Vous avez utilisé votre essai gratuit." : "Vous avez utilisé tous vos examens blancs. L'entraînement par domaine reste illimité."}
+                </p>
+              )}
               {!openExam && examsLeft > 0 && <p className="basis-full text-xs text-ink-secondary">Un examen commencé compte dans votre quota, même abandonné.</p>}
             </Card>
 
+            {trial && (
+              <Card radius="stat" variant="sand" className="flex flex-wrap items-center gap-4 p-5">
+                <div className="min-w-56 flex-1">
+                  <h3 className="font-heading text-lg font-bold text-navy">Allez plus loin avec le simulateur complet</h3>
+                  <p className="text-sm text-ink-secondary">Examens blancs de 50 questions, entraînement illimité par domaine, toutes les corrections détaillées en français et plan de révision.</p>
+                </div>
+                <Button asChild shape="rounded"><Link to="/simulateur-pl-300#forfaits">Voir les forfaits</Link></Button>
+              </Card>
+            )}
+
+            {!trial && (
             <section aria-labelledby="study-title" className="flex flex-col gap-3">
               <h3 id="study-title" className="font-heading text-lg font-bold text-navy">S'entraîner par domaine</h3>
               <p className="-mt-2 text-sm text-ink-secondary">Séries de 10 questions avec correction immédiate. Sans limite, sans chronomètre.</p>
@@ -116,6 +135,7 @@ export default function EspaceSimulateur() {
                 ))}
               </ul>
             </section>
+            )}
           </>
         )}
 
@@ -132,7 +152,7 @@ export default function EspaceSimulateur() {
                   return (
                     <li key={a.id} className="border-b border-[#E7E0D4] last:border-b-0">
                       <Link to={target} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-app-bg">
-                        <span className="min-w-36 flex-1 text-sm font-semibold text-ink">{MODE_LABELS[a.mode]}<span className="ml-2 font-normal text-ink-secondary">{a.totalQuestions} questions</span></span>
+                        <span className="min-w-36 flex-1 text-sm font-semibold text-ink">{a.mode === "EXAM" && a.passed === null && a.status !== "IN_PROGRESS" ? "Mini-test d'essai" : MODE_LABELS[a.mode]}<span className="ml-2 font-normal text-ink-secondary">{a.totalQuestions} questions</span></span>
                         <span className="flex items-center gap-1.5 text-xs text-ink-secondary"><Clock className="h-3.5 w-3.5" aria-hidden="true" />{stamp(a.startedAt)}</span>
                         <Pill variant="neutral">{STATUS_LABELS[a.status]}</Pill>
                         <Pill variant={r.variant}>{r.label}</Pill>

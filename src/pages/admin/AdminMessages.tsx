@@ -38,6 +38,7 @@ const TYPE_LABELS: Record<ContactMessageType, string> = {
   DIAGNOSTIC: "Diagnostic entreprise",
   PARTNER_APPLICATION: "Candidature partenaire",
   SIMULATOR_WAITLIST: "Liste d'attente simulateur",
+  SIMULATOR_TRIAL: "Essai gratuit simulateur",
 };
 
 const TYPE_TABS: { value: string; label: string }[] = [
@@ -45,7 +46,7 @@ const TYPE_TABS: { value: string; label: string }[] = [
   { value: "CONTACT", label: "Contacts" },
   { value: "DIAGNOSTIC", label: "Diagnostics" },
   { value: "PARTNER_APPLICATION", label: "Partenaires" },
-  { value: "SIMULATOR_WAITLIST", label: "Simulateur" },
+  { value: "SIMULATOR", label: "Simulateur (attente et essais)" },
 ];
 
 /** Libellés lisibles des détails structurés renvoyés par le backend. */
@@ -94,7 +95,7 @@ export default function AdminMessages() {
     const q = search.trim().toLowerCase();
     return messages.filter((m) =>
       (filterStatus === "all" || m.status === filterStatus)
-      && (filterType === "all" || (m.type ?? "CONTACT") === filterType)
+      && (filterType === "all" || (filterType === "SIMULATOR" ? (m.type ?? "").startsWith("SIMULATOR_") : (m.type ?? "CONTACT") === filterType))
       && (!q || `${m.firstName} ${m.lastName} ${m.email} ${m.subject ?? ""} ${m.company ?? ""} ${m.message}`.toLowerCase().includes(q)));
   }, [messages, filterStatus, filterType, search]);
 

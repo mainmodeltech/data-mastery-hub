@@ -73,6 +73,7 @@ export function useSimWorkflow() {
       mutationFn: (a: { code: string; version: number; reason: string }) => simulatorAdminService.retire(a.code, a.version, a.reason),
       onSuccess,
     }),
+    setTrialSample: useMutation({ mutationFn: (a: { code: string; value: boolean }) => simulatorAdminService.setTrialSample(a.code, a.value), onSuccess }),
     deleteDraft: useMutation({ mutationFn: (a: { code: string; version: number }) => simulatorAdminService.deleteDraft(a.code, a.version), onSuccess }),
     importItems: useMutation({ mutationFn: (items: ItemRequest[]) => simulatorAdminService.importItems(items), onSuccess }),
   };

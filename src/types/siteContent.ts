@@ -360,6 +360,12 @@ export interface PageSimulateur {
   };
   steps: { eyebrow: string; title: string; items: { title: string; description: string }[] };
   faq: FaqBlock;
+  /** Essai gratuit (absent d'un contenu enregistré avant ce lot : la page utilise alors ses textes par défaut). */
+  trial?: {
+    eyebrow: string; title: string; points: string[];
+    namePlaceholder: string; emailPlaceholder: string; phonePlaceholder: string;
+    consentLabel: string; submitLabel: string; successTitle: string; successText: string; note: string;
+  };
   waitlist: {
     eyebrow: string; title: string; points: string[];
     namePlaceholder: string; emailPlaceholder: string; phonePlaceholder: string; companyPlaceholder: string;

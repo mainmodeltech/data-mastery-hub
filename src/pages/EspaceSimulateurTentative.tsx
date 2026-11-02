@@ -204,7 +204,7 @@ function Runner({ attempt }: { attempt: AttemptView }) {
     <div className="flex flex-col gap-4">
       <Card radius="stat" className="sticky top-0 z-10 flex flex-wrap items-center gap-x-6 gap-y-2 p-3 shadow-sm">
         <div className="min-w-40 flex-1">
-          <p className="text-xs text-ink-secondary">{exam ? "Examen blanc" : "Série d'étude"} · question {index + 1} sur {questions.length}</p>
+          <p className="text-xs text-ink-secondary">{attempt.trial ? "Mini-test d'essai" : exam ? "Examen blanc" : "Série d'étude"} · question {index + 1} sur {questions.length}</p>
           <ProgressBar value={(answeredCount / Math.max(questions.length, 1)) * 100} aria-label="Questions répondues" />
         </div>
         {remaining !== null && (
@@ -214,7 +214,7 @@ function Runner({ attempt }: { attempt: AttemptView }) {
           </div>
         )}
         <span className={cn("text-xs", saveState === "error" ? "font-semibold text-error" : "text-ink-secondary")} aria-live="polite">{saveLabel}</span>
-        <Button type="button" shape="rounded" size="sm" onClick={() => setConfirming(true)}>{exam ? "Terminer l'examen" : "Terminer la série"}</Button>
+        <Button type="button" shape="rounded" size="sm" onClick={() => setConfirming(true)}>{attempt.trial ? "Terminer le test" : exam ? "Terminer l'examen" : "Terminer la série"}</Button>
       </Card>
       <p className="sr-only" aria-live="assertive">{announce}</p>
 

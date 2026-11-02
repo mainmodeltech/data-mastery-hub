@@ -257,6 +257,14 @@ Prévoir **deux comptes** avec les droits du simulateur (profil Pédagogie ou Di
 | P25 | **Mode étude** : valider une réponse | Correction immédiate (bonne réponse + explication FR) ; la question se verrouille | ☐ |
 | P26 | Ouvrir l'adresse d'une tentative d'**un autre apprenant** | « Introuvable » (jamais de contenu) | ☐ |
 | P27 | **Révoquer** le droit (motif obligatoire) | L'apprenant perd l'accès immédiatement ; ses tentatives passées restent consultables ; ligne `SIM_ACCESS_REVOKED` dans l'audit | ☐ |
+| P28 | *Pages du site → Menu & pied de page* puis *Simulateur PL-300* : **Restaurer** chacun (à faire une fois par environnement, les contenus déjà enregistrés ne changent pas tout seuls) | Le menu du site affiche « Simulateur PL-300 » à la place de « Ressources » ; « Ressources » reste dans le pied de page ; la page du simulateur propose « Essayer gratuitement » | ☐ |
+| P29 | Visiteur : page *Simulateur PL-300* → section **Essai gratuit** : nom, e-mail, accord → envoyer | Message « Vérifiez votre boîte mail » ; un e-mail avec lien et code de connexion arrive ; la demande apparaît dans *Messages* (filtre « Simulateur ») | ☐ |
+| P30 | Refaire la demande avec la même adresse, puis avec une adresse jetable (mailinator…) | Même message neutre, aucun doublon dans *Droits d'usage* ni dans *Messages* ; l'adresse jetable est refusée avec un message clair | ☐ |
+| P31 | Se connecter avec le lien reçu → **Simulateur PL-300** | Carte « Essai gratuit » (1 essai, 15 min), pas d'entraînement par domaine, bandeau « simulateur complet » | ☐ |
+| P32 | Passer le **mini-test**, le terminer | Pourcentage (pas de note sur 1000 ni « réussi »), résultats par domaine et par compétence, **3 corrections** détaillées, les autres questions verrouillées avec le bouton « Débloquer » | ☐ |
+| P33 | Retourner sur le simulateur après le test | « Vous avez utilisé votre essai gratuit » ; impossible de recommencer ; le lien vers les forfaits fonctionne | ☐ |
+| P34 | *Simulateur → Questions* : ouvrir une question **publiée** → **Ajouter à l'essai gratuit** ; cocher le filtre « Échantillons essai gratuit » | Le compteur augmente ; l'étiquette « Essai » s'affiche ; une question non publiée ne peut pas être ajoutée ; sans le droit de gestion, le bouton est absent | ☐ |
+| P35 | Accorder ensuite un forfait payant à ce visiteur (*Droits d'usage*) | Il retrouve le simulateur complet (examens blancs, entraînement par domaine) | ☐ |
 
 ### Espace apprenant
 

@@ -4,11 +4,16 @@ import {
   siteFormsService,
   type DiagnosticRequestPayload,
   type SimulatorWaitlistPayload,
+  type SimulatorTrialPayload,
   type PartnerApplicationPayload,
 } from "@/services/api/siteFormsService";
 
 export function useSendSimulatorWaitlist() {
   return useMutation({ mutationFn: (p: SimulatorWaitlistPayload) => siteFormsService.sendSimulatorWaitlist(p) });
+}
+
+export function useSendSimulatorTrial() {
+  return useMutation({ mutationFn: (p: SimulatorTrialPayload) => siteFormsService.sendSimulatorTrial(p) });
 }
 
 export function useSendDiagnostic() {

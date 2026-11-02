@@ -12,15 +12,34 @@ import { Check, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { SeoHead, PAGE_SEO } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card, ContentGate, FaqAccordion, Pill, SectionHeader } from "@/components/shared";
-import { useSendSimulatorWaitlist } from "@/hooks/useSiteForms";
+import { useSendSimulatorTrial, useSendSimulatorWaitlist } from "@/hooks/useSiteForms";
 import { useSiteContent } from "@/hooks/useSiteContent";
-import { EXAM_HORIZONS, SIMULATOR_PLANS, splitName, type SimulatorWaitlistPayload } from "@/services/api/siteFormsService";
+import { EXAM_HORIZONS, SIMULATOR_PLANS, splitName, type SimulatorTrialPayload, type SimulatorWaitlistPayload } from "@/services/api/siteFormsService";
 import { submitErrorMessage } from "@/lib/formErrors";
 import { cn } from "@/lib/utils";
 import type { PageSimulateur } from "@/types/siteContent";
 
 const inputClass =
   "w-full rounded-card border border-[#D6CEC0] bg-white px-4 py-2.5 font-sans text-sm text-ink outline-none focus:border-navy";
+
+const DEFAULT_TRIAL: NonNullable<PageSimulateur["trial"]> = {
+  eyebrow: "Essai gratuit",
+  title: "Testez-vous en 15 minutes, gratuitement",
+  points: [
+    "10 questions représentatives de l'examen, 15 minutes chrono",
+    "Votre niveau domaine par domaine dès la fin du test",
+    "3 corrections détaillées en français offertes",
+    "Sans carte bancaire, une seule tentative",
+  ],
+  namePlaceholder: "Nom et prénom",
+  emailPlaceholder: "E-mail (vous y recevrez votre lien de connexion)",
+  phonePlaceholder: "Téléphone / WhatsApp (facultatif)",
+  consentLabel: "J'accepte d'être contacté(e) au sujet du simulateur PL-300.",
+  submitLabel: "Commencer l'essai gratuit",
+  successTitle: "Vérifiez votre boîte mail",
+  successText: "Nous venons de vous envoyer un lien de connexion (valable 10 minutes). Cliquez dessus pour démarrer votre essai. Pensez à regarder vos courriers indésirables.",
+  note: "Un seul essai par personne. Vos données servent uniquement à vous donner accès au simulateur et à vous informer.",
+};
 
 export default function Simulateur() {
   const page = useSiteContent("page.simulateur");
@@ -39,6 +58,20 @@ function SimulateurBody({ c }: { c: PageSimulateur }) {
   const [submitted, setSubmitted] = useState(false);
   const send = useSendSimulatorWaitlist();
   const w = c.waitlist;
+  const [trialSent, setTrialSent] = useState(false);
+  const sendTrial = useSendSimulatorTrial();
+  const t = c.trial ?? DEFAULT_TRIAL;
+
+  const handleTrial = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    const text = (k: string) => ((data.get(k) as string | null) ?? "").trim();
+    const { firstName, lastName } = splitName(text("name"));
+    const payload: SimulatorTrialPayload = {
+      firstName, lastName, email: text("email"), phone: text("phone") || undefined, consent: data.get("consent") === "on",
+    };
+    sendTrial.mutate(payload, { onSuccess: () => setTrialSent(true) });
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,6 +121,47 @@ function SimulateurBody({ c }: { c: PageSimulateur }) {
             <img src={c.hero.image.url} alt={c.hero.image.alt} loading="eager" className="h-64 w-full rounded-hero object-cover lg:h-80" />
           )}
         </div>
+      </section>
+
+      {/* Essai gratuit */}
+      <section id="essai" className="grid gap-10 bg-surface-sand px-6 py-16 lg:grid-cols-2 lg:px-20">
+        <div className="flex flex-col gap-4">
+          <SectionHeader eyebrow={t.eyebrow} title={t.title} />
+          <ul className="flex flex-col gap-2">
+            {t.points.map((p) => (
+              <li key={p} className="flex items-center gap-2 text-sm text-ink-secondary">
+                <Check className="h-4 w-4 text-success" aria-hidden="true" /> {p}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <Card radius="card" className="self-start p-8">
+          {trialSent ? (
+            <div className="flex flex-col items-center gap-3 py-8 text-center" role="status">
+              <CheckCircle className="h-12 w-12 text-success" aria-hidden="true" />
+              <p className="font-heading text-lg font-bold text-navy">{t.successTitle}</p>
+              <p className="text-sm text-ink-secondary">{t.successText}</p>
+            </div>
+          ) : (
+            <form onSubmit={handleTrial} className="flex flex-col gap-4">
+              <input name="name" required placeholder={t.namePlaceholder} className={inputClass} aria-label="Nom et prénom" autoComplete="name" />
+              <input name="email" type="email" required placeholder={t.emailPlaceholder} className={inputClass} aria-label="E-mail" autoComplete="email" />
+              <input name="phone" type="tel" placeholder={t.phonePlaceholder} className={inputClass} aria-label="Téléphone / WhatsApp" autoComplete="tel" />
+              <label className="flex items-start gap-2 text-sm text-ink">
+                <input name="consent" type="checkbox" required className="mt-1 h-4 w-4 accent-[#1A3A5B]" />
+                <span>{t.consentLabel}</span>
+              </label>
+              {sendTrial.isError && (
+                <p role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{submitErrorMessage(sendTrial.error)}</p>
+              )}
+              <Button type="submit" variant="primary" shape="pill" disabled={sendTrial.isPending}>
+                {sendTrial.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t.submitLabel}
+              </Button>
+              <p className="text-center text-xs text-ink-secondary">{t.note}</p>
+            </form>
+          )}
+        </Card>
       </section>
 
       {/* Pour qui */}
@@ -143,7 +217,7 @@ function SimulateurBody({ c }: { c: PageSimulateur }) {
       </section>
 
       {/* Forfaits */}
-      <section className="bg-surface-sand px-6 py-16 lg:px-20">
+      <section id="forfaits" className="bg-surface-sand px-6 py-16 lg:px-20">
         <SectionHeader eyebrow={c.plans.eyebrow} title={c.plans.title} description={c.plans.note} />
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {c.plans.items.map((p) => (

@@ -56,6 +56,9 @@ export const simulatorAdminService = {
   retire: async (code: string, version: number, reason: string): Promise<ItemVersion> =>
     (await httpClient.post<ApiResponse<ItemVersion>>(`${item(code, version)}/retire`, { reason })).data,
 
+  setTrialSample: async (code: string, value: boolean): Promise<ItemVersion> =>
+    (await httpClient.put<ApiResponse<ItemVersion>>(`${base}/items/${encodeURIComponent(code)}/trial-sample`, { value })).data,
+
   deleteDraft: async (code: string, version: number): Promise<void> => {
     await httpClient.delete<unknown>(item(code, version));
   },
