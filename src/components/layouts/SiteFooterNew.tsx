@@ -57,7 +57,7 @@ export function SiteFooterNew() {
       </div>
 
       {footer && company && (
-        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-[#8FA5BC] sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-3 pt-6 text-sm text-[#8FA5BC] sm:flex-row sm:items-center sm:justify-between">
           <span>© {new Date().getFullYear()} {company.name}. {footer.rights}</span>
           <nav aria-label="Informations légales" className="flex flex-wrap gap-x-4 gap-y-1">
             <Link to={LEGAL_PATHS.MENTIONS} className="hover:text-white">Mentions légales</Link>
