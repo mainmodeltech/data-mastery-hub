@@ -33,9 +33,14 @@ export default function Coaching() {
   );
 }
 
-/** Adresse du formulaire de contact avec le créneau ou la formule choisis (le message est pré-rempli). */
+/** Les contenus enregistrés avant la demande de coaching pointent encore vers le formulaire de contact : on les redirige ici. */
+const LEGACY_BOOKING = /^\/contact\?sujet=coaching/;
+const coachingHref = (href: string): string => (LEGACY_BOOKING.test(href) ? "/coaching/demande" : href);
+
+/** Adresse de la demande de coaching avec le créneau ou la formule choisis (le formulaire est pré-rempli). */
 function bookingHref(base: string, key: "creneau" | "formule", value: string): string {
-  return `${base}${base.includes("?") ? "&" : "?"}${key}=${encodeURIComponent(value)}`;
+  const target = coachingHref(base);
+  return `${target}${target.includes("?") ? "&" : "?"}${key}=${encodeURIComponent(value)}`;
 }
 
 function CoachingBody({ c, company }: { c: PageCoaching; company: SiteCompany }) {
@@ -52,7 +57,7 @@ function CoachingBody({ c, company }: { c: PageCoaching; company: SiteCompany })
           <p className="text-ink-secondary">{c.hero.description}</p>
           <div className="flex flex-wrap gap-4">
             <Button asChild variant="primary" shape="pill">
-              <Link to={c.hero.primary.href}>{c.hero.primary.label}</Link>
+              <Link to={coachingHref(c.hero.primary.href)}>{c.hero.primary.label}</Link>
             </Button>
             <Button asChild variant="outline" shape="pill">
               <a href={c.hero.secondary.href}>{c.hero.secondary.label}</a>
@@ -203,7 +208,7 @@ function CoachingBody({ c, company }: { c: PageCoaching; company: SiteCompany })
           <div>
             <SectionHeader eyebrow={c.faq.eyebrow} title={c.faq.title} />
             <Button asChild variant="primary" shape="pill" className="mt-6">
-              <Link to={c.faq.cta.href}>{c.faq.cta.label}</Link>
+              <Link to={coachingHref(c.faq.cta.href)}>{c.faq.cta.label}</Link>
             </Button>
           </div>
           <FaqAccordion items={c.faq.items} />

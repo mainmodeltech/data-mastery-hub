@@ -79,7 +79,7 @@ function PlanDialog({ plan, onClose }: { plan: AdminPlan; onClose: () => void })
         <form onSubmit={submit} className="flex flex-col gap-4">
           <Field label="Nom *" htmlFor="pl-name"><input id="pl-name" required maxLength={80} className={inputClass} value={name} onChange={(e) => setName(e.target.value)} /></Field>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Prix (FCFA) *" htmlFor="pl-price"><input id="pl-price" type="number" min={100} max={5000000} step={500} required className={inputClass} value={price} onChange={(e) => setPrice(Number(e.target.value))} /></Field>
+            <Field label="Prix (FCFA) *" htmlFor="pl-price"><input id="pl-price" type="number" min={100} max={5000000} step={1} required className={inputClass} value={price} onChange={(e) => setPrice(Number(e.target.value))} /></Field>
             <Field label="Durée (jours) *" htmlFor="pl-days"><input id="pl-days" type="number" min={1} max={365} required className={inputClass} value={days} onChange={(e) => setDays(Number(e.target.value))} /></Field>
             <Field label="Examens blancs *" htmlFor="pl-exams"><input id="pl-exams" type="number" min={0} max={50} required className={inputClass} value={exams} onChange={(e) => setExams(Number(e.target.value))} /></Field>
           </div>

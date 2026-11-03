@@ -38,6 +38,7 @@ import {
   FileQuestion,
   ClipboardCheck,
   SlidersHorizontal,
+  HeartHandshake,
 } from "lucide-react";
 
 type PermNavItem = AppNavItem & { access: readonly string[] };
@@ -52,6 +53,7 @@ const navItems: PermNavItem[] = [
   { href: "/admin/bootcamp-sessions", label: "Sessions", icon: CalendarDays, section: "Catalogue", access: ACCESS.CATALOG },
   { href: "/admin/propositions", label: "Propositions", icon: ClipboardCheck, section: "Catalogue", access: ACCESS.PROPOSALS_REVIEW },
   { href: "/admin/simulateur", label: "Simulateur", icon: FileQuestion, section: "Catalogue", access: ACCESS.SIMULATOR },
+  { href: "/admin/coaching", label: "Demandes de coaching", icon: HeartHandshake, section: "Catalogue", access: ACCESS.COACHING },
   { href: "/admin/candidatures", label: "Candidatures", icon: Wallet, section: "Admissions", access: ACCESS.APPLICATIONS },
   { href: "/admin/paiements", label: "Paiements", icon: Banknote, section: "Admissions", access: ACCESS.PAYMENTS },
   { href: "/admin/factures", label: "Factures", icon: Receipt, section: "Admissions", access: ACCESS.INVOICES },

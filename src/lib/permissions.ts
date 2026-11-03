@@ -36,6 +36,8 @@ export const ACCESS = {
   /** Réglages de paiement (en ligne / manuel, coupure d'urgence) : Direction seulement. */
   PAYMENT_SETTINGS: ["PAYMENT_SETTINGS_MANAGE"],
   SIMULATOR: ["SIMULATOR_VIEW"],
+  /** Demandes de coaching : la pédagogie les traite (COACHING_MANAGE), la Finance voit les paiements à vérifier (PAYMENTS_VIEW). */
+  COACHING: ["COACHING_MANAGE", "PAYMENTS_VIEW"],
   /** Formateur : proposer des modifications du programme de ses formations. */
   PROGRAM_PROPOSE: ["PROGRAM_PROPOSE"],
   /** Pédagogie : valider les propositions des formateurs. */

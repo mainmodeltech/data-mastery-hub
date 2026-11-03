@@ -20,7 +20,7 @@ const MODES = Object.keys(PAYMENT_MODE_LABELS) as PaymentMode[];
 const SERVICE_HINTS: Record<PayableService, string> = {
   SIMULATOR: "Achat d'un forfait du simulateur PL-300.",
   REGISTRATION: "Règlement des échéances d'une inscription (après validation de la candidature par l'équipe).",
-  COACHING: "Règlement d'une séance de coaching (lien de paiement envoyé après l'entretien).",
+  COACHING: "Règlement d'un coaching validé (lien de paiement envoyé par e-mail après validation par le responsable pédagogique).",
 };
 
 export default function AdminReglagesPaiement() {

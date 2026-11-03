@@ -67,6 +67,7 @@ Détail du menu d'administration par rôle (✔ visible, – masqué) :
 | Suivi de session | ✔ | ✔ | – | ✔ (ses sessions) | – |
 | Comptes back-office | ✔ | – | – | – | – |
 | Réglages de paiement (en ligne / manuel, coupure d'urgence) | ✔ | – | – | – | – |
+| Demandes de coaching (profil Pédagogie ; la Finance voit les paiements à vérifier) | ✔ | ✔ | – | – | – |
 
 ## 3. Parcours à tester
 
@@ -323,6 +324,27 @@ Prévoir une candidature acceptée en **3 échéances**, un compte **Direction**
 | P76 | Service réglé sur **En ligne** (manuel en secours) puis *interrupteur général* coupé | Le lien affiche « Paiement en ligne indisponible » avec le message de secours et propose le manuel ; la déclaration manuelle est acceptée | ☐ |
 | P77 | Une échéance **déclarée** à la main (en vérification) | Elle ne peut pas être payée en ligne (message clair) ; les autres échéances le peuvent | ☐ |
 | P78 | *Journal d'audit* après un paiement en ligne | Ligne « Paiement confirmé » ; en cas d'incohérence de montant (cas simulé en test), ligne « Paiement en ligne encaissé mais incohérent » et **aucune** échéance confirmée | ☐ |
+
+### Coaching : demande, validation et paiement (lot L3)
+
+Prévoir un compte **Pédagogie** (responsable pédagogique), un compte **Finance** et un compte **Formateur**. Dans *Réglages de paiement*, laisser **Coaching** en *Manuel seulement* pour la première partie, puis le passer sur *En ligne ou manuel*.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P79 | Page *Coaching* : cliquer sur « Choisir » d'une formule ou sur un créneau | Ouvre `/coaching/demande` avec la formule (ou le créneau) déjà renseignée ; plus aucun lien vers le formulaire de contact | ☐ |
+| P80 | Envoyer la demande **sans cocher** l'accord, puis avec | Sans l'accord : envoi impossible ; avec : « Demande bien reçue » et, si configuré, un bouton **Réserver un échange** (lien Brevo) ; aucun paiement demandé | ☐ |
+| P81 | Boîte du demandeur et boîte interne | Le demandeur reçoit l'accusé de réception ; l'équipe reçoit « Nouvelle demande de coaching » | ☐ |
+| P82 | Un compte **Formateur** ouvre `/admin/coaching` | Refusé (pas d'entrée de menu, accès direct refusé) ; la **Pédagogie** y accède, la **Finance** aussi en lecture | ☐ |
+| P83 | Pédagogie : onglet *Nouvelle* → ouvrir la demande → **Prendre en charge** | La demande passe « En analyse » avec le nom de la personne ; la fiche reste ouverte ; formateur et notes internes enregistrables | ☐ |
+| P84 | **Valider** sans cocher « disponibilité confirmée », avec un montant inférieur à 100 FCFA, puis correctement (offre, montant, formateur, case cochée) | Refus clair dans les deux premiers cas ; puis « En attente de paiement », lien de paiement visible dans la fiche, e-mail « Votre coaching est validé » reçu par le client | ☐ |
+| P85 | Ouvrir le lien de paiement du client | Offre, formateur et montant affichés ; **aucune** donnée interne (notes, e-mail du formateur, téléphone) ; en manuel : numéro Wave / Orange Money et formulaire de déclaration | ☐ |
+| P86 | Déclarer le paiement (moyen + référence), joindre une capture | « Paiement en cours de vérification » ; la Finance reçoit l'alerte ; la demande passe « Paiement à vérifier » | ☐ |
+| P87 | **Pédagogie** tente de confirmer le paiement | Pas de bouton (« confirmation faite par la Finance ») ; l'appel direct est refusé | ☐ |
+| P88 | **Finance** : *Voir le justificatif*, **Refuser** (motif), puis le client redéclare, puis **Confirmer** | Après refus : le client voit le motif et peut redéclarer ; après confirmation : « Payée », « confirmé par » la Finance ; e-mails au client, au formateur et au responsable ; confirmer une seconde fois est refusé | ☐ |
+| P89 | Passer **Coaching** sur *En ligne ou manuel*, valider une autre demande, ouvrir son lien, **Payer en ligne** (sandbox PayDunya) | Retour sur le lien avec « Coaching confirmé : merci ! » ; fiche « Payée » en ligne, confirmée par « paiement-en-ligne » | ☐ |
+| P90 | **Refuser** une demande (motif) avant validation | Le client reçoit le motif par e-mail ; la demande est « Refusée » et ne peut plus être validée | ☐ |
+| P91 | **Annuler** un coaching validé non payé, puis rouvrir son lien | Le lien affiche « Ce coaching n'est plus à régler » ; un paiement en ligne qui arriverait quand même n'est pas compté et laisse une ligne « Paiement en ligne encaissé mais incohérent » dans l'audit | ☐ |
+| P92 | *Journal d'audit* (catégorie Coaching) | Lignes : validation, refus, annulation, paiement déclaré, paiement refusé, paiement ; avec l'auteur de chaque action | ☐ |
 
 ### Espace apprenant
 
