@@ -278,6 +278,8 @@ export interface CreateRegistrationDTO {
   /** Code promo saisi par le visiteur (le backend valide et applique) */
   promoCode: string | null;
   recaptchaToken: string | null;
+  /** Versions des textes légaux acceptées (le serveur vérifie qu'elles sont en vigueur) ; absent tant que rien n'est publié. */
+  acceptedDocuments?: string[];
 }
 
 export interface CreateContactMessageDTO {

@@ -4,6 +4,7 @@
 
 import { Suspense, lazy } from 'react';
 import { Toaster } from '@/components/ui/toaster';
+import { CookieBanner } from '@/components/legal/CookieBanner';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -51,6 +52,8 @@ const Coaching = lazy(() => import('./pages/Coaching'));
 const CoachingDemande = lazy(() => import('./pages/CoachingDemande'));
 const CoachingPaiement = lazy(() => import('./pages/CoachingPaiement'));
 const AdminCoaching = lazy(() => import('./pages/admin/AdminCoaching'));
+const LegalPage = lazy(() => import('./pages/LegalPage'));
+const AdminTextesLegaux = lazy(() => import('./pages/admin/AdminTextesLegaux'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Simulateur = lazy(() => import('./pages/Simulateur'));
 const SimulateurPaiement = lazy(() => import('./pages/SimulateurPaiement'));
@@ -158,6 +161,10 @@ const App = () => (
                   <Route path="/contact" element={<Contact />} />
                   {/* Lot 2 — nouvelles pages publiques (docs/design/README.md §2) */}
                   <Route path="/coaching" element={<Coaching />} />
+                  <Route path="/cgu" element={<LegalPage code="CGU" />} />
+                  <Route path="/cgv" element={<LegalPage code="CGV" />} />
+                  <Route path="/confidentialite" element={<LegalPage code="PRIVACY" />} />
+                  <Route path="/mentions-legales" element={<LegalPage code="MENTIONS" />} />
                   <Route path="/coaching/demande" element={<CoachingDemande />} />
                   <Route path="/coaching/paiement/:token" element={<CoachingPaiement />} />
                   <Route path="/entreprises" element={<Entreprises />} />
@@ -236,6 +243,7 @@ const App = () => (
                   <Route path="/admin/profils" element={<ProtectedRoute permissions={ACCESS.PROFILES}><AdminProfils /></ProtectedRoute>} />
                   <Route path="/admin/audit" element={<ProtectedRoute permissions={ACCESS.AUDIT}><AdminAudit /></ProtectedRoute>} />
                   <Route path="/admin/coaching" element={<ProtectedRoute permissions={ACCESS.COACHING}><AdminCoaching /></ProtectedRoute>} />
+                  <Route path="/admin/textes-legaux" element={<ProtectedRoute permissions={ACCESS.LEGAL}><AdminTextesLegaux /></ProtectedRoute>} />
                   <Route path="/admin/reglages-paiement" element={<ProtectedRoute permissions={ACCESS.PAYMENT_SETTINGS}><AdminReglagesPaiement /></ProtectedRoute>} />
                   <Route path="/admin/domaines" element={<ProtectedRoute permissions={ACCESS.CATALOG}><AdminDomaines /></ProtectedRoute>} />
                   <Route path="/admin/partenaires" element={<ProtectedRoute permissions={ACCESS.PARTNERS}><AdminPartenaires /></ProtectedRoute>} />
@@ -258,6 +266,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
+              <CookieBanner />
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>

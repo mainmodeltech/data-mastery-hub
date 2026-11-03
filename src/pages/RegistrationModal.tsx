@@ -17,6 +17,8 @@ import { promoCodeService, registrationService } from "@/services/api";
 import { useSessionAvailability } from "@/hooks/useRegistrations";
 import { SessionAvailabilityBadge } from "./SessionAvailabilityBadge";
 import { cn } from "@/lib/utils";
+import { LegalConsent } from "@/components/legal/LegalConsent";
+import { useLegalAcceptedIds } from "@/hooks/useLegal";
 import {
     ArrowRight,
     BookOpen,
@@ -234,6 +236,9 @@ export function RegistrationModal({ bootcamp, session, onClose }: RegistrationMo
 
     const [form, setForm]           = useState<FormValues>(INITIAL_FORM);
     const [submitting, setSubmitting] = useState(false);
+    // Textes légaux en vigueur (CGU, CGV, confidentialité) : à accepter avant de candidater ; absents tant que rien n'est publié
+    const legalIds = useLegalAcceptedIds("REGISTRATION");
+    const [termsOk, setTermsOk] = useState(false);
     const [submitted, setSubmitted]   = useState(false);
     const promo                       = usePromoCode();
 
@@ -276,6 +281,11 @@ export function RegistrationModal({ bootcamp, session, onClose }: RegistrationMo
             return;
         }
 
+        if (legalIds && !termsOk) {
+            toast({ title: "Veuillez accepter les conditions pour envoyer votre candidature.", variant: "destructive" });
+            return;
+        }
+
         if (!executeRecaptcha) {
             toast({ title: "reCAPTCHA non initialisé. Veuillez recharger la page.", variant: "destructive" });
             return;
@@ -301,6 +311,7 @@ export function RegistrationModal({ bootcamp, session, onClose }: RegistrationMo
                 position:      form.profile === "PROFESSIONAL"  ? form.position.trim() : (form.position.trim() || null),
                 message:       form.message.trim() || null,
                 recaptchaToken,
+                acceptedDocuments: termsOk ? legalIds : undefined,
             });
 
             setSubmitted(true);
@@ -607,6 +618,11 @@ export function RegistrationModal({ bootcamp, session, onClose }: RegistrationMo
                                         className={cn(fieldClass, "resize-none")}
                                     />
                                 </div>
+
+                                <LegalConsent
+                                    context="REGISTRATION" hideWhenNone fallbackLabel="" checked={termsOk} onCheckedChange={setTermsOk}
+                                    className="flex items-start gap-2 text-sm text-ink"
+                                />
 
                                 <Button type="submit" variant="primary" shape="pill" size="lg" disabled={submitting} className="w-full">
                                     {submitting

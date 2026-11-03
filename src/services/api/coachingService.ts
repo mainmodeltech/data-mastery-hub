@@ -20,6 +20,10 @@ export const coachingPublicService = {
   view: async (token: string): Promise<CoachingPayView> =>
     (await httpClient.get<ApiResponse<CoachingPayView>>(`/coaching/payments/${enc(token)}`, { skipAuth: true })).data,
 
+  /** Acceptation des conditions de vente en vigueur, préalable au paiement. */
+  acceptTerms: async (token: string, documents: string[]): Promise<CoachingPayView> =>
+    (await httpClient.post<ApiResponse<CoachingPayView>>(`/coaching/payments/${enc(token)}/accept`, { documents }, { skipAuth: true })).data,
+
   startOnline: async (token: string): Promise<CoachingStartResponse> =>
     (await httpClient.post<ApiResponse<CoachingStartResponse>>(`/coaching/payments/${enc(token)}/online`, undefined, { skipAuth: true })).data,
 

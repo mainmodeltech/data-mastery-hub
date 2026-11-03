@@ -13,6 +13,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { homePathFor } from "@/lib/roles";
+import { LearnerLegalGate } from "@/components/legal/LearnerLegalGate";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -48,7 +49,8 @@ const ProtectedRoute = ({ children, permissions, learnerArea = false }: Protecte
     return <Navigate to={homePathFor(user)} replace />;
   }
 
-  return <>{children}</>;
+  // Les apprenants acceptent les textes légaux en vigueur avant d'utiliser leur espace (le personnel qui prévisualise n'est pas concerné)
+  return <>{children}{learnerArea && user.userType === "LEARNER" && <LearnerLegalGate />}</>;
 };
 
 export default ProtectedRoute;

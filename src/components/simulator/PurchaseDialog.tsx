@@ -9,6 +9,8 @@ import { useState } from "react";
 import { Info, Loader2, Lock, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { LegalConsent } from "@/components/legal/LegalConsent";
+import { useLegalAcceptedIds } from "@/hooks/useLegal";
 import { Button } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCreateOrder } from "@/hooks/useSimulatorShop";
@@ -24,6 +26,7 @@ type Options = Pick<PlansView, "online" | "manual" | "fallback" | "fallbackReaso
 
 export function PurchaseDialog({ plan, options, termsLabel, onClose }: { plan: ShopPlan; options: Options; termsLabel: string; onClose: () => void }) {
   const order = useCreateOrder();
+  const legalIds = useLegalAcceptedIds("SIMULATOR_ORDER");
   const navigate = useNavigate();
   const [redirecting, setRedirecting] = useState(false);
   const both = options.online && options.manual;
@@ -40,7 +43,7 @@ export function PurchaseDialog({ plan, options, termsLabel, onClose }: { plan: S
     const { firstName, lastName } = splitName(text("name"));
     order.mutate(
       // Le moyen n'est envoyé que si le client a eu le choix : sinon le serveur décide (et bascule en manuel si le prestataire est en panne).
-      { plan: plan.code, channel: both ? channel : undefined, firstName, lastName, email: text("email"), phone: text("phone") || undefined, acceptTerms: data.get("terms") === "on" },
+      { plan: plan.code, channel: both ? channel : undefined, firstName, lastName, email: text("email"), phone: text("phone") || undefined, acceptTerms: data.get("terms") === "on", acceptedDocuments: legalIds },
       {
         onSuccess: (res) => {
           if (res.channel === "MANUAL" || !res.checkoutUrl) {
@@ -95,10 +98,7 @@ export function PurchaseDialog({ plan, options, termsLabel, onClose }: { plan: S
           <input name="name" required autoFocus placeholder="Nom et prénom" aria-label="Nom et prénom" autoComplete="name" className={inputClass} />
           <input name="email" type="email" required placeholder="E-mail (votre accès vous y est envoyé)" aria-label="E-mail" autoComplete="email" className={inputClass} />
           <input name="phone" type="tel" placeholder="Téléphone / WhatsApp (facultatif)" aria-label="Téléphone" autoComplete="tel" className={inputClass} />
-          <label className="flex items-start gap-2 text-sm text-ink">
-            <input name="terms" type="checkbox" required className="mt-1 h-4 w-4 accent-[#1A3A5B]" />
-            <span>{termsLabel}</span>
-          </label>
+          <LegalConsent context="SIMULATOR_ORDER" fallbackLabel={termsLabel} />
           {order.isError && <p role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{submitErrorMessage(order.error)}</p>}
           <Button type="submit" variant="primary" shape="pill" disabled={busy}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : channel === "ONLINE" ? <Lock className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}

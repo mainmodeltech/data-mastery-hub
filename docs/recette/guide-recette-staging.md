@@ -68,6 +68,7 @@ Détail du menu d'administration par rôle (✔ visible, – masqué) :
 | Comptes back-office | ✔ | – | – | – | – |
 | Réglages de paiement (en ligne / manuel, coupure d'urgence) | ✔ | – | – | – | – |
 | Demandes de coaching (profil Pédagogie ; la Finance voit les paiements à vérifier) | ✔ | ✔ | – | – | – |
+| Textes légaux (CGU, CGV, confidentialité, mentions) et preuves d'acceptation | ✔ | – | – | – | – |
 
 ## 3. Parcours à tester
 
@@ -345,6 +346,28 @@ Prévoir un compte **Pédagogie** (responsable pédagogique), un compte **Financ
 | P90 | **Refuser** une demande (motif) avant validation | Le client reçoit le motif par e-mail ; la demande est « Refusée » et ne peut plus être validée | ☐ |
 | P91 | **Annuler** un coaching validé non payé, puis rouvrir son lien | Le lien affiche « Ce coaching n'est plus à régler » ; un paiement en ligne qui arriverait quand même n'est pas compté et laisse une ligne « Paiement en ligne encaissé mais incohérent » dans l'audit | ☐ |
 | P92 | *Journal d'audit* (catégorie Coaching) | Lignes : validation, refus, annulation, paiement déclaré, paiement refusé, paiement ; avec l'auteur de chaque action | ☐ |
+
+### Textes légaux, acceptation et cookies (lot L4)
+
+Prévoir un compte **Direction**, un compte **Admin** (ou Finance), un visiteur sans compte et un **apprenant** de test. Les textes livrés sont des **modèles à faire valider par votre conseil juridique** : pour la recette, complétez-les avec des valeurs d'essai (le système refuse de publier un texte qui contient encore « [À COMPLÉTER »).
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P93 | Visiteur : ouvrir `/cgu` (ou `/cgv`) **avant** toute publication ; regarder le pied de page | « Ce document est en cours de préparation… » ; le pied de page contient Mentions légales, CGU, CGV, Confidentialité et **Gérer mes cookies** | ☐ |
+| P94 | Un compte **Admin** ou **Finance** | L'entrée *Textes légaux* est **absente** du menu ; l'adresse directe est refusée ; seule la **Direction** y accède | ☐ |
+| P95 | Direction : *Textes légaux* | Quatre onglets « non publié », chacun avec un brouillon et l'alerte « N champs [À COMPLÉTER] restent à renseigner » ; le bouton **Publier** est grisé avec l'explication | ☐ |
+| P96 | Compléter un texte, l'enregistrer, **Publier** sans nom de validateur, puis avec nom, date et résumé | Refusé sans validateur ; avec : « En vigueur : version 1 », qui a validé, quand, par qui ; une ligne « Texte légal publié » dans le *Journal d'audit* | ☐ |
+| P97 | Visiteur : rouvrir la page publique du texte publié | Texte complet, « Version 1 · en vigueur depuis le … », aucune mention du conseil ni de l'auteur ; un titre/une liste correctement mis en forme | ☐ |
+| P98 | Visiteur : achat d'un forfait du simulateur après publication des CGU, CGV, confidentialité | La case affiche « J'ai lu et j'accepte les conditions générales d'utilisation, les conditions générales de vente et la politique de confidentialité » (trois liens, nouvel onglet) ; l'envoi est impossible sans la cocher | ☐ |
+| P99 | *Textes légaux → Preuves d'acceptation* après cet achat | Trois lignes (CGU, CGV, confidentialité) avec version, empreinte, acte « Achat simulateur », e-mail, date et IP ; recherche par e-mail et filtre par texte fonctionnels | ☐ |
+| P100 | Candidature à une formation, puis demande de coaching | La case des textes apparaît ; sans l'accepter, l'envoi est refusé ; les acceptations apparaissent dans les preuves (actes « Candidature » et « Demande de coaching ») | ☐ |
+| P101 | Coaching validé : ouvrir le lien de paiement (CGV publiées après la demande) | Une carte « Avant de payer » demande d'accepter les CGV ; **aucun** bouton de paiement tant que ce n'est pas fait ; ensuite le paiement (en ligne ou manuel) est proposé | ☐ |
+| P102 | Apprenant : première connexion après publication des CGU et de la confidentialité | Fenêtre bloquante « Avant de continuer » (liens vers les textes) ; impossible d'utiliser l'espace sans accepter ; après acceptation, elle ne revient plus | ☐ |
+| P103 | Direction : modifier les CGU (« Modifier », nouvelle version), publier la version 2 | L'historique garde la version 1 ; l'apprenant doit accepter **les CGU v2** à sa prochaine page (pas la confidentialité inchangée) ; un nouvel achat enregistre la v2 | ☐ |
+| P104 | Ouvrir le formulaire d'achat dans un onglet, publier une nouvelle version dans un autre, puis envoyer l'achat | Refus clair demandant de recharger : une version périmée n'est jamais acceptée | ☐ |
+| P105 | Premier accès au site (navigation privée) | Le bandeau cookies s'affiche ; **Refuser** : aucun suivi (pas d'appels à Google Analytics dans l'onglet réseau du navigateur) ; **Accepter** : le suivi démarre | ☐ |
+| P106 | Pied de page → **Gérer mes cookies** (et le bouton de la page de confidentialité) | Le bandeau se rouvre ; refuser après avoir accepté arrête le suivi et efface les cookies `_ga` | ☐ |
+| P107 | Avant toute publication, refaire un achat, une candidature, une demande de coaching et une connexion apprenant | Tout fonctionne comme avant : rien n'est exigé tant que rien n'est publié | ☐ |
 
 ### Espace apprenant
 

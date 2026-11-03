@@ -35,6 +35,8 @@ export const ACCESS = {
   AUDIT: ["AUDIT_VIEW"],
   /** Réglages de paiement (en ligne / manuel, coupure d'urgence) : Direction seulement. */
   PAYMENT_SETTINGS: ["PAYMENT_SETTINGS_MANAGE"],
+  /** Textes légaux (CGU, CGV, mentions, confidentialité) et preuves d'acceptation : Direction seulement. */
+  LEGAL: ["LEGAL_MANAGE"],
   SIMULATOR: ["SIMULATOR_VIEW"],
   /** Demandes de coaching : la pédagogie les traite (COACHING_MANAGE), la Finance voit les paiements à vérifier (PAYMENTS_VIEW). */
   COACHING: ["COACHING_MANAGE", "PAYMENTS_VIEW"],
