@@ -16,6 +16,14 @@ export function useCoachingPayment(token: string | undefined) {
   return useQuery({ queryKey: payKey(token ?? ""), queryFn: () => coachingPublicService.view(token as string), enabled: !!token, retry: false });
 }
 
+export function useAcceptCoachingTerms(token: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (documents: string[]) => coachingPublicService.acceptTerms(token, documents),
+    onSuccess: () => qc.invalidateQueries({ queryKey: payKey(token) }),
+  });
+}
+
 export function useStartCoachingOnline(token: string) {
   return useMutation({ mutationFn: () => coachingPublicService.startOnline(token) });
 }

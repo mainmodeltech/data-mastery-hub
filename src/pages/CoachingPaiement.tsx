@@ -8,10 +8,11 @@ import { AlertCircle, CheckCircle2, Clock, ExternalLink, Info, Loader2, Lock, XC
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { SeoHead } from "@/components/SeoHead";
+import { DocumentLinks } from "@/components/legal/LegalConsent";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card } from "@/components/shared";
 import { ManualPaymentView } from "@/components/simulator/ManualPaymentPanel";
-import { useCoachingCheckout, useCoachingPayment, useDeclareCoachingPayment, useStartCoachingOnline, useUploadCoachingProof } from "@/hooks/useCoaching";
+import { useAcceptCoachingTerms, useCoachingCheckout, useCoachingPayment, useDeclareCoachingPayment, useStartCoachingOnline, useUploadCoachingProof } from "@/hooks/useCoaching";
 import { submitErrorMessage } from "@/lib/formErrors";
 import { ApiError } from "@/services/httpClient";
 import { formatAmount } from "@/types/payment.type";
@@ -64,6 +65,25 @@ function CheckoutReturn({ token, checkoutRef, cancelled }: { token: string; chec
       <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
       <span>Le paiement n'a pas abouti : aucun montant n'a été validé. Vous pouvez réessayer ci-dessous. Débité malgré tout ? Écrivez-nous avec le justificatif.</span>
     </p>
+  );
+}
+
+/** Conditions de vente à accepter avant de payer : rien ne s'affiche en dessous tant qu'elles ne le sont pas (le serveur refuse aussi tout paiement). */
+function TermsGate({ token, view }: { token: string; view: CoachingPayView }) {
+  const accept = useAcceptCoachingTerms(token);
+  const [checked, setChecked] = useState(false);
+  return (
+    <div className="flex w-full flex-col gap-3 rounded-card border border-[#D6CEC0] p-4 text-left">
+      <h2 className="font-heading text-lg font-bold text-navy">Avant de payer</h2>
+      <label className="flex items-start gap-2 text-sm text-ink">
+        <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-[#1A3A5B]" />
+        <span>J'ai lu et j'accepte <DocumentLinks documents={view.termsToAccept} />.</span>
+      </label>
+      {accept.isError && <p role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{submitErrorMessage(accept.error)}</p>}
+      <Button type="button" shape="pill" disabled={!checked || accept.isPending} onClick={() => accept.mutate(view.termsToAccept.map((d) => d.id))}>
+        {accept.isPending ? <Loader2 className="animate-spin" /> : "Accepter et continuer"}
+      </Button>
+    </div>
   );
 }
 
@@ -169,14 +189,15 @@ export default function CoachingPaiement() {
         <span className="text-ink-secondary">Formateur : {v.trainerName}</span>
         <span className="font-heading text-xl font-extrabold text-navy">{formatAmount(v.amountXof)}</span>
       </div>
-      {v.options.fallback && v.options.reason && (
+      {v.termsToAccept.length > 0 && <TermsGate token={token} view={v} />}
+      {v.termsToAccept.length === 0 && v.options.fallback && v.options.reason && (
         <p role="status" className="flex w-full items-start gap-2 rounded-xl bg-surface-sand px-4 py-3 text-left text-sm text-ink">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-navy" aria-hidden="true" />{v.options.reason}
         </p>
       )}
-      {v.options.online && <OnlineCard token={token} view={v} />}
-      {v.options.online && v.options.manual && <p className="text-sm font-semibold text-ink">Ou payez par Wave, Orange Money ou virement</p>}
-      {v.options.manual && (
+      {v.termsToAccept.length === 0 && v.options.online && <OnlineCard token={token} view={v} />}
+      {v.termsToAccept.length === 0 && v.options.online && v.options.manual && <p className="text-sm font-semibold text-ink">Ou payez par Wave, Orange Money ou virement</p>}
+      {v.termsToAccept.length === 0 && v.options.manual && (
         <ManualPaymentView
           headingLevel={2} title="Paiement manuel" amountXof={v.amountXof} subject={`votre coaching « ${v.offerLabel} »`}
           afterVerification="Dès que notre équipe l'a vérifiée, votre coaching est confirmé et votre formateur vous contacte."

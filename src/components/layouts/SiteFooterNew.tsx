@@ -5,6 +5,8 @@
 import { Link } from "react-router-dom";
 import { LogoChip } from "@/components/shared/Logo";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { openCookieSettings } from "@/lib/cookieConsent";
+import { LEGAL_PATHS } from "@/types/legal.type";
 
 export function SiteFooterNew() {
   const { content: nav } = useSiteContent("site.nav");
@@ -55,8 +57,15 @@ export function SiteFooterNew() {
       </div>
 
       {footer && company && (
-        <div className="mt-12 border-t border-white/10 pt-6 text-xs text-[#8FA5BC]">
-          © {new Date().getFullYear()} {company.name}. {footer.rights}
+        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-[#8FA5BC] sm:flex-row sm:items-center sm:justify-between">
+          <span>© {new Date().getFullYear()} {company.name}. {footer.rights}</span>
+          <nav aria-label="Informations légales" className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link to={LEGAL_PATHS.MENTIONS} className="hover:text-white">Mentions légales</Link>
+            <Link to={LEGAL_PATHS.CGU} className="hover:text-white">CGU</Link>
+            <Link to={LEGAL_PATHS.CGV} className="hover:text-white">CGV</Link>
+            <Link to={LEGAL_PATHS.PRIVACY} className="hover:text-white">Confidentialité</Link>
+            <button type="button" onClick={openCookieSettings} className="hover:text-white">Gérer mes cookies</button>
+          </nav>
         </div>
       )}
     </footer>

@@ -34,6 +34,8 @@ export interface PlansView { online: boolean; manual: boolean; fallback: boolean
 
 export interface PurchaseRequest {
   plan: PlanCode; channel?: OrderChannel; firstName: string; lastName?: string; email: string; phone?: string; acceptTerms: boolean;
+  /** Versions des textes légaux affichées (le serveur vérifie qu'elles sont en vigueur) ; absent tant que rien n'est publié. */
+  acceptedDocuments?: string[];
 }
 
 /** `checkoutUrl` est nul pour un paiement manuel : l'acheteur est dirigé vers la page de suivi, qui affiche les consignes. */

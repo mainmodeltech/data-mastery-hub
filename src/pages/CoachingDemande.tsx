@@ -9,6 +9,8 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 import { SeoHead } from "@/components/SeoHead";
+import { LegalConsent } from "@/components/legal/LegalConsent";
+import { useLegalAcceptedIds } from "@/hooks/useLegal";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card } from "@/components/shared";
 import { useSendCoachingRequest } from "@/hooks/useCoaching";
@@ -22,6 +24,7 @@ const inputClass =
 export default function CoachingDemande() {
   const [params] = useSearchParams();
   const send = useSendCoachingRequest();
+  const legalIds = useLegalAcceptedIds("COACHING_REQUEST");
   const [receipt, setReceipt] = useState<CoachingRequestReceipt | null>(null);
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -32,7 +35,7 @@ export default function CoachingDemande() {
     send.mutate(
       {
         firstName, lastName, email: text("email"), phone: text("phone") || undefined, company: text("company") || undefined,
-        tier: text("tier") || undefined, slot: text("slot") || undefined, message: text("message") || undefined, acceptTerms: data.get("terms") === "on",
+        tier: text("tier") || undefined, slot: text("slot") || undefined, message: text("message") || undefined, acceptTerms: data.get("terms") === "on", acceptedDocuments: legalIds,
       },
       { onSuccess: setReceipt },
     );
@@ -79,10 +82,9 @@ export default function CoachingDemande() {
                   <input name="slot" defaultValue={params.get("creneau") ?? ""} placeholder="Créneau souhaité (facultatif)" aria-label="Créneau souhaité" className={inputClass} />
                 </div>
                 <textarea name="message" rows={4} maxLength={4000} placeholder="Votre objectif, votre niveau, ce que vous voulez accomplir…" aria-label="Votre besoin" className={inputClass} />
-                <label className="flex items-start gap-2 text-sm text-ink">
-                  <input name="terms" type="checkbox" required className="mt-1 h-4 w-4 accent-[#1A3A5B]" />
-                  <span>J'accepte d'être contacté(e) au sujet de ma demande et que mes informations soient utilisées pour la traiter.</span>
-                </label>
+                <LegalConsent
+                  context="COACHING_REQUEST" lead="J'ai lu et j'accepte" fallbackLabel="J'accepte d'être contacté(e) au sujet de ma demande et que mes informations soient utilisées pour la traiter."
+                />
                 {send.isError && <p role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{submitErrorMessage(send.error)}</p>}
                 <Button type="submit" variant="primary" shape="pill" disabled={send.isPending}>
                   {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Envoyer ma demande"}

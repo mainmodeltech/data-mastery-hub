@@ -39,6 +39,7 @@ import {
   ClipboardCheck,
   SlidersHorizontal,
   HeartHandshake,
+  Scale,
 } from "lucide-react";
 
 type PermNavItem = AppNavItem & { access: readonly string[] };
@@ -71,6 +72,7 @@ const navItems: PermNavItem[] = [
   { href: "/admin/apprenants", label: "Apprenants", icon: GraduationCap, section: "Équipe & comptes", access: ACCESS.LEARNERS },
   { href: "/admin/comptes", label: "Comptes back-office", icon: ShieldCheck, section: "Équipe & comptes", access: ACCESS.ACCOUNTS },
   { href: "/admin/profils", label: "Profils & droits", icon: KeyRound, section: "Équipe & comptes", access: ACCESS.PROFILES },
+  { href: "/admin/textes-legaux", label: "Textes légaux", icon: Scale, section: "Équipe & comptes", access: ACCESS.LEGAL },
   { href: "/admin/reglages-paiement", label: "Réglages de paiement", icon: SlidersHorizontal, section: "Équipe & comptes", access: ACCESS.PAYMENT_SETTINGS },
   { href: "/admin/audit", label: "Journal d'audit", icon: ScrollText, section: "Équipe & comptes", access: ACCESS.AUDIT },
 ];

@@ -3,6 +3,7 @@
  * Contrat : modeltech-backend PublicCoachingController (/coaching-requests, /coaching/payments/{jeton}) et AdminCoachingController
  * (/admin/coaching-requests). Les montants sont en francs CFA (XOF, entiers) ; le prix est fixé par l'équipe à la validation.
  */
+import type { LegalDocumentRef } from "@/types/legal.type";
 import type { ManualMethod, OrderChannel } from "@/types/simulatorShop.type";
 
 export type CoachingStatus = "NEW" | "IN_REVIEW" | "AWAITING_PAYMENT" | "PAYMENT_DECLARED" | "PAID" | "DECLINED" | "CANCELLED" | "EXPIRED";
@@ -23,6 +24,8 @@ export const COACHING_STATUS_LABELS: Record<CoachingStatus, string> = {
 export interface CoachingRequestForm {
   firstName: string; lastName?: string; email: string; phone?: string; company?: string;
   tier?: string; slot?: string; message?: string; acceptTerms: boolean;
+  /** Versions des textes légaux affichées (le serveur vérifie qu'elles sont en vigueur) ; absent tant que rien n'est publié. */
+  acceptedDocuments?: string[];
 }
 
 /** `bookingUrl` : lien de réservation d'un échange de présentation (15 à 20 minutes), absent s'il n'est pas configuré. */
@@ -35,6 +38,8 @@ export interface CoachingPayView {
   firstName: string; offerLabel: string; trainerName: string; status: CoachingStatus; amountXof: number; options: CoachingPayOptions;
   declaredMethod: ManualMethod | null; proofUploaded: boolean; rejectNote: string | null; paidChannel: OrderChannel | null; receiptUrl: string | null;
   bookingUrl: string | null; expiresAt: string | null;
+  /** Conditions de vente à accepter avant de payer ; vide : rien à accepter, ou déjà accepté. */
+  termsToAccept: LegalDocumentRef[];
 }
 
 export interface CoachingStartResponse { checkoutRef: string; checkoutUrl: string }
