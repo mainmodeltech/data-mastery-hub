@@ -304,6 +304,26 @@ Prévoir un compte **Direction** (Super Admin), un compte **Financier** (ou Admi
 | P64 | Frais : renseigner `PAYMENTS_FEES_MODE=PASS_ON` et `PAYMENTS_FEES_PERCENT` côté serveur, redémarrer, ouvrir l'achat en ligne | Le prix en ligne est majoré des frais (ligne « dont X FCFA de frais ») ; le paiement manuel reste au prix du catalogue ; *Réglages de paiement* affiche « Répercutés » | ☐ |
 | P65 | Panne du prestataire (3 échecs de création de paiement de suite) | Le bandeau « Panne détectée » apparaît dans les réglages, les visiteurs se voient proposer le manuel avec un message d'explication ; *Remettre en service* rétablit le paiement en ligne | ☐ |
 
+### Paiement en ligne des inscriptions (lot L2)
+
+Prévoir une candidature acceptée en **3 échéances**, un compte **Direction** et le compte PayDunya **de test** configuré. Dans *Réglages de paiement*, passer **Inscriptions aux formations** sur *En ligne ou manuel*.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P66 | Ouvrir le lien de paiement d'une échéance (visiteur) | Carte **Payer en ligne** avec « Payer l'échéance 1 » et « Payer tout le solde (3 échéances) » (montants corrects, frais éventuels indiqués) ; le paiement manuel reste proposé dessous (« Ou payez par Wave… ») | ☐ |
+| P67 | Service réglé sur **Manuel seulement** | Le lien n'affiche que le paiement manuel, comme avant ; aucune carte « Payer en ligne » | ☐ |
+| P68 | « Payer l'échéance 1 » → payer chez PayDunya (sandbox) | Retour sur le lien avec « Paiement confirmé : merci ! » (après quelques secondes) ; l'échéance 1 est **Payée**, les suivantes **À payer** | ☐ |
+| P69 | Côté équipe, *Paiements* et *Candidatures* | L'échéance est « Confirmé » avec le moyen **Paiement en ligne** et « confirmé par paiement-en-ligne » ; l'inscription est **Confirmée**, l'apprenant reçoit son invitation, l'accès à la session est ouvert (une seule fois) | ☐ |
+| P70 | Sur une autre inscription, « Payer tout le solde » → payer | Retour « Paiement confirmé : 3 échéances réglées » ; les trois échéances sont **Payées** en un seul paiement | ☐ |
+| P71 | Après le règlement d'une échéance, ouvrir le lien de la suivante | Le solde proposé n'inclut plus que les échéances restantes (2 échéances, montant réduit) ; la même échéance ne peut plus être payée en ligne | ☐ |
+| P72 | Annuler sur la page PayDunya, ou fermer l'onglet avant le retour | Aucune échéance confirmée ; au retour « Paiement non finalisé » ; si le paiement a bien été encaissé, l'échéance se confirme d'elle-même sous quelques minutes | ☐ |
+| P73 | Payer puis **fermer l'onglet** avant le retour | L'échéance se confirme quand même (notification ou rapprochement sous 5 minutes) | ☐ |
+| P74 | Rouvrir le même lien de paiement en ligne dans la demi-heure | Le même lien PayDunya est repris (pas de seconde facture) | ☐ |
+| P75 | Inscription d'une **entreprise** (facture / bon de commande) | Jamais de paiement en ligne : seul le manuel est proposé | ☐ |
+| P76 | Service réglé sur **En ligne** (manuel en secours) puis *interrupteur général* coupé | Le lien affiche « Paiement en ligne indisponible » avec le message de secours et propose le manuel ; la déclaration manuelle est acceptée | ☐ |
+| P77 | Une échéance **déclarée** à la main (en vérification) | Elle ne peut pas être payée en ligne (message clair) ; les autres échéances le peuvent | ☐ |
+| P78 | *Journal d'audit* après un paiement en ligne | Ligne « Paiement confirmé » ; en cas d'incohérence de montant (cas simulé en test), ligne « Paiement en ligne encaissé mais incohérent » et **aucune** échéance confirmée | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |

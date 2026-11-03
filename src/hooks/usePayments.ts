@@ -4,7 +4,7 @@ import { paymentAdminService, paymentLinkService } from "@/services/api/paymentS
 import { REGISTRATION_KEYS } from "@/hooks/useRegistrations";
 import { QUERY_CONFIG } from "@/config/constants";
 import type { ManualRegistrationPayload } from "@/services/api/paymentService";
-import type { AcceptRegistrationPayload, DeclarePaymentPayload, ManualPaymentPayload } from "@/types/payment.type";
+import type { AcceptRegistrationPayload, CheckoutScope, DeclarePaymentPayload, ManualPaymentPayload } from "@/types/payment.type";
 
 export const PAYMENT_KEYS = {
   open: ["admin", "payments", "open"] as const,
@@ -133,6 +133,29 @@ export function usePaymentLink(token: string | undefined) {
     queryFn: () => paymentLinkService.get(token as string),
     enabled: !!token,
     retry: false,
+  });
+}
+
+export function useStartOnlinePayment(token: string) {
+  return useMutation({ mutationFn: (scope: CheckoutScope) => paymentLinkService.startOnline(token, scope) });
+}
+
+/** Suit une tentative de paiement en ligne : relancé toutes les 3 s tant qu'elle est en attente, puis rafraîchit la page du lien quand elle aboutit. */
+export function useCheckoutStatus(token: string, ref: string | null) {
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: ["payments", "checkout", ref],
+    queryFn: async () => {
+      const view = await paymentLinkService.checkout(ref as string);
+      if (view.status === "PAID") qc.invalidateQueries({ queryKey: PAYMENT_KEYS.link(token) });
+      return view;
+    },
+    enabled: !!ref,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchInterval: (query) => (query.state.data?.status === "PENDING" && query.state.dataUpdateCount < 60 ? 3000 : false),
   });
 }
 

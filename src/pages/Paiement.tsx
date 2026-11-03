@@ -1,19 +1,22 @@
 /**
  * Paiement.tsx — lien de paiement envoyé au candidat accepté (route publique /paiement/:token).
- * Le jeton est le seul secret : aucune donnée sensible n'est affichée. Le candidat paie par
- * Wave / Orange Money / virement hors du site, puis déclare sa référence (et joint une capture) ;
- * l'équipe vérifie et confirme depuis « Candidatures & paiements ».
+ * Le jeton est le seul secret : aucune donnée sensible n'est affichée. Deux moyens, selon les réglages de la Direction :
+ *   - en ligne (PayDunya) : une échéance ou tout le solde ; au retour (?checkout=…), le serveur relit le paiement avant de confirmer ;
+ *   - manuel : le candidat paie par Wave / Orange Money / virement hors du site, puis déclare sa référence (et joint une capture) ;
+ *     l'équipe vérifie et confirme depuis « Candidatures & paiements ».
+ * Le manuel sert aussi de secours : si l'en ligne est coupé ou en panne, le serveur le propose avec un message.
  */
 import { useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { AlertCircle, CheckCircle2, Clock, Copy, FileText, Loader2, Upload } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Copy, ExternalLink, FileText, Loader2, Upload } from "lucide-react";
 
 import { SeoHead } from "@/components/SeoHead";
+import { OnlinePaymentCard } from "@/components/payments/OnlinePaymentCard";
 import { Logo } from "@/components/shared/Logo";
 import { Button, Card, Pill } from "@/components/shared";
-import { useDeclarePayment, useDownloadInvoice, usePaymentLink, useUploadPaymentProof } from "@/hooks/usePayments";
+import { useCheckoutStatus, useDeclarePayment, useDownloadInvoice, usePaymentLink, useUploadPaymentProof } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
 import { ApiError } from "@/services/httpClient";
 import { useSiteContent } from "@/hooks/useSiteContent";
@@ -70,8 +73,38 @@ function Notice({ tone, title, children }: { tone: "success" | "info" | "error";
   );
 }
 
+const CHECKOUT_REF = /^[0-9a-fA-F-]{36}$/;
+
+/** Retour de la page du prestataire (?checkout=…) : suit la tentative, le serveur relit le paiement avant de rien confirmer. */
+function CheckoutReturn({ token, checkoutRef, cancelled }: { token: string; checkoutRef: string; cancelled: boolean }) {
+  const { data, isError } = useCheckoutStatus(token, checkoutRef);
+  if (isError) return <Notice tone="info" title="Paiement en cours de vérification">Nous n'avons pas pu relire l'état du paiement : réessayez dans un instant ou contactez-nous si vous avez été débité.</Notice>;
+  if (!data || data.status === "PENDING") {
+    return (
+      <Notice tone="info" title={cancelled ? "Paiement non finalisé" : "Paiement en cours de vérification"}>
+        {cancelled
+          ? "Vous avez quitté la page de paiement avant la fin. Si vous avez bien été débité, patientez : cette page se met à jour toute seule."
+          : "Nous attendons la confirmation de votre paiement. Cette page se met à jour toute seule (Orange Money et Wave peuvent demander une validation sur votre téléphone)."}
+      </Notice>
+    );
+  }
+  if (data.status === "PAID") {
+    return (
+      <Notice tone="success" title={data.installments > 1 ? `Paiement confirmé : ${data.installments} échéances réglées` : "Paiement confirmé : merci !"}>
+        {data.receiptUrl && data.receiptUrl.startsWith("https://") && (
+          <a href={data.receiptUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold underline"><ExternalLink className="h-3.5 w-3.5" />Mon reçu</a>
+        )}
+      </Notice>
+    );
+  }
+  return <Notice tone="error" title="Le paiement n'a pas abouti">Aucun montant n'a été validé sur votre inscription. Vous pouvez réessayer ci-dessous. Débité malgré tout ? Écrivez-nous avec le justificatif.</Notice>;
+}
+
 export default function Paiement() {
   const { token } = useParams<{ token: string }>();
+  const [search] = useSearchParams();
+  const rawCheckout = search.get("checkout");
+  const checkoutRef = rawCheckout && CHECKOUT_REF.test(rawCheckout) ? rawCheckout : null;
   const { toast } = useToast();
   const { data: p, isLoading, error } = usePaymentLink(token);
   const declare = useDeclarePayment(token ?? "");
@@ -153,7 +186,9 @@ export default function Paiement() {
           </p>
         </div>
 
-        {p.status === "CONFIRMED" && (
+        {checkoutRef && token && <CheckoutReturn token={token} checkoutRef={checkoutRef} cancelled={search.get("annule") === "1"} />}
+
+        {p.status === "CONFIRMED" && !checkoutRef && (
           <Notice tone="success" title="Paiement confirmé — merci !">
             {p.installmentNumber < p.installmentCount ? "Les échéances suivantes figurent ci-dessous." : "Vous recevrez vos accès par e-mail."}
           </Notice>
@@ -203,9 +238,21 @@ export default function Paiement() {
           )}
         </Card>
 
-        {awaitingPayment && (
+        {awaitingPayment && p.online?.online && token && (
+          <OnlinePaymentCard
+            token={token} currency={p.currency} installmentNumber={p.installmentNumber} installmentCount={p.installmentCount}
+            installment={p.online.installment} balance={p.online.balance}
+          />
+        )}
+
+        {awaitingPayment && !p.online?.online && p.online?.fallback && p.online.reason && (
+          <Notice tone="info" title="Paiement en ligne indisponible">{p.online.reason}</Notice>
+        )}
+
+        {awaitingPayment && (p.online ? p.online.manual : true) && (
           <Card radius="callout" className="flex flex-col gap-5 border border-[#E7E0D4] p-6">
             <div className="flex flex-col gap-2">
+              {p.online?.online && <p className="text-sm font-semibold text-ink">Ou payez par Wave, Orange Money ou virement</p>}
               <h2 className="font-heading text-xl font-bold text-navy">1. Effectuez le paiement</h2>
               <p className="text-sm text-ink-secondary">
                 Réglez {formatAmount(p.amount, p.currency)} par {methods.map((m) => PAYMENT_METHOD_LABELS[m]).join(", ")}.
