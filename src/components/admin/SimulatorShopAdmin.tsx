@@ -1,24 +1,26 @@
 /**
- * Vente en ligne du simulateur (administration) : forfaits (prix, durée, quota), commandes et état de la passerelle de paiement.
- * Les droits sont vérifiés par le serveur : forfaits et revérification = SIMULATOR_MANAGE ; lecture des commandes = SIMULATOR_MANAGE ou PAYMENTS_VIEW.
+ * Vente du simulateur (administration) : forfaits (prix, durée, quota), commandes et état de la passerelle de paiement.
+ * Paiements manuels (Wave, Orange Money, virement) : l'équipe vérifie le justificatif puis confirme (l'accès s'ouvre) ou refuse avec un motif.
+ * Les droits sont vérifiés par le serveur : forfaits et revérification = SIMULATOR_MANAGE ; lecture des commandes = SIMULATOR_MANAGE ou PAYMENTS_VIEW ;
+ * confirmer ou refuser un paiement manuel = SIMULATOR_MANAGE ou PAYMENTS_MANAGE.
  */
 import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { AlertTriangle, CheckCircle2, Loader2, Pencil, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileImage, Loader2, Pencil, RefreshCw, X } from "lucide-react";
 
-import { EmptyState, ErrorNotice, errorMessage, Field, inputClass, Pager } from "@/components/admin/AdminKit";
+import { EmptyState, ErrorNotice, errorMessage, Field, inputClass, Pager, ReasonDialog } from "@/components/admin/AdminKit";
 import { Button, Card, Pill } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useAdminPlans, useGatewayStatus, useSimOrders, useUpdatePlan, useVerifyOrder } from "@/hooks/useSimulatorAdmin";
+import { useAdminPlans, useConfirmOrder, useGatewayStatus, useOrderProof, useRejectOrder, useSimOrders, useUpdatePlan, useVerifyOrder } from "@/hooks/useSimulatorAdmin";
 import { formatAmount } from "@/types/payment.type";
-import { ORDER_STATUS_LABELS, type AdminOrder, type AdminPlan, type OrderStatus } from "@/types/simulatorShop.type";
+import { MANUAL_METHOD_LABELS, ORDER_STATUS_LABELS, type AdminOrder, type AdminPlan, type OrderStatus } from "@/types/simulatorShop.type";
 
 const stamp = (iso: string | null) => (iso ? format(new Date(iso), "d MMM yyyy 'à' HH:mm", { locale: fr }) : "—");
 
-const STATUS_VARIANT: Record<OrderStatus, "success" | "warning" | "error" | "neutral"> = {
-  PAID: "success", PENDING: "warning", FAILED: "error", CANCELLED: "neutral", EXPIRED: "neutral",
+const STATUS_VARIANT: Record<OrderStatus, "success" | "warning" | "error" | "neutral" | "info"> = {
+  PAID: "success", PENDING: "warning", DECLARED: "info", FAILED: "error", CANCELLED: "neutral", EXPIRED: "neutral",
 };
 
 // ── Passerelle ────────────────────────────────────────────────────────
@@ -123,12 +125,45 @@ export function SimulatorPlans() {
 
 // ── Commandes ─────────────────────────────────────────────────────────
 
-export function SimulatorOrders({ canVerify }: { canVerify: boolean }) {
+export function SimulatorOrders({ canVerify, canConfirm }: { canVerify: boolean; canConfirm: boolean }) {
   const { toast } = useToast();
   const [status, setStatus] = useState<OrderStatus | "">("");
   const [page, setPage] = useState(0);
   const { data, isLoading, isError, error } = useSimOrders(status || undefined, page);
   const verify = useVerifyOrder();
+  const confirm = useConfirmOrder();
+  const reject = useRejectOrder();
+  const proof = useOrderProof();
+  const [rejecting, setRejecting] = useState<AdminOrder | null>(null);
+
+  const confirmPayment = async (o: AdminOrder) => {
+    try {
+      await confirm.mutateAsync(o.id);
+      toast({ title: "Paiement confirmé", description: `${o.learnerEmail} : accès ouvert.` });
+    } catch (err) {
+      toast({ title: "Confirmation impossible", description: errorMessage(err), variant: "destructive" });
+    }
+  };
+
+  const rejectPayment = async (reason: string) => {
+    if (!rejecting) return;
+    try {
+      await reject.mutateAsync({ id: rejecting.id, reason });
+      toast({ title: "Paiement refusé", description: "L'acheteur voit le motif et peut déclarer de nouveau." });
+      setRejecting(null);
+    } catch (err) {
+      toast({ title: "Refus impossible", description: errorMessage(err), variant: "destructive" });
+    }
+  };
+
+  const openProof = async (o: AdminOrder) => {
+    try {
+      const url = await proof.mutateAsync(o.id);
+      if (url.startsWith("https://") || url.startsWith("http://localhost")) window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast({ title: "Justificatif indisponible", description: errorMessage(err), variant: "destructive" });
+    }
+  };
 
   const recheck = async (o: AdminOrder) => {
     try {
@@ -150,7 +185,7 @@ export function SimulatorOrders({ canVerify }: { canVerify: boolean }) {
       </div>
       {isLoading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />}
       {isError && <ErrorNotice>{errorMessage(error, "Impossible de charger les commandes.")}</ErrorNotice>}
-      {data && data.items.length === 0 && <EmptyState title="Aucune commande" text="Les achats en ligne apparaîtront ici." />}
+      {data && data.items.length === 0 && <EmptyState title="Aucune commande" text="Les achats, en ligne ou manuels, apparaîtront ici." />}
       {data && data.items.length > 0 && (
         <>
           <Card radius="stat" className="overflow-x-auto border border-[#E7E0D4] p-0">
@@ -166,14 +201,34 @@ export function SimulatorOrders({ canVerify }: { canVerify: boolean }) {
                   <tr key={o.id} className="border-b border-[#E7E0D4] align-top last:border-b-0">
                     <td className="px-4 py-3"><div className="font-semibold text-ink">{o.learnerName}</div><div className="text-xs text-ink-secondary">{o.learnerEmail}</div></td>
                     <td className="px-4 py-3">{o.planName}</td>
-                    <td className="px-4 py-3 tabular-nums">{formatAmount(o.amountXof)}</td>
+                    <td className="px-4 py-3 tabular-nums">
+                      {formatAmount(o.chargedXof)}
+                      {o.feeXof > 0 && <div className="text-xs text-ink-secondary">dont {formatAmount(o.feeXof)} de frais</div>}
+                      <div className="text-xs text-ink-secondary">{o.channel === "MANUAL" ? "Manuel" : "En ligne"}</div>
+                    </td>
                     <td className="px-4 py-3 text-ink-secondary">{stamp(o.createdAt)}{o.paidAt && <div className="text-xs">payée le {stamp(o.paidAt)}</div>}</td>
                     <td className="px-4 py-3">
                       <Pill variant={STATUS_VARIANT[o.status]}>{ORDER_STATUS_LABELS[o.status]}</Pill>
                       {o.providerMode === "sandbox" && <div className="mt-1 text-xs text-warning">test</div>}
                       {o.failureReason && <div className="mt-1 max-w-56 text-xs text-ink-secondary">{o.failureReason}</div>}
+                      {o.channel === "MANUAL" && o.manualMethod && (
+                        <div className="mt-1 max-w-56 text-xs text-ink-secondary">
+                          {MANUAL_METHOD_LABELS[o.manualMethod]} · réf. <span className="break-all font-mono">{o.manualReference}</span>
+                          {o.declaredAt && <div>déclaré le {stamp(o.declaredAt)}</div>}
+                        </div>
+                      )}
+                      {o.confirmedBy && <div className="mt-1 text-xs text-ink-secondary">confirmé par {o.confirmedBy}</div>}
                     </td>
                     <td className="px-4 py-3 text-right">
+                      {o.proofUploaded && (
+                        <Button type="button" size="sm" variant="outline" shape="rounded" className="mr-2" disabled={proof.isPending} onClick={() => openProof(o)}><FileImage />Justificatif</Button>
+                      )}
+                      {canConfirm && o.status === "DECLARED" && (
+                        <span className="inline-flex gap-2">
+                          <Button type="button" size="sm" shape="rounded" disabled={confirm.isPending} onClick={() => confirmPayment(o)}><CheckCircle2 />Confirmer</Button>
+                          <Button type="button" size="sm" variant="outline" shape="rounded" onClick={() => setRejecting(o)}><X />Refuser</Button>
+                        </span>
+                      )}
                       {canVerify && o.status === "PENDING" && o.providerToken && (
                         <Button type="button" size="sm" variant="outline" shape="rounded" disabled={verify.isPending} onClick={() => recheck(o)}><RefreshCw />Revérifier</Button>
                       )}
@@ -185,6 +240,15 @@ export function SimulatorOrders({ canVerify }: { canVerify: boolean }) {
           </Card>
           <Pager page={page} totalPages={data.totalPages} totalElements={data.totalElements} onChange={setPage} />
         </>
+      )}
+      {rejecting && (
+        <ReasonDialog
+          title="Refuser ce paiement"
+          description={`${rejecting.learnerEmail} verra ce motif et pourra déclarer son paiement de nouveau. Aucun accès n'est ouvert.`}
+          confirmLabel="Refuser"
+          onClose={() => setRejecting(null)}
+          onSubmit={rejectPayment}
+        />
       )}
     </div>
   );

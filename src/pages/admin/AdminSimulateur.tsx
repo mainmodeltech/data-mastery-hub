@@ -458,7 +458,7 @@ export default function AdminSimulateur() {
 
         {tab === "grants" && can("SIMULATOR_MANAGE") && <SimulatorGrants />}
         {tab === "plans" && can("SIMULATOR_MANAGE") && <SimulatorPlans />}
-        {tab === "orders" && (can("SIMULATOR_MANAGE") || can("PAYMENTS_VIEW")) && <SimulatorOrders canVerify={can("SIMULATOR_MANAGE")} />}
+        {tab === "orders" && (can("SIMULATOR_MANAGE") || can("PAYMENTS_VIEW")) && <SimulatorOrders canVerify={can("SIMULATOR_MANAGE")} canConfirm={can("SIMULATOR_MANAGE") || can("PAYMENTS_MANAGE")} />}
 
         {tab === "questions" && (
           <>

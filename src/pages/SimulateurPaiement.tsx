@@ -1,7 +1,8 @@
 /**
- * /simulateur-pl-300/paiement?ref=… — retour du paiement d'un forfait. La page ne décide de rien : elle interroge le serveur, qui
- * relit l'état du paiement auprès du prestataire (toutes les 3 secondes tant qu'il est en attente) et n'ouvre l'accès qu'une fois
- * le paiement confirmé. La référence est opaque : elle seule permet de suivre la commande, sans compte.
+ * /simulateur-pl-300/paiement?ref=… — suivi du paiement d'un forfait. La page ne décide de rien : elle interroge le serveur.
+ *   - En ligne : le serveur relit l'état du paiement auprès du prestataire (toutes les 3 secondes tant qu'il est en attente).
+ *   - Manuel : l'acheteur déclare son paiement, l'équipe le vérifie (voir ManualPaymentPanel).
+ * L'accès ne s'ouvre qu'une fois le paiement confirmé. La référence est opaque : elle seule permet de suivre la commande, sans compte.
  */
 import { AlertCircle, CheckCircle2, Clock, ExternalLink, Loader2, XCircle } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -9,6 +10,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { SeoHead } from "@/components/SeoHead";
 import { SiteLayout } from "@/components/layouts/SiteLayout";
 import { Button, Card } from "@/components/shared";
+import { ManualPaymentPanel } from "@/components/simulator/ManualPaymentPanel";
 import { useOrderStatus } from "@/hooks/useSimulatorShop";
 import { formatAmount } from "@/types/payment.type";
 
@@ -56,7 +58,7 @@ export default function SimulateurPaiement() {
               <CheckCircle2 className="h-14 w-14 text-success" aria-hidden="true" />
               <h1 className="font-heading text-2xl font-bold text-navy">Paiement confirmé</h1>
               <p className="text-sm text-ink-secondary">
-                Forfait <strong>{data.planName}</strong> · {formatAmount(data.amountXof)}. Votre accès est ouvert.
+                Forfait <strong>{data.planName}</strong> · {formatAmount(data.chargedXof)}. Votre accès est ouvert.
               </p>
               <p className="rounded-card bg-surface-sand px-4 py-3 text-sm text-ink">
                 Un e-mail avec votre <strong>lien de connexion</strong> vient d'être envoyé à <strong>{data.emailHint}</strong>.
@@ -73,7 +75,9 @@ export default function SimulateurPaiement() {
             </>
           )}
 
-          {data?.status === "PENDING" && (
+          {data?.channel === "MANUAL" && (data.status === "PENDING" || data.status === "DECLARED") && <ManualPaymentPanel order={data} />}
+
+          {data?.channel === "ONLINE" && data.status === "PENDING" && (
             <>
               <Clock className="h-12 w-12 text-warning" aria-hidden="true" />
               <h1 className="font-heading text-xl font-bold text-navy">{cancelledByUser ? "Paiement non finalisé" : "Paiement en cours de vérification"}</h1>

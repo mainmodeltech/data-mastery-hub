@@ -33,6 +33,8 @@ export const ACCESS = {
   ACCOUNTS: ["ACCOUNTS_MANAGE"],
   PROFILES: ["PROFILES_MANAGE"],
   AUDIT: ["AUDIT_VIEW"],
+  /** Réglages de paiement (en ligne / manuel, coupure d'urgence) : Direction seulement. */
+  PAYMENT_SETTINGS: ["PAYMENT_SETTINGS_MANAGE"],
   SIMULATOR: ["SIMULATOR_VIEW"],
   /** Formateur : proposer des modifications du programme de ses formations. */
   PROGRAM_PROPOSE: ["PROGRAM_PROPOSE"],

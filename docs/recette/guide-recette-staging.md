@@ -66,6 +66,7 @@ Détail du menu d'administration par rôle (✔ visible, – masqué) :
 | Apprenants | ✔ | ✔ | – | – | – |
 | Suivi de session | ✔ | ✔ | – | ✔ (ses sessions) | – |
 | Comptes back-office | ✔ | – | – | – | – |
+| Réglages de paiement (en ligne / manuel, coupure d'urgence) | ✔ | – | – | – | – |
 
 ## 3. Parcours à tester
 
@@ -282,6 +283,26 @@ Prévoir **deux comptes** avec les droits du simulateur (profil Pédagogie ou Di
 | P50 | Commande restée « En attente » alors que le paiement est encaissé | Bouton **Revérifier** : la commande passe à « Payée » ; sinon elle l'est d'elle-même sous 5 minutes | ☐ |
 | P51 | Retirer un forfait de la vente (*Forfaits*), recharger la page publique | Le forfait n'a plus de bouton « Acheter » ; impossible de retirer le dernier forfait en vente | ☐ |
 | P52 | Environnement **sans clés** PayDunya | Aucun bouton « Acheter » sur la page publique ; la liste d'attente reste disponible | ☐ |
+
+### Réglages de paiement et paiement manuel du simulateur (lot L1)
+
+Prévoir un compte **Direction** (Super Admin), un compte **Financier** (ou Admin) et un acheteur de test. Les réglages sont dans *Équipe & comptes → Réglages de paiement*.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P53 | Se connecter avec un compte **Admin** ou **Financier** | L'entrée *Réglages de paiement* est **absente** du menu ; l'ouvrir par son adresse (`/admin/reglages-paiement`) est refusé ; seule la Direction y accède | ☐ |
+| P54 | Direction : ouvrir *Réglages de paiement* | État de PayDunya (mode test ou production, « Non configuré » si les clés manquent), adresse de notification, interrupteur général, un choix par service, frais en lecture seule ; **aucune clé** n'est affichée | ☐ |
+| P55 | Changer le mode du simulateur sans motif | Impossible : le motif est obligatoire dans la fenêtre de confirmation ; avec motif, « Réglages enregistrés » et une ligne `PAYMENT_SETTINGS_CHANGED` dans le *Journal d'audit* (motif et auteur) | ☐ |
+| P56 | Simulateur sur **En ligne ou manuel**, ouvrir *Acheter ce forfait* en visiteur | Le client choisit « Payer en ligne » ou « Payer par Wave, Orange Money ou virement » ; le montant affiché est celui du serveur | ☐ |
+| P57 | Choisir le paiement **manuel**, accepter les conditions, continuer | Page de suivi avec le montant, le numéro Wave / Orange Money de l'entreprise (bouton Copier) et le formulaire de déclaration ; **aucun accès ouvert** | ☐ |
+| P58 | Déclarer sans référence, puis avec moyen + référence | Sans référence : envoi impossible ; avec : « Paiement en cours de vérification » (la page se met à jour toute seule) ; une capture d'écran peut être jointe (5 Mo max) | ☐ |
+| P59 | *Simulateur → Commandes* (Financier ou Direction) | Commande « À vérifier » avec moyen, référence, date de déclaration, bouton *Justificatif* si joint, boutons **Confirmer** / **Refuser** | ☐ |
+| P60 | **Refuser** (motif obligatoire), puis revenir sur la page de suivi de l'acheteur | La commande repasse « En attente » ; l'acheteur voit le motif et peut déclarer de nouveau | ☐ |
+| P61 | Déclarer de nouveau, puis **Confirmer** | Commande « Payée », « confirmé par » l'auteur de la confirmation ; droit d'usage créé avec la source « paiement-manuel » ; l'acheteur reçoit sa confirmation et son lien de connexion ; confirmer une seconde fois est refusé | ☐ |
+| P62 | Un profil qui voit les paiements sans les gérer (Admissions) ouvre les commandes | Pas de boutons Confirmer / Refuser ; l'appel direct à ces actions est refusé par le serveur | ☐ |
+| P63 | **Coupure d'urgence** : désactiver « Paiement en ligne activé », enregistrer (motif), recharger la page publique du simulateur en visiteur | Message « Le paiement en ligne est momentanément désactivé » ; seul le choix manuel est proposé ; les commandes en cours déjà payées en ligne ne sont pas touchées ; réactiver rétablit le paiement en ligne | ☐ |
+| P64 | Frais : renseigner `PAYMENTS_FEES_MODE=PASS_ON` et `PAYMENTS_FEES_PERCENT` côté serveur, redémarrer, ouvrir l'achat en ligne | Le prix en ligne est majoré des frais (ligne « dont X FCFA de frais ») ; le paiement manuel reste au prix du catalogue ; *Réglages de paiement* affiche « Répercutés » | ☐ |
+| P65 | Panne du prestataire (3 échecs de création de paiement de suite) | Le bandeau « Panne détectée » apparaît dans les réglages, les visiteurs se voient proposer le manuel avec un message d'explication ; *Remettre en service* rétablit le paiement en ligne | ☐ |
 
 ### Espace apprenant
 
