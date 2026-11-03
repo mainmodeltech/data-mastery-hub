@@ -210,7 +210,7 @@ export function ManualPaymentDialog({ registration, onClose }: { registration: R
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Moyen de paiement *" htmlFor="mp-method">
               <select id="mp-method" className={inputClass} value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
-                {(Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethod[]).map((m) => <option key={m} value={m}>{PAYMENT_METHOD_LABELS[m]}</option>)}
+                {(Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethod[]).filter((m) => m !== "PAYDUNYA").map((m) => <option key={m} value={m}>{PAYMENT_METHOD_LABELS[m]}</option>)}
               </select>
             </Field>
             <Field label="Échéance n°" htmlFor="mp-inst" hint="Vide : la première non payée.">

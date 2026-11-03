@@ -88,6 +88,14 @@ export const simulatorAdminService = {
 
   verifyOrder: async (id: string): Promise<AdminOrder> => (await httpClient.post<ApiResponse<AdminOrder>>(`${base}/orders/${id}/verify`)).data,
 
+  confirmOrder: async (id: string): Promise<AdminOrder> => (await httpClient.post<ApiResponse<AdminOrder>>(`${base}/orders/${id}/confirm`)).data,
+
+  rejectOrder: async (id: string, reason: string): Promise<AdminOrder> =>
+    (await httpClient.post<ApiResponse<AdminOrder>>(`${base}/orders/${id}/reject`, { reason })).data,
+
+  /** Lien signé et temporaire vers le justificatif joint par l'acheteur. */
+  orderProof: async (id: string): Promise<string> => (await httpClient.get<ApiResponse<{ url: string }>>(`${base}/orders/${id}/proof`)).data.url,
+
   gatewayStatus: async (): Promise<GatewayStatus> => (await httpClient.get<ApiResponse<GatewayStatus>>(`${base}/payments/status`)).data,
 
   grant: async (body: GrantRequest): Promise<GrantView> => (await httpClient.post<ApiResponse<GrantView>>(`${base}/grants`, body)).data,

@@ -143,6 +143,29 @@ export function useVerifyOrder() {
   });
 }
 
+export function useConfirmOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => simulatorAdminService.confirmOrder(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SIM_KEYS.orders });
+      qc.invalidateQueries({ queryKey: SIM_KEYS.grants });
+    },
+  });
+}
+
+export function useRejectOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => simulatorAdminService.rejectOrder(id, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SIM_KEYS.orders }),
+  });
+}
+
+export function useOrderProof() {
+  return useMutation({ mutationFn: (id: string) => simulatorAdminService.orderProof(id) });
+}
+
 export function useGatewayStatus() {
   return useQuery({ queryKey: SIM_KEYS.gateway, queryFn: simulatorAdminService.gatewayStatus, staleTime: 30 * 1000, retry: false });
 }

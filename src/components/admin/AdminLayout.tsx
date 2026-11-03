@@ -37,6 +37,8 @@ import {
   ScrollText,
   FileQuestion,
   ClipboardCheck,
+  SlidersHorizontal,
+  HeartHandshake,
 } from "lucide-react";
 
 type PermNavItem = AppNavItem & { access: readonly string[] };
@@ -51,6 +53,7 @@ const navItems: PermNavItem[] = [
   { href: "/admin/bootcamp-sessions", label: "Sessions", icon: CalendarDays, section: "Catalogue", access: ACCESS.CATALOG },
   { href: "/admin/propositions", label: "Propositions", icon: ClipboardCheck, section: "Catalogue", access: ACCESS.PROPOSALS_REVIEW },
   { href: "/admin/simulateur", label: "Simulateur", icon: FileQuestion, section: "Catalogue", access: ACCESS.SIMULATOR },
+  { href: "/admin/coaching", label: "Demandes de coaching", icon: HeartHandshake, section: "Catalogue", access: ACCESS.COACHING },
   { href: "/admin/candidatures", label: "Candidatures", icon: Wallet, section: "Admissions", access: ACCESS.APPLICATIONS },
   { href: "/admin/paiements", label: "Paiements", icon: Banknote, section: "Admissions", access: ACCESS.PAYMENTS },
   { href: "/admin/factures", label: "Factures", icon: Receipt, section: "Admissions", access: ACCESS.INVOICES },
@@ -68,6 +71,7 @@ const navItems: PermNavItem[] = [
   { href: "/admin/apprenants", label: "Apprenants", icon: GraduationCap, section: "Équipe & comptes", access: ACCESS.LEARNERS },
   { href: "/admin/comptes", label: "Comptes back-office", icon: ShieldCheck, section: "Équipe & comptes", access: ACCESS.ACCOUNTS },
   { href: "/admin/profils", label: "Profils & droits", icon: KeyRound, section: "Équipe & comptes", access: ACCESS.PROFILES },
+  { href: "/admin/reglages-paiement", label: "Réglages de paiement", icon: SlidersHorizontal, section: "Équipe & comptes", access: ACCESS.PAYMENT_SETTINGS },
   { href: "/admin/audit", label: "Journal d'audit", icon: ScrollText, section: "Équipe & comptes", access: ACCESS.AUDIT },
 ];
 

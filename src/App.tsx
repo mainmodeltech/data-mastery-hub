@@ -48,6 +48,9 @@ const EspaceCalendrier = lazy(() => import('./pages/EspaceCalendrier'));
 const EspaceRessources = lazy(() => import('./pages/EspaceRessources'));
 const EspaceProfil = lazy(() => import('./pages/EspaceProfil'));
 const Coaching = lazy(() => import('./pages/Coaching'));
+const CoachingDemande = lazy(() => import('./pages/CoachingDemande'));
+const CoachingPaiement = lazy(() => import('./pages/CoachingPaiement'));
+const AdminCoaching = lazy(() => import('./pages/admin/AdminCoaching'));
 const Entreprises = lazy(() => import('./pages/Entreprises'));
 const Simulateur = lazy(() => import('./pages/Simulateur'));
 const SimulateurPaiement = lazy(() => import('./pages/SimulateurPaiement'));
@@ -84,6 +87,7 @@ const AdminComptes = lazy(() => import('./pages/admin/AdminComptes'));
 const AdminProfils = lazy(() => import('./pages/admin/AdminProfils'));
 const AdminSimulateur = lazy(() => import('./pages/admin/AdminSimulateur'));
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit'));
+const AdminReglagesPaiement = lazy(() => import('./pages/admin/AdminReglagesPaiement'));
 const AdminPropositions = lazy(() => import('./pages/admin/AdminPropositions'));
 const AdminDomaines = lazy(() => import('./pages/admin/AdminDomaines'));
 const AdminPartenaires = lazy(() => import('./pages/admin/AdminPartenaires'));
@@ -154,6 +158,8 @@ const App = () => (
                   <Route path="/contact" element={<Contact />} />
                   {/* Lot 2 — nouvelles pages publiques (docs/design/README.md §2) */}
                   <Route path="/coaching" element={<Coaching />} />
+                  <Route path="/coaching/demande" element={<CoachingDemande />} />
+                  <Route path="/coaching/paiement/:token" element={<CoachingPaiement />} />
                   <Route path="/entreprises" element={<Entreprises />} />
                   <Route path="/simulateur-pl-300" element={<Simulateur />} />
                   <Route path="/simulateur-pl-300/paiement" element={<SimulateurPaiement />} />
@@ -229,6 +235,8 @@ const App = () => (
                   <Route path="/admin/simulateur" element={<ProtectedRoute permissions={ACCESS.SIMULATOR}><AdminSimulateur /></ProtectedRoute>} />
                   <Route path="/admin/profils" element={<ProtectedRoute permissions={ACCESS.PROFILES}><AdminProfils /></ProtectedRoute>} />
                   <Route path="/admin/audit" element={<ProtectedRoute permissions={ACCESS.AUDIT}><AdminAudit /></ProtectedRoute>} />
+                  <Route path="/admin/coaching" element={<ProtectedRoute permissions={ACCESS.COACHING}><AdminCoaching /></ProtectedRoute>} />
+                  <Route path="/admin/reglages-paiement" element={<ProtectedRoute permissions={ACCESS.PAYMENT_SETTINGS}><AdminReglagesPaiement /></ProtectedRoute>} />
                   <Route path="/admin/domaines" element={<ProtectedRoute permissions={ACCESS.CATALOG}><AdminDomaines /></ProtectedRoute>} />
                   <Route path="/admin/partenaires" element={<ProtectedRoute permissions={ACCESS.PARTNERS}><AdminPartenaires /></ProtectedRoute>} />
                   <Route path="/admin/sessions/:id" element={<ProtectedRoute permissions={ACCESS.SESSION_FOLLOW}><AdminSessionSuivi /></ProtectedRoute>} />

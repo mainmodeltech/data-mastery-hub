@@ -6,7 +6,8 @@
  */
 
 export type PaymentStatus = "PENDING" | "DECLARED" | "CONFIRMED" | "REJECTED" | "CANCELLED" | "REFUNDED";
-export type PaymentMethod = "WAVE" | "ORANGE_MONEY" | "VIREMENT" | "ENTREPRISE" | "ESPECES";
+/** PAYDUNYA : payé en ligne, posé par le serveur après relecture chez le prestataire (jamais saisi ni déclaré à la main). */
+export type PaymentMethod = "WAVE" | "ORANGE_MONEY" | "VIREMENT" | "ENTREPRISE" | "ESPECES" | "PAYDUNYA";
 export type PayerType = "INDIVIDUAL" | "COMPANY";
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -15,6 +16,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   VIREMENT: "Virement bancaire",
   ENTREPRISE: "Facture entreprise",
   ESPECES: "Espèces",
+  PAYDUNYA: "Paiement en ligne",
 };
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
@@ -131,6 +133,32 @@ export interface PublicPayment {
   totalAmount: number;
   schedule: { installmentNumber: number; amount: number; dueDate: string | null; status: PaymentStatus }[];
   payTo: { phone: string | null; methods: PaymentMethod[] };
+  /** Moyens proposés et montants (frais compris) d'une échéance et du solde ; absent si le serveur ne les renseigne pas. */
+  online?: OnlineOptions;
+}
+
+/** `amount` : prix du catalogue ; `fee` : frais répercutés (0 si absorbés) ; `total` : montant encaissé en ligne ; `count` : échéances couvertes. */
+export interface OnlineAmounts { amount: number; fee: number; total: number; count: number }
+
+/**
+ * `online` / `manual` : moyens proposés (au moins un est toujours vrai). `fallback` : le paiement en ligne est indisponible et le manuel le
+ * remplace (`reason` est alors un message prêt à afficher). `installment` : cette échéance seule ; `balance` : tout le solde, seulement s'il
+ * reste au moins deux échéances à régler.
+ */
+export interface OnlineOptions {
+  online: boolean; manual: boolean; fallback: boolean; reason?: string;
+  installment?: OnlineAmounts; balance?: OnlineAmounts;
+}
+
+export type CheckoutScope = "INSTALLMENT" | "BALANCE";
+export type CheckoutStatus = "PENDING" | "PAID" | "FAILED" | "CANCELLED" | "EXPIRED";
+
+export interface StartCheckoutResponse { checkoutRef: string; checkoutUrl: string }
+
+/** Suivi d'une tentative de paiement en ligne au retour du prestataire. */
+export interface CheckoutView {
+  ref: string; status: CheckoutStatus; scope: CheckoutScope; amountXof: number; feeXof: number; chargedXof: number;
+  installments: number; receiptUrl?: string;
 }
 
 export interface DeclarePaymentPayload {

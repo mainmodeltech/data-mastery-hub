@@ -8,10 +8,13 @@ import type {
   AcceptRegistrationPayload,
   AdminEnrollment,
   AdminPayment,
+  CheckoutScope,
+  CheckoutView,
   DeclarePaymentPayload,
   ManualPaymentPayload,
   PaymentStatus,
   PublicPayment,
+  StartCheckoutResponse,
 } from "@/types/payment.type";
 
 interface ApiResponse<T> {
@@ -105,6 +108,14 @@ export const paymentLinkService = {
 
   declare: async (token: string, payload: DeclarePaymentPayload): Promise<PublicPayment> =>
     (await httpClient.post<ApiResponse<PublicPayment>>(`/payments/${encodeURIComponent(token)}/declaration`, payload, { skipAuth: true })).data,
+
+  /** Démarre le paiement en ligne d'une échéance ou de tout le solde : renvoie l'adresse de la page du prestataire. */
+  startOnline: async (token: string, scope: CheckoutScope): Promise<StartCheckoutResponse> =>
+    (await httpClient.post<ApiResponse<StartCheckoutResponse>>(`/payments/${encodeURIComponent(token)}/online`, { scope }, { skipAuth: true })).data,
+
+  /** Suivi d'une tentative (référence opaque reçue au retour du prestataire). */
+  checkout: async (ref: string): Promise<CheckoutView> =>
+    (await httpClient.get<ApiResponse<CheckoutView>>(`/payments/online-checkouts/${encodeURIComponent(ref)}`, { skipAuth: true })).data,
 
   /** Facture de l'inscription (PDF) ; 404 si aucune facture en vigueur */
   downloadInvoice: (token: string): Promise<Blob> =>

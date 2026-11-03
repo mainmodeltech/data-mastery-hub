@@ -229,7 +229,7 @@ function SimulateurBody({ c }: { c: PageSimulateur }) {
           {c.plans.items.map((p) => {
             // Le prix affiché est celui que le serveur facturera ; à défaut (serveur injoignable), le texte de la page.
             const live = shop.data?.plans.find((x) => x.code === p.code);
-            const canBuy = !!live && shop.data?.paymentsEnabled;
+            const canBuy = !!live && !!shop.data && (shop.data.online || shop.data.manual);
             return (
             <Card key={p.code} radius="card" className={cn("flex flex-col gap-4 p-6", p.highlighted && "border-2 border-navy")}>
               <div className="flex flex-col gap-1">
@@ -331,7 +331,7 @@ function SimulateurBody({ c }: { c: PageSimulateur }) {
       <section className="px-6 pb-16 lg:px-20">
         <p className="text-xs leading-relaxed text-ink-secondary">{c.disclaimer}</p>
       </section>
-      {buying && <PurchaseDialog plan={buying} termsLabel="J'accepte les conditions d'utilisation et de vente du simulateur." onClose={() => setBuying(null)} />}
+      {buying && shop.data && <PurchaseDialog plan={buying} options={shop.data} termsLabel="J'accepte les conditions d'utilisation et de vente du simulateur." onClose={() => setBuying(null)} />}
     </>
   );
 }

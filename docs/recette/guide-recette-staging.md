@@ -66,6 +66,8 @@ Détail du menu d'administration par rôle (✔ visible, – masqué) :
 | Apprenants | ✔ | ✔ | – | – | – |
 | Suivi de session | ✔ | ✔ | – | ✔ (ses sessions) | – |
 | Comptes back-office | ✔ | – | – | – | – |
+| Réglages de paiement (en ligne / manuel, coupure d'urgence) | ✔ | – | – | – | – |
+| Demandes de coaching (profil Pédagogie ; la Finance voit les paiements à vérifier) | ✔ | ✔ | – | – | – |
 
 ## 3. Parcours à tester
 
@@ -282,6 +284,67 @@ Prévoir **deux comptes** avec les droits du simulateur (profil Pédagogie ou Di
 | P50 | Commande restée « En attente » alors que le paiement est encaissé | Bouton **Revérifier** : la commande passe à « Payée » ; sinon elle l'est d'elle-même sous 5 minutes | ☐ |
 | P51 | Retirer un forfait de la vente (*Forfaits*), recharger la page publique | Le forfait n'a plus de bouton « Acheter » ; impossible de retirer le dernier forfait en vente | ☐ |
 | P52 | Environnement **sans clés** PayDunya | Aucun bouton « Acheter » sur la page publique ; la liste d'attente reste disponible | ☐ |
+
+### Réglages de paiement et paiement manuel du simulateur (lot L1)
+
+Prévoir un compte **Direction** (Super Admin), un compte **Financier** (ou Admin) et un acheteur de test. Les réglages sont dans *Équipe & comptes → Réglages de paiement*.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P53 | Se connecter avec un compte **Admin** ou **Financier** | L'entrée *Réglages de paiement* est **absente** du menu ; l'ouvrir par son adresse (`/admin/reglages-paiement`) est refusé ; seule la Direction y accède | ☐ |
+| P54 | Direction : ouvrir *Réglages de paiement* | État de PayDunya (mode test ou production, « Non configuré » si les clés manquent), adresse de notification, interrupteur général, un choix par service, frais en lecture seule ; **aucune clé** n'est affichée | ☐ |
+| P55 | Changer le mode du simulateur sans motif | Impossible : le motif est obligatoire dans la fenêtre de confirmation ; avec motif, « Réglages enregistrés » et une ligne `PAYMENT_SETTINGS_CHANGED` dans le *Journal d'audit* (motif et auteur) | ☐ |
+| P56 | Simulateur sur **En ligne ou manuel**, ouvrir *Acheter ce forfait* en visiteur | Le client choisit « Payer en ligne » ou « Payer par Wave, Orange Money ou virement » ; le montant affiché est celui du serveur | ☐ |
+| P57 | Choisir le paiement **manuel**, accepter les conditions, continuer | Page de suivi avec le montant, le numéro Wave / Orange Money de l'entreprise (bouton Copier) et le formulaire de déclaration ; **aucun accès ouvert** | ☐ |
+| P58 | Déclarer sans référence, puis avec moyen + référence | Sans référence : envoi impossible ; avec : « Paiement en cours de vérification » (la page se met à jour toute seule) ; une capture d'écran peut être jointe (5 Mo max) | ☐ |
+| P59 | *Simulateur → Commandes* (Financier ou Direction) | Commande « À vérifier » avec moyen, référence, date de déclaration, bouton *Justificatif* si joint, boutons **Confirmer** / **Refuser** | ☐ |
+| P60 | **Refuser** (motif obligatoire), puis revenir sur la page de suivi de l'acheteur | La commande repasse « En attente » ; l'acheteur voit le motif et peut déclarer de nouveau | ☐ |
+| P61 | Déclarer de nouveau, puis **Confirmer** | Commande « Payée », « confirmé par » l'auteur de la confirmation ; droit d'usage créé avec la source « paiement-manuel » ; l'acheteur reçoit sa confirmation et son lien de connexion ; confirmer une seconde fois est refusé | ☐ |
+| P62 | Un profil qui voit les paiements sans les gérer (Admissions) ouvre les commandes | Pas de boutons Confirmer / Refuser ; l'appel direct à ces actions est refusé par le serveur | ☐ |
+| P63 | **Coupure d'urgence** : désactiver « Paiement en ligne activé », enregistrer (motif), recharger la page publique du simulateur en visiteur | Message « Le paiement en ligne est momentanément désactivé » ; seul le choix manuel est proposé ; les commandes en cours déjà payées en ligne ne sont pas touchées ; réactiver rétablit le paiement en ligne | ☐ |
+| P64 | Frais : renseigner `PAYMENTS_FEES_MODE=PASS_ON` et `PAYMENTS_FEES_PERCENT` côté serveur, redémarrer, ouvrir l'achat en ligne | Le prix en ligne est majoré des frais (ligne « dont X FCFA de frais ») ; le paiement manuel reste au prix du catalogue ; *Réglages de paiement* affiche « Répercutés » | ☐ |
+| P65 | Panne du prestataire (3 échecs de création de paiement de suite) | Le bandeau « Panne détectée » apparaît dans les réglages, les visiteurs se voient proposer le manuel avec un message d'explication ; *Remettre en service* rétablit le paiement en ligne | ☐ |
+
+### Paiement en ligne des inscriptions (lot L2)
+
+Prévoir une candidature acceptée en **3 échéances**, un compte **Direction** et le compte PayDunya **de test** configuré. Dans *Réglages de paiement*, passer **Inscriptions aux formations** sur *En ligne ou manuel*.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P66 | Ouvrir le lien de paiement d'une échéance (visiteur) | Carte **Payer en ligne** avec « Payer l'échéance 1 » et « Payer tout le solde (3 échéances) » (montants corrects, frais éventuels indiqués) ; le paiement manuel reste proposé dessous (« Ou payez par Wave… ») | ☐ |
+| P67 | Service réglé sur **Manuel seulement** | Le lien n'affiche que le paiement manuel, comme avant ; aucune carte « Payer en ligne » | ☐ |
+| P68 | « Payer l'échéance 1 » → payer chez PayDunya (sandbox) | Retour sur le lien avec « Paiement confirmé : merci ! » (après quelques secondes) ; l'échéance 1 est **Payée**, les suivantes **À payer** | ☐ |
+| P69 | Côté équipe, *Paiements* et *Candidatures* | L'échéance est « Confirmé » avec le moyen **Paiement en ligne** et « confirmé par paiement-en-ligne » ; l'inscription est **Confirmée**, l'apprenant reçoit son invitation, l'accès à la session est ouvert (une seule fois) | ☐ |
+| P70 | Sur une autre inscription, « Payer tout le solde » → payer | Retour « Paiement confirmé : 3 échéances réglées » ; les trois échéances sont **Payées** en un seul paiement | ☐ |
+| P71 | Après le règlement d'une échéance, ouvrir le lien de la suivante | Le solde proposé n'inclut plus que les échéances restantes (2 échéances, montant réduit) ; la même échéance ne peut plus être payée en ligne | ☐ |
+| P72 | Annuler sur la page PayDunya, ou fermer l'onglet avant le retour | Aucune échéance confirmée ; au retour « Paiement non finalisé » ; si le paiement a bien été encaissé, l'échéance se confirme d'elle-même sous quelques minutes | ☐ |
+| P73 | Payer puis **fermer l'onglet** avant le retour | L'échéance se confirme quand même (notification ou rapprochement sous 5 minutes) | ☐ |
+| P74 | Rouvrir le même lien de paiement en ligne dans la demi-heure | Le même lien PayDunya est repris (pas de seconde facture) | ☐ |
+| P75 | Inscription d'une **entreprise** (facture / bon de commande) | Jamais de paiement en ligne : seul le manuel est proposé | ☐ |
+| P76 | Service réglé sur **En ligne** (manuel en secours) puis *interrupteur général* coupé | Le lien affiche « Paiement en ligne indisponible » avec le message de secours et propose le manuel ; la déclaration manuelle est acceptée | ☐ |
+| P77 | Une échéance **déclarée** à la main (en vérification) | Elle ne peut pas être payée en ligne (message clair) ; les autres échéances le peuvent | ☐ |
+| P78 | *Journal d'audit* après un paiement en ligne | Ligne « Paiement confirmé » ; en cas d'incohérence de montant (cas simulé en test), ligne « Paiement en ligne encaissé mais incohérent » et **aucune** échéance confirmée | ☐ |
+
+### Coaching : demande, validation et paiement (lot L3)
+
+Prévoir un compte **Pédagogie** (responsable pédagogique), un compte **Finance** et un compte **Formateur**. Dans *Réglages de paiement*, laisser **Coaching** en *Manuel seulement* pour la première partie, puis le passer sur *En ligne ou manuel*.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P79 | Page *Coaching* : cliquer sur « Choisir » d'une formule ou sur un créneau | Ouvre `/coaching/demande` avec la formule (ou le créneau) déjà renseignée ; plus aucun lien vers le formulaire de contact | ☐ |
+| P80 | Envoyer la demande **sans cocher** l'accord, puis avec | Sans l'accord : envoi impossible ; avec : « Demande bien reçue » et, si configuré, un bouton **Réserver un échange** (lien Brevo) ; aucun paiement demandé | ☐ |
+| P81 | Boîte du demandeur et boîte interne | Le demandeur reçoit l'accusé de réception ; l'équipe reçoit « Nouvelle demande de coaching » | ☐ |
+| P82 | Un compte **Formateur** ouvre `/admin/coaching` | Refusé (pas d'entrée de menu, accès direct refusé) ; la **Pédagogie** y accède, la **Finance** aussi en lecture | ☐ |
+| P83 | Pédagogie : onglet *Nouvelle* → ouvrir la demande → **Prendre en charge** | La demande passe « En analyse » avec le nom de la personne ; la fiche reste ouverte ; formateur et notes internes enregistrables | ☐ |
+| P84 | **Valider** sans cocher « disponibilité confirmée », avec un montant inférieur à 100 FCFA, puis correctement (offre, montant, formateur, case cochée) | Refus clair dans les deux premiers cas ; puis « En attente de paiement », lien de paiement visible dans la fiche, e-mail « Votre coaching est validé » reçu par le client | ☐ |
+| P85 | Ouvrir le lien de paiement du client | Offre, formateur et montant affichés ; **aucune** donnée interne (notes, e-mail du formateur, téléphone) ; en manuel : numéro Wave / Orange Money et formulaire de déclaration | ☐ |
+| P86 | Déclarer le paiement (moyen + référence), joindre une capture | « Paiement en cours de vérification » ; la Finance reçoit l'alerte ; la demande passe « Paiement à vérifier » | ☐ |
+| P87 | **Pédagogie** tente de confirmer le paiement | Pas de bouton (« confirmation faite par la Finance ») ; l'appel direct est refusé | ☐ |
+| P88 | **Finance** : *Voir le justificatif*, **Refuser** (motif), puis le client redéclare, puis **Confirmer** | Après refus : le client voit le motif et peut redéclarer ; après confirmation : « Payée », « confirmé par » la Finance ; e-mails au client, au formateur et au responsable ; confirmer une seconde fois est refusé | ☐ |
+| P89 | Passer **Coaching** sur *En ligne ou manuel*, valider une autre demande, ouvrir son lien, **Payer en ligne** (sandbox PayDunya) | Retour sur le lien avec « Coaching confirmé : merci ! » ; fiche « Payée » en ligne, confirmée par « paiement-en-ligne » | ☐ |
+| P90 | **Refuser** une demande (motif) avant validation | Le client reçoit le motif par e-mail ; la demande est « Refusée » et ne peut plus être validée | ☐ |
+| P91 | **Annuler** un coaching validé non payé, puis rouvrir son lien | Le lien affiche « Ce coaching n'est plus à régler » ; un paiement en ligne qui arriverait quand même n'est pas compté et laisse une ligne « Paiement en ligne encaissé mais incohérent » dans l'audit | ☐ |
+| P92 | *Journal d'audit* (catégorie Coaching) | Lignes : validation, refus, annulation, paiement déclaré, paiement refusé, paiement ; avec l'auteur de chaque action | ☐ |
 
 ### Espace apprenant
 
