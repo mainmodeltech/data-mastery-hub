@@ -399,6 +399,19 @@ Utiliser une formation **interne** complète (programme, témoignage, certificat
 | P122 | Défiler après le haut de page (ordinateur **et** téléphone) | Une barre « Titre · Démarre le … · N places · Candidater » reste en bas ; elle disparaît au bandeau de fin ; le bandeau de fin propose la même cohorte | ☐ |
 | P123 | « À découvrir aussi » en bas de fiche | Cartes des formations liées, avec leur cohorte ouverte et un bouton **Candidater** qui ouvre le formulaire sur la bonne cohorte | ☐ |
 
+### Page Entreprises : du besoin à la demande de diagnostic
+
+Prévoir un visiteur sans compte. Tester sur ordinateur **et** sur téléphone.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P124 | Ouvrir `/entreprises` | Le titre, les trois engagements et le **formulaire de diagnostic** sont visibles dès l'arrivée (ordinateur) ; sur téléphone, un bouton mène au formulaire placé juste dessous | ☐ |
+| P125 | Cliquer **Demander un programme** sur l'offre « Power BI sur mesure » | La page remonte au formulaire et le champ *Besoin principal* est déjà sur « Power BI sur mesure » ; idem pour les deux autres offres | ☐ |
+| P126 | Envoyer le formulaire avec tous les champs obligatoires (*) | Message « Demande envoyée ! » ; la demande apparaît côté équipe (admin, messages/diagnostics) avec le besoin, l'effectif et le contexte | ☐ |
+| P127 | Envoyer avec un champ obligatoire vide, puis avec un e-mail invalide | Le navigateur signale le champ concerné ; rien n'est envoyé ; chaque champ a un libellé visible (pas seulement un exemple grisé) | ☐ |
+| P128 | Défiler : secteurs et entreprises des alumni, avant → après par service, photos, étapes de la méthode, témoignages | Les blocs vides sont absents (plaquette, étude de cas, témoignages tant qu'il n'y en a pas) ; le bouton de la plaquette n'apparaît que si son lien est renseigné dans *Pages du site* | ☐ |
+| P129 | Défiler après le haut de page, sur téléphone | Une barre « Sans engagement · … » avec **Demander un diagnostic** reste en bas ; elle disparaît au bandeau de fin, qui propose le formulaire, le téléphone, WhatsApp et l'e-mail de l'entreprise | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |
