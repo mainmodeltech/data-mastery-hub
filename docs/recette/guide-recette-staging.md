@@ -426,6 +426,21 @@ Prévoir un visiteur sans compte. Tester sur ordinateur **et** sur téléphone. 
 | P135 | Défiler : déroulé, coach, FAQ, bandeau de fin | Le témoignage du coach n'apparaît que s'il est renseigné ; le bandeau de fin propose la demande, WhatsApp et le téléphone de l'entreprise | ☐ |
 | P136 | Sur téléphone, défiler après le haut de page | Une barre « Appel de 20 minutes offert · Réserver » reste en bas ; elle disparaît au bandeau de fin | ☐ |
 
+### Page Simulateur PL-300 : essai, achat et liste d'attente
+
+Prévoir un visiteur sans compte. Tester sur ordinateur **et** sur téléphone. (Les parcours d'achat et de paiement restent ceux des lots S et L : P60 à P92.)
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P137 | Ouvrir `/simulateur-pl-300` | Le titre (« Réussissez le PL-300 », avec le nom de la certification en dessous), les atouts et le **formulaire d'essai gratuit** sont visibles dès l'arrivée ; chaque champ a un libellé visible ; sur téléphone, un bouton mène au formulaire | ☐ |
+| P138 | Envoyer l'essai gratuit (e-mail valide, case cochée) | « Vérifiez votre boîte mail » ; l'e-mail de connexion arrive ; un second essai avec la même adresse est refusé avec un message clair | ☐ |
+| P139 | Observer « Chaque question est rattachée à une compétence » | Quatre barres : trois de même hauteur (25–30 %) et une plus basse (15–20 %), chacune avec ses sujets | ☐ |
+| P140 | Forfaits, achat ouvert | Prix et durée viennent du serveur ; **Acheter ce forfait** ouvre la fenêtre d'achat du bon forfait ; « Entreprise ou école » propose **Demander un devis** vers la page Entreprises | ☐ |
+| P141 | Forfaits, achat fermé (paiement en ligne **et** manuel désactivés dans *Réglages de paiement*) | Plus de bouton d'achat : chaque forfait propose **Rejoindre la liste d'attente**, qui mène au formulaire ; aucune impasse | ☐ |
+| P142 | Envoyer la liste d'attente | « Vous êtes inscrit » ; la demande apparaît côté équipe (messages) avec forfait et date d'examen visés | ☐ |
+| P143 | Fonctionnalités avec statut (« Après l'ouverture »), étapes, FAQ, mentions | Le statut s'affiche sous le titre de la fonctionnalité ; les mentions de non-affiliation à Microsoft restent visibles en bas | ☐ |
+| P144 | Sur téléphone, défiler après le haut de page | Une barre « Testez-vous en 15 minutes · Essayer gratuitement » reste en bas ; elle disparaît au bandeau de fin | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |

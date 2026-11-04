@@ -83,21 +83,21 @@ export default function CoachingDemande() {
                     <input name="email" type="email" required autoComplete="email" className={field} />
                   </label>
                   <label className={label}>
-                    {UI.form.phone} {optional}
+                    <span>{UI.form.phone} {optional}</span>
                     <input name="phone" type="tel" autoComplete="tel" className={field} />
                   </label>
                 </div>
                 <label className={label}>
-                  {UI.form.company} {optional}
+                  <span>{UI.form.company} {optional}</span>
                   <input name="company" autoComplete="organization" className={field} />
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className={label}>
-                    {UI.form.tier} {optional}
+                    <span>{UI.form.tier} {optional}</span>
                     <input name="tier" defaultValue={params.get("formule") ?? ""} className={field} />
                   </label>
                   <label className={label}>
-                    {UI.form.slot} {optional}
+                    <span>{UI.form.slot} {optional}</span>
                     <input name="slot" defaultValue={params.get("creneau") ?? ""} className={field} />
                   </label>
                 </div>

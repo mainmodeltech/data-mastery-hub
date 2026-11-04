@@ -90,7 +90,7 @@ export function DiagnosticForm({ d, need, onNeedChange, className }: Props) {
                 <input name="email" type="email" required autoComplete="email" placeholder={d.emailPlaceholder} className={field} />
               </label>
               <label className={label}>
-                {UI.form.phone} <span className="font-normal text-ink-secondary">({UI.form.optional})</span>
+                <span>{UI.form.phone} <span className="font-normal text-ink-secondary">({UI.form.optional})</span></span>
                 <input name="phone" type="tel" autoComplete="tel" placeholder={d.phonePlaceholder} className={field} />
               </label>
             </div>
@@ -102,7 +102,7 @@ export function DiagnosticForm({ d, need, onNeedChange, className }: Props) {
               </select>
             </label>
             <label className={label}>
-              {UI.form.context} <span className="font-normal text-ink-secondary">({UI.form.optional})</span>
+              <span>{UI.form.context} <span className="font-normal text-ink-secondary">({UI.form.optional})</span></span>
               <textarea name="context" rows={3} placeholder={d.contextPlaceholder} className={cn(field, "min-h-24 py-3")} />
             </label>
 
