@@ -385,6 +385,20 @@ Prévoir un visiteur sans compte, au moins une formation avec une **cohorte ouve
 | P115 | Bas de page : quiz, conseiller (WhatsApp), offre entreprises, FAQ | Chaque lien mène à la bonne page ; le WhatsApp s'ouvre dans un nouvel onglet avec le numéro de l'entreprise | ☐ |
 | P116 | Bouton **Pause** de la vidéo du haut de page ; mode « réduire les animations » du système | La vidéo se met en pause et reprend ; avec « réduire les animations », elle ne se lance pas et tout le contenu reste lisible | ☐ |
 
+### Fiche formation : choisir une cohorte et candidater
+
+Utiliser une formation **interne** complète (programme, témoignage, certification), une formation **partenaire** et, si possible, une formation avec **plusieurs** cohortes ouvertes.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P117 | Ouvrir une fiche depuis le catalogue | En haut : titre, durée, niveau, format, et à droite le **choix de la cohorte** avec le bouton **Candidater** ; l'onglet du navigateur porte le titre de la formation | ☐ |
+| P118 | Formation avec une cohorte **déjà démarrée** et une cohorte à venir (ex. Power BI) | Seule la cohorte à venir est proposée ; **Candidater** ouvre le formulaire sur cette cohorte, jamais sur celle qui a démarré | ☐ |
+| P119 | Formation avec plusieurs cohortes ouvertes : choisir la deuxième puis **Candidater** | La date, le rythme, les places et le prix changent avec le choix ; le formulaire s'ouvre sur la cohorte choisie ; la sélection se fait aussi au clavier (flèches) | ☐ |
+| P120 | Formation sans cohorte ouverte (ex. date limite passée) | « Pas de cohorte ouverte pour le moment » avec le prix de la formation et **Être prévenu** vers le contact ; aucun bouton Candidater, ni dans la page ni dans la barre du bas | ☐ |
+| P121 | Défiler : programme (un module ouvert, un seul à la fois), outils, attestation, « Dispensé par », témoignage, questions | Les sections vides sont absentes ; formation partenaire : « Dispensé par » (partenaire) et « Qui fait quoi » ; attestation co-signée mentionnée | ☐ |
+| P122 | Défiler après le haut de page (ordinateur **et** téléphone) | Une barre « Titre · Démarre le … · N places · Candidater » reste en bas ; elle disparaît au bandeau de fin ; le bandeau de fin propose la même cohorte | ☐ |
+| P123 | « À découvrir aussi » en bas de fiche | Cartes des formations liées, avec leur cohorte ouverte et un bouton **Candidater** qui ouvre le formulaire sur la bonne cohorte | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |

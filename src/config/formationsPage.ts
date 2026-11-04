@@ -32,3 +32,32 @@ export const FORMATIONS_UI = {
   filters: { domain: "Domaine", role: "Votre métier", level: "Niveau", format: "Format", deliveredBy: "Dispensé par", all: "Tous", reset: "Réinitialiser" },
   closing: { title: "Votre place se prépare maintenant.", other: "Voir les autres dates" },
 } as const;
+
+/** Libellés de la fiche formation (titres de sections et mentions d'action). Les données elles-mêmes viennent de l'API. */
+export const FICHE_UI = {
+  breadcrumb: "Formations",
+  language: "Français",
+  chooseDate: "Choisissez votre cohorte",
+  nextCohort: "Cohorte",
+  noCohortTitle: "Pas de cohorte ouverte pour le moment",
+  seeProgram: "Voir le programme",
+  forWho: "Cette formation est faite pour vous si…",
+  prerequisites: "Prérequis",
+  outcomes: "À la fin de la formation, vous saurez",
+  program: "Le programme",
+  tools: "Les outils que vous maîtriserez",
+  hours: "Volume",
+  deliverable: "Livrable",
+  certification: "Attestation et certification",
+  attestationInternal: "Attestation délivrée par Model Technologie.",
+  attestationPartner: (partner: string) => `Attestation co-signée par Model Technologie et ${partner}.`,
+  examLabel: "Examen officiel préparé",
+  testimonial: "Ce qu'en dit un ancien",
+  faq: "Vos questions avant de candidater",
+  related: "À découvrir aussi",
+  notFound: "Formation introuvable.",
+  back: "← Retour au catalogue",
+  loading: "Chargement…",
+  deliveredBy: "Dispensé par",
+  whoDoesWhat: "Qui fait quoi",
+} as const;

@@ -11,11 +11,12 @@ interface Props {
 export function HomeFaq({ items }: Props) {
   return (
     <div className="flex flex-col gap-3">
-      {items.map((item) => (
+      {items.map((item, i) => (
         <details
           key={item.question}
           name="home-faq"
-          className="group rounded-2xl bg-surface-sand px-6 py-5 text-navy open:bg-navy open:text-white"
+          style={{ ["--d" as string]: i * 60 }}
+          className="reveal group rounded-2xl bg-surface-sand px-6 py-5 text-navy open:bg-navy open:text-white"
         >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-heading text-lg font-bold [&::-webkit-details-marker]:hidden">
             <span>{item.question}</span>
@@ -27,7 +28,7 @@ export function HomeFaq({ items }: Props) {
               <span className="hidden group-open:inline">−</span>
             </span>
           </summary>
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-white/90">{item.answer}</p>
+          <p className="mt-3 max-w-[65ch] text-base leading-relaxed text-white/90">{item.answer}</p>
         </details>
       ))}
     </div>

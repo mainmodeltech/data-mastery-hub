@@ -17,9 +17,11 @@ interface Props {
   /** Élément à partir duquel la barre disparaît pour de bon (bandeau de fin : visible ou déjà dépassé). */
   hideFrom: RefObject<HTMLElement | null>;
   onApply: (s: FlatSession) => void;
+  /** Visible aussi sur grand écran (fiche formation) ; sinon seulement sur téléphone et tablette. */
+  desktop?: boolean;
 }
 
-export function StickyApplyBar({ cohort, hideWhenVisible, hideFrom, onApply }: Props) {
+export function StickyApplyBar({ cohort, hideWhenVisible, hideFrom, onApply, desktop = false }: Props) {
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
@@ -41,7 +43,8 @@ export function StickyApplyBar({ cohort, hideWhenVisible, hideFrom, onApply }: P
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 bg-navy px-5 pt-3 text-white shadow-[0_-8px_24px_rgba(16,38,60,0.25)] transition-transform duration-300 lg:hidden",
+        "fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 bg-navy px-5 pt-3 text-white shadow-[0_-8px_24px_rgba(16,38,60,0.25)] transition-transform duration-300",
+        desktop ? "lg:px-20" : "lg:hidden",
         "pb-[max(0.75rem,env(safe-area-inset-bottom))] motion-reduce:transition-none",
         hidden ? "pointer-events-none translate-y-full" : "translate-y-0",
       )}
@@ -49,7 +52,10 @@ export function StickyApplyBar({ cohort, hideWhenVisible, hideFrom, onApply }: P
       {...(hidden ? ({ inert: "" } as object) : {})}
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate font-heading text-base font-bold">{start ? `Démarre le ${start}` : cohort.formationTitle}</p>
+        <p className="truncate font-heading text-base font-bold">
+          {desktop && <span className="hidden lg:inline">{cohort.formationTitle} · </span>}
+          {start ? `Démarre le ${start}` : cohort.formationTitle}
+        </p>
         <p className="truncate text-sm text-white/85">{pluralSpots(spotsLeft(cohort))}</p>
       </div>
       <Button variant="primary" shape="pill" onClick={() => onApply(cohort)} className="home-press shrink-0">

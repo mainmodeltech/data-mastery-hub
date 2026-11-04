@@ -21,6 +21,12 @@
 .home-bar img { transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 .home-bar:hover img { transform: scale(1.05); }
 
+/* Un bloc posé en bas du héros monte une fois à l'ouverture, comme une barre (sans le soulèvement au survol de .home-bar) */
+.home-bar-in {
+  animation: home-bar-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: 80ms;
+}
+
 /* Le texte du héros entre en cascade */
 @keyframes home-rise {
   from { opacity: 0; transform: translateY(22px); }
@@ -55,6 +61,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .home-bar,
+  .home-bar-in,
   .home-hero-in { animation: none; }
   [data-reveal="on"] .reveal { opacity: 1; translate: none; transition: none; }
   .home-bar,

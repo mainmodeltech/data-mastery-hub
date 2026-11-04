@@ -12,12 +12,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { CatalogueCard } from "@/components/formations/CatalogueCard";
+import { ClosingBand } from "@/components/formations/ClosingBand";
 import { CatalogueFilters, EMPTY_FILTERS, type FormationFilters } from "@/components/formations/CatalogueFilters";
 import { CohortBars, TOP } from "@/components/formations/CohortBars";
 import { CohortList } from "@/components/formations/CohortList";
 import { StickyApplyBar } from "@/components/formations/StickyApplyBar";
-import promotion from "@/assets/home/promotion.webp";
-import promotionSmall from "@/assets/home/promotion-sm.webp";
 import { HeroVideo } from "@/components/home/HeroVideo";
 import { HomeFaq } from "@/components/home/HomeFaq";
 import { useReveal } from "@/components/home/useReveal";
@@ -28,7 +27,7 @@ import { FORMATIONS_UI as UI } from "@/config/formationsPage";
 import { useAllFormationSessions, useDomains, useFormations } from "@/hooks/useFormations";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { usePublishedTestimonials } from "@/hooks/useTestimonials";
-import { nextOpenByFormation, openCohorts, pluralSpots, spotsLeft, todayIso } from "@/lib/cohorts";
+import { nextOpenByFormation, openCohorts, todayIso } from "@/lib/cohorts";
 import { cn } from "@/lib/utils";
 import type { FlatSession, Formation } from "@/types/formation.type";
 import "@/styles/home.css";
@@ -38,9 +37,6 @@ const SECTION = "px-5 py-20 lg:px-20 lg:py-24";
 const H2 = "font-heading text-[clamp(22px,3.4vw,48px)] font-extrabold leading-[1.08] tracking-[-0.025em] text-balance max-w-4xl";
 
 const delay = (ms: number) => ({ ["--d" as string]: ms });
-
-const dateLong = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "Date à venir";
 
 /** Colonnes de la grille sous la formation phare : on évite une dernière ligne à moitié vide. */
 function gridFor(n: number): { grid: string; lastSpan: boolean } {
@@ -361,46 +357,7 @@ export default function Formations() {
           </section>
         )}
 
-        {/* Dernier appel : la cohorte la plus proche, avec l'action, devant la promotion */}
-        <section ref={closing} className="bg-cta px-5 pt-16 text-white lg:px-20 lg:pt-20">
-          <div className="grid items-end gap-10 lg:grid-cols-12 lg:gap-12">
-            <div className="flex flex-col gap-6 pb-4 lg:col-span-6 lg:pb-20">
-              <h2 className="font-heading text-[clamp(24px,2.8vw,40px)] font-extrabold leading-[1.1] tracking-[-0.02em] text-balance">{UI.closing.title}</h2>
-              {soonest && (
-                <p className="text-lg">
-                  {soonest.formationTitle} · {dateLong(soonest.startDate)} · {pluralSpots(spotsLeft(soonest))}
-                </p>
-              )}
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                {soonest ? (
-                  <Button variant="navy" shape="pill" size="lg" onClick={() => apply(soonest.formationId, soonest)} className="home-press">
-                    {UI.apply}
-                  </Button>
-                ) : (
-                  <Button asChild variant="navy" shape="pill" size="lg" className="home-press">
-                    <Link to="/contact">{UI.notify}</Link>
-                  </Button>
-                )}
-                {open.length > 1 && (
-                  <a href="#cohortes" className="home-press inline-flex min-h-11 items-center text-base font-semibold text-white underline decoration-white/50 underline-offset-4 hover:decoration-white">
-                    {UI.closing.other}
-                  </a>
-                )}
-              </div>
-            </div>
-            <img
-              src={promotion}
-              srcSet={`${promotionSmall} 800w, ${promotion} 1400w`}
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              width={1400}
-              height={933}
-              loading="lazy"
-              decoding="async"
-              alt="Une promotion de Model Technologie à la remise des certificats : des diplômés souriants, certificat en main"
-              className="aspect-[3/2] w-full rounded-t-[72px] object-cover object-[50%_30%] lg:col-span-6"
-            />
-          </div>
-        </section>
+        <ClosingBand ref={closing} cohort={soonest} othersHref={open.length > 1 ? "#cohortes" : undefined} onApply={(c) => apply(c.formationId, c)} />
       </div>
 
       <StickyApplyBar cohort={soonest} hideWhenVisible={stickyHides} hideFrom={closing} onApply={(s) => apply(s.formationId, s)} />
