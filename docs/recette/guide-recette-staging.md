@@ -369,6 +369,22 @@ Prévoir un compte **Direction**, un compte **Admin** (ou Finance), un visiteur 
 | P106 | Pied de page → **Gérer mes cookies** (et le bouton de la page de confidentialité) | Le bandeau se rouvre ; refuser après avoir accepté arrête le suivi et efface les cookies `_ga` | ☐ |
 | P107 | Avant toute publication, refaire un achat, une candidature, une demande de coaching et une connexion apprenant | Tout fonctionne comme avant : rien n'est exigé tant que rien n'est publié | ☐ |
 
+### Page Formations : du catalogue à la candidature
+
+Prévoir un visiteur sans compte, au moins une formation avec une **cohorte ouverte** (statut Ouverte ou À venir, places libres, date limite d'inscription non dépassée) et une formation **sans** cohorte ouverte. Tester sur ordinateur **et** sur téléphone.
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P108 | Ouvrir `/formations` (ou l'ancienne adresse `/bootcamps`) | Le titre, le bouton **Candidater à la prochaine cohorte** et le panneau **Prochaines cohortes** sont visibles sans défiler (ordinateur) ; une cohorte déjà démarrée, complète ou dont la date limite est passée n'est **jamais** proposée | ☐ |
+| P109 | Cliquer **Candidater** dans le panneau, puis sur une carte de formation, puis sur une ligne de la liste des dates | Le formulaire s'ouvre à chaque fois, **déjà sur la bonne cohorte**, sans quitter la page ; l'envoi aboutit comme depuis la fiche (case des textes légaux comprise) | ☐ |
+| P110 | Ouvrir `/formations?candidater=<adresse-de-la-formation>` | Le formulaire de candidature s'ouvre directement sur la prochaine cohorte ouverte ; sans cohorte ouverte, la page s'affiche normalement | ☐ |
+| P111 | Filtrer par domaine (onglets) puis par métier (pastilles) ; ouvrir « Plus de critères » | Les cartes changent, le décompte est annoncé, **Réinitialiser** rétablit tout ; sur téléphone, aucune rangée ne défile sur le côté | ☐ |
+| P112 | Formation **sans** cohorte ouverte | Pas de bouton Candidater : « Aucune cohorte n'est ouverte… » et un bouton **Être prévenu** vers le formulaire de contact | ☐ |
+| P113 | Cohorte avec moins de 6 places, puis cohorte avec tarif **early-bird** en cours | « Plus que N places » (seulement quand c'est vrai) ; prix préférentiel affiché avec l'ancien prix barré et sa date limite ; le tarif disparaît le lendemain de la date limite | ☐ |
+| P114 | Sur téléphone, défiler après le haut de page | Une barre « Démarre le … · N places · Candidater » reste en bas de l'écran ; elle disparaît au bandeau de fin de page | ☐ |
+| P115 | Bas de page : quiz, conseiller (WhatsApp), offre entreprises, FAQ | Chaque lien mène à la bonne page ; le WhatsApp s'ouvre dans un nouvel onglet avec le numéro de l'entreprise | ☐ |
+| P116 | Bouton **Pause** de la vidéo du haut de page ; mode « réduire les animations » du système | La vidéo se met en pause et reprend ; avec « réduire les animations », elle ne se lance pas et tout le contenu reste lisible | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |
