@@ -8,9 +8,9 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, XCircle } from "lucide-react";
 
+import { AuthShell } from "@/components/auth/AuthShell";
 import { useAuth } from "@/hooks/useAuth";
 import { usePostLoginRedirect } from "@/hooks/usePostLoginRedirect";
-import { Logo } from "@/components/shared/Logo";
 import { Button } from "@/components/shared/Button";
 import { authService } from "@/services/api/authService";
 import { ApiError } from "@/services/httpClient";
@@ -50,23 +50,20 @@ export default function ConnexionLien() {
   }, [applySession, navigate]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center gap-10 bg-site-bg px-6 py-12">
-      <Link to="/" aria-label="Model Technologie — accueil"><Logo className="h-14" /></Link>
-      <div className="my-auto flex max-w-md flex-col items-center gap-5 text-center">
-        {error ? (
-          <>
-            <XCircle className="h-12 w-12 text-error" aria-hidden="true" />
-            <h1 className="font-heading text-3xl font-extrabold text-navy">Connexion impossible</h1>
-            <p role="alert" className="text-ink-secondary">{error}</p>
-            <Button asChild variant="primary" shape="pill"><Link to="/connexion">Retour à la connexion</Link></Button>
-          </>
-        ) : (
-          <>
-            <Loader2 className="h-10 w-10 animate-spin text-navy" aria-hidden="true" />
-            <h1 className="font-heading text-2xl font-extrabold text-navy">Connexion en cours…</h1>
-          </>
-        )}
-      </div>
-    </div>
+    <AuthShell>
+      {error ? (
+        <div className="flex flex-col items-start gap-4">
+          <XCircle className="h-12 w-12 text-error" aria-hidden="true" />
+          <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.5rem]">Connexion impossible</h1>
+          <p role="alert" className="text-base text-ink-secondary">{error}</p>
+          <Button asChild variant="primary" shape="pill" size="lg" className="home-press"><Link to="/connexion">Retour à la connexion</Link></Button>
+        </div>
+      ) : (
+        <div role="status" className="flex flex-col items-start gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-navy motion-reduce:animate-none" aria-hidden="true" />
+          <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.5rem]">Connexion en cours…</h1>
+        </div>
+      )}
+    </AuthShell>
   );
 }

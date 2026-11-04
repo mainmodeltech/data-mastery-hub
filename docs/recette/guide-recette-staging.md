@@ -441,6 +441,20 @@ Prévoir un visiteur sans compte. Tester sur ordinateur **et** sur téléphone. 
 | P143 | Fonctionnalités avec statut (« Après l'ouverture »), étapes, FAQ, mentions | Le statut s'affiche sous le titre de la fonctionnalité ; les mentions de non-affiliation à Microsoft restent visibles en bas | ☐ |
 | P144 | Sur téléphone, défiler après le haut de page | Une barre « Testez-vous en 15 minutes · Essayer gratuitement » reste en bas ; elle disparaît au bandeau de fin | ☐ |
 
+### Écrans de connexion : connexion, lien par e-mail, mot de passe oublié
+
+Tester sur ordinateur **et** sur téléphone, avec un compte apprenant et un compte du personnel (les parcours de sécurité restent ceux de P1 à P40).
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P145 | Ouvrir `/connexion` | Le curseur est déjà dans le champ e-mail ; à droite (ordinateur) un **vrai témoignage** d'ancien et, s'il y en a une, la **prochaine cohorte ouverte** avec un lien vers sa fiche ; aucun faux exemple de progression | ☐ |
+| P146 | Se connecter avec un compte apprenant, puis avec un compte du personnel | Apprenant → `/espace` ; personnel → vérification en deux étapes puis `/admin` ; chaque champ a un libellé visible | ☐ |
+| P147 | Saisir un mauvais mot de passe pour un compte **existant**, 5 fois de suite | Message d'identifiants incorrects, puis blocage temporaire avec mise en avant de l'envoi du lien par e-mail | ☐ |
+| P148 | **Recevoir un lien de connexion par e-mail** (bouton sous « Se connecter ») | Écran « Vérifiez votre boîte mail » avec compte à rebours avant de pouvoir renvoyer ; le code à 6 chiffres reçu ouvre la session ; le lien reçu ouvre `/connexion/lien` puis la session | ☐ |
+| P149 | Ouvrir `/connexion/lien` sans jeton, puis avec un jeton déjà utilisé | « Connexion impossible » avec un message clair et un bouton **Retour à la connexion** ; le jeton n'apparaît plus dans la barre d'adresse | ☐ |
+| P150 | **Mot de passe oublié ?** puis `/reinitialiser-mot-de-passe` depuis l'e-mail | Même mise en page que la connexion ; confirmation identique que l'adresse existe ou non ; après le changement, retour automatique à la connexion | ☐ |
+| P151 | Sur téléphone, avec le bouton Google activé | Aucun défilement horizontal ; le bouton Google s'adapte à la largeur de l'écran ; « Pas encore inscrit ? » mène au catalogue | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |
