@@ -412,6 +412,20 @@ Prévoir un visiteur sans compte. Tester sur ordinateur **et** sur téléphone.
 | P128 | Défiler : secteurs et entreprises des alumni, avant → après par service, photos, étapes de la méthode, témoignages | Les blocs vides sont absents (plaquette, étude de cas, témoignages tant qu'il n'y en a pas) ; le bouton de la plaquette n'apparaît que si son lien est renseigné dans *Pages du site* | ☐ |
 | P129 | Défiler après le haut de page, sur téléphone | Une barre « Sans engagement · … » avec **Demander un diagnostic** reste en bas ; elle disparaît au bandeau de fin, qui propose le formulaire, le téléphone, WhatsApp et l'e-mail de l'entreprise | ☐ |
 
+### Page Coaching : de la formule à la demande
+
+Prévoir un visiteur sans compte. Tester sur ordinateur **et** sur téléphone. (Le traitement de la demande et le paiement relèvent du lot L3, parcours P85 à P92.)
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P130 | Ouvrir `/coaching` | Le titre, **Réserver un appel diagnostic** et une photo de coaching sont visibles dès l'arrivée ; sous le bouton, les mentions du contenu (appel offert, lieu, durée) | ☐ |
+| P131 | Observer les formules | Les trois formules montent avec le nombre de séances ; la formule recommandée est en couleur ; un tarif vide affiche « Sur devis » | ☐ |
+| P132 | Cliquer **Choisir cette formule** sur « Pack Progression » | La demande s'ouvre avec le champ *Formule souhaitée* déjà rempli ; idem pour chaque formule | ☐ |
+| P133 | *Pages du site* : renseigner un créneau disponible et un créneau complet, puis rouvrir `/coaching` | Une rangée « Créneaux » apparaît ; un créneau disponible mène à la demande avec *Créneau souhaité* rempli ; un créneau complet est barré et annoncé « complet » ; sans créneau, la rangée est absente | ☐ |
+| P134 | Remplir et envoyer la demande (avec acceptation des textes légaux) | « Demande bien reçue », aucun paiement demandé ; chaque champ a un libellé visible (pas seulement un exemple grisé) ; la demande arrive chez le responsable pédagogique | ☐ |
+| P135 | Défiler : déroulé, coach, FAQ, bandeau de fin | Le témoignage du coach n'apparaît que s'il est renseigné ; le bandeau de fin propose la demande, WhatsApp et le téléphone de l'entreprise | ☐ |
+| P136 | Sur téléphone, défiler après le haut de page | Une barre « Appel de 20 minutes offert · Réserver » reste en bas ; elle disparaît au bandeau de fin | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |
