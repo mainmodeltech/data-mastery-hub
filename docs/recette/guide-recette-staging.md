@@ -412,6 +412,35 @@ Prévoir un visiteur sans compte. Tester sur ordinateur **et** sur téléphone.
 | P128 | Défiler : secteurs et entreprises des alumni, avant → après par service, photos, étapes de la méthode, témoignages | Les blocs vides sont absents (plaquette, étude de cas, témoignages tant qu'il n'y en a pas) ; le bouton de la plaquette n'apparaît que si son lien est renseigné dans *Pages du site* | ☐ |
 | P129 | Défiler après le haut de page, sur téléphone | Une barre « Sans engagement · … » avec **Demander un diagnostic** reste en bas ; elle disparaît au bandeau de fin, qui propose le formulaire, le téléphone, WhatsApp et l'e-mail de l'entreprise | ☐ |
 
+### Page Coaching : de la formule à la demande
+
+Prévoir un visiteur sans compte. Tester sur ordinateur **et** sur téléphone. (Le traitement de la demande et le paiement relèvent du lot L3, parcours P85 à P92.)
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P130 | Ouvrir `/coaching` | Le titre, **Réserver un appel diagnostic** et une photo de coaching sont visibles dès l'arrivée ; sous le bouton, les mentions du contenu (appel offert, lieu, durée) | ☐ |
+| P131 | Observer les formules | Les trois formules montent avec le nombre de séances ; la formule recommandée est en couleur ; un tarif vide affiche « Sur devis » | ☐ |
+| P132 | Cliquer **Choisir cette formule** sur « Pack Progression » | La demande s'ouvre avec le champ *Formule souhaitée* déjà rempli ; idem pour chaque formule | ☐ |
+| P133 | *Pages du site* : renseigner un créneau disponible et un créneau complet, puis rouvrir `/coaching` | Une rangée « Créneaux » apparaît ; un créneau disponible mène à la demande avec *Créneau souhaité* rempli ; un créneau complet est barré et annoncé « complet » ; sans créneau, la rangée est absente | ☐ |
+| P134 | Remplir et envoyer la demande (avec acceptation des textes légaux) | « Demande bien reçue », aucun paiement demandé ; chaque champ a un libellé visible (pas seulement un exemple grisé) ; la demande arrive chez le responsable pédagogique | ☐ |
+| P135 | Défiler : déroulé, coach, FAQ, bandeau de fin | Le témoignage du coach n'apparaît que s'il est renseigné ; le bandeau de fin propose la demande, WhatsApp et le téléphone de l'entreprise | ☐ |
+| P136 | Sur téléphone, défiler après le haut de page | Une barre « Appel de 20 minutes offert · Réserver » reste en bas ; elle disparaît au bandeau de fin | ☐ |
+
+### Page Simulateur PL-300 : essai, achat et liste d'attente
+
+Prévoir un visiteur sans compte. Tester sur ordinateur **et** sur téléphone. (Les parcours d'achat et de paiement restent ceux des lots S et L : P60 à P92.)
+
+| # | Étapes | Résultat attendu | OK / KO |
+|---|---|---|:-:|
+| P137 | Ouvrir `/simulateur-pl-300` | Le titre (« Réussissez le PL-300 », avec le nom de la certification en dessous), les atouts et le **formulaire d'essai gratuit** sont visibles dès l'arrivée ; chaque champ a un libellé visible ; sur téléphone, un bouton mène au formulaire | ☐ |
+| P138 | Envoyer l'essai gratuit (e-mail valide, case cochée) | « Vérifiez votre boîte mail » ; l'e-mail de connexion arrive ; un second essai avec la même adresse est refusé avec un message clair | ☐ |
+| P139 | Observer « Chaque question est rattachée à une compétence » | Quatre barres : trois de même hauteur (25–30 %) et une plus basse (15–20 %), chacune avec ses sujets | ☐ |
+| P140 | Forfaits, achat ouvert | Prix et durée viennent du serveur ; **Acheter ce forfait** ouvre la fenêtre d'achat du bon forfait ; « Entreprise ou école » propose **Demander un devis** vers la page Entreprises | ☐ |
+| P141 | Forfaits, achat fermé (paiement en ligne **et** manuel désactivés dans *Réglages de paiement*) | Plus de bouton d'achat : chaque forfait propose **Rejoindre la liste d'attente**, qui mène au formulaire ; aucune impasse | ☐ |
+| P142 | Envoyer la liste d'attente | « Vous êtes inscrit » ; la demande apparaît côté équipe (messages) avec forfait et date d'examen visés | ☐ |
+| P143 | Fonctionnalités avec statut (« Après l'ouverture »), étapes, FAQ, mentions | Le statut s'affiche sous le titre de la fonctionnalité ; les mentions de non-affiliation à Microsoft restent visibles en bas | ☐ |
+| P144 | Sur téléphone, défiler après le haut de page | Une barre « Testez-vous en 15 minutes · Essayer gratuitement » reste en bas ; elle disparaît au bandeau de fin | ☐ |
+
 ### Espace apprenant
 
 | # | Étapes | Résultat attendu | OK / KO |
