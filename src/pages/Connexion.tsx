@@ -11,21 +11,21 @@
  */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff, Loader2, MailCheck, Play } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthOptions } from "@/hooks/useAuthOptions";
 import { usePostLoginRedirect } from "@/hooks/usePostLoginRedirect";
 import { Button } from "@/components/shared/Button";
-import { ProgressBar } from "@/components/shared/ProgressBar";
-import { Logo } from "@/components/shared/Logo";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { MfaEnrollPanel, MfaVerifyPanel } from "@/components/auth/MfaPanels";
+import { CONNEXION_UI as UI } from "@/config/connexionPage";
 import { authService } from "@/services/api/authService";
 import { ApiError } from "@/services/httpClient";
 
 const fieldClass =
-  "w-full rounded-xl border border-[#D6CEC0] bg-white px-4 py-3.5 font-sans text-base text-ink outline-none focus:border-navy";
+  "min-h-12 w-full rounded-xl border border-[#D6CEC0] bg-white px-4 py-3 font-sans text-base text-ink focus-visible:border-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy";
 
 type View = "password" | "link-request" | "link-code";
 const RESEND_DELAY_S = 60;
@@ -155,234 +155,201 @@ export default function Connexion() {
   const showGoogle = !!googleClientId && !googleBroken && view === "password" && !pendingMfa;
 
   const linkButton = (
-    <button
-      type="button"
-      onClick={() => goTo("link-request")}
-      className={
-        rateLimited
-          ? "w-full rounded-xl border border-navy bg-white px-4 py-3.5 text-[0.9375rem] font-semibold text-navy hover:bg-navy/5"
-          : "text-center text-[0.9375rem] font-semibold text-navy hover:underline"
-      }
-    >
-      Recevoir un lien de connexion par e-mail
-    </button>
+    <div className="flex flex-col gap-2">
+      <Button type="button" variant="outline" shape="pill" size="lg" onClick={() => goTo("link-request")} className="home-press w-full">
+        {UI.link}
+      </Button>
+      <p className="text-center text-base text-ink-secondary">{UI.linkHint}</p>
+    </div>
   );
 
   return (
-    <div className="grid min-h-screen bg-site-bg lg:grid-cols-2">
-      <div className="flex flex-col gap-10 px-6 py-8 lg:px-24 lg:py-12">
-        <Link to="/" aria-label="Model Technologie — accueil" className="flex w-fit items-center">
-          <Logo className="h-14 lg:h-16" />
-        </Link>
+    <AuthShell>
+      {pendingMfa?.kind === "verify" && <MfaVerifyPanel />}
+      {pendingMfa?.kind === "enroll" && <MfaEnrollPanel />}
 
-        <div className="my-auto flex w-full max-w-[440px] flex-col gap-5">
-          {pendingMfa?.kind === "verify" && <MfaVerifyPanel />}
-          {pendingMfa?.kind === "enroll" && <MfaEnrollPanel />}
+      {!pendingMfa && view === "password" && (
+        <>
+          <div className="flex flex-col gap-2">
+            <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy md:text-[2.5rem] lg:text-[2.75rem]">
+              Bon retour parmi nous
+            </h1>
+            <p className="text-base text-ink-secondary lg:text-[1.0625rem]">
+              Connectez-vous pour reprendre votre formation.
+            </p>
+          </div>
 
-          {!pendingMfa && view === "password" && (
+          {showGoogle && (
             <>
-              <div className="flex flex-col gap-2">
-                <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.75rem]">
-                  Bon retour parmi nous
-                </h1>
-                <p className="text-base text-ink-secondary lg:text-[1.0625rem]">
-                  Connectez-vous pour reprendre votre formation.
-                </p>
-              </div>
-
-              {showGoogle && (
-                <>
-                  <GoogleSignInButton
-                    clientId={googleClientId}
-                    onCredential={(c) => void handleGoogle(c)}
-                    onUnavailable={() => setGoogleBroken(true)}
-                  />
-                  {passwordEnabled && (
-                    <div className="flex items-center gap-3 text-[0.8125rem] text-ink-secondary">
-                      <span className="h-px flex-1 bg-[#E7E0D4]" />
-                      ou avec votre e-mail
-                      <span className="h-px flex-1 bg-[#E7E0D4]" />
-                    </div>
-                  )}
-                </>
+              <GoogleSignInButton
+                clientId={googleClientId}
+                onCredential={(c) => void handleGoogle(c)}
+                onUnavailable={() => setGoogleBroken(true)}
+              />
+              {passwordEnabled && (
+                <p className="text-center text-base text-ink-secondary">{UI.or}</p>
               )}
-
-              {expired && !error && (
-                <div role="status" className="rounded-xl bg-warning-bg px-4 py-3 text-sm text-warning">
-                  Votre session a expiré ou a été fermée. Reconnectez-vous pour continuer.
-                </div>
-              )}
-              {error && (
-                <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">
-                  {error}
-                </div>
-              )}
-
-              {passwordEnabled ? (
-                <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-5">
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="l-mail" className="text-sm font-semibold text-ink">E-mail</label>
-                    <input
-                      id="l-mail"
-                      type="email"
-                      required
-                      autoComplete="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="vous@exemple.com"
-                      className={fieldClass}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between">
-                      <label htmlFor="l-pw" className="text-sm font-semibold text-ink">Mot de passe</label>
-                      <Link to="/mot-de-passe-oublie" className="text-sm font-semibold">Mot de passe oublié ?</Link>
-                    </div>
-                    <div className="relative">
-                      <input
-                        id="l-pw"
-                        type={showPassword ? "text" : "password"}
-                        required
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className={`${fieldClass} pr-12`}
-                      />
-                      <button
-                        type="button"
-                        aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                        onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-secondary hover:text-navy"
-                      >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[1.0625rem]" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Se connecter"}
-                  </Button>
-                </form>
-              ) : (
-                loading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />
-              )}
-
-              {linkEnabled && linkButton}
-
-              <p className="text-center text-sm text-ink-secondary">
-                Pas encore de compte ? Il est créé automatiquement à votre inscription.{" "}
-                <Link to="/formations" className="font-semibold">Voir les formations</Link>
-              </p>
             </>
           )}
 
-          {!pendingMfa && view === "link-request" && (
-            <form onSubmit={sendLink} className="flex flex-col gap-5">
-              <button type="button" onClick={() => goTo("password")} className="flex w-fit items-center gap-1.5 text-sm font-semibold text-navy">
-                <ArrowLeft className="h-4 w-4" /> Retour
-              </button>
+          {expired && !error && (
+            <div role="status" className="rounded-xl bg-warning-bg px-4 py-3 text-base text-warning">
+              Votre session a expiré ou a été fermée. Reconnectez-vous pour continuer.
+            </div>
+          )}
+          {error && (
+            <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-base text-error">
+              {error}
+            </div>
+          )}
+
+          {passwordEnabled ? (
+            <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.5rem]">
-                  Recevoir un lien de connexion
-                </h1>
-                <p className="text-base text-ink-secondary">
-                  Nous vous envoyons un lien et un code à 6 chiffres, valables 10 minutes. Aucun mot de passe nécessaire.
-                </p>
-              </div>
-              {error && <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{error}</div>}
-              <div className="flex flex-col gap-2">
-                <label htmlFor="ll-mail" className="text-sm font-semibold text-ink">E-mail</label>
+                <label htmlFor="l-mail" className="text-base font-semibold text-ink">E-mail</label>
                 <input
-                  id="ll-mail"
+                  id="l-mail"
                   type="email"
                   required
                   autoFocus
                   autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="vous@exemple.com"
                   className={fieldClass}
                 />
               </div>
-              <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[1.0625rem]" disabled={loading}>
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Envoyer le lien et le code"}
-              </Button>
-            </form>
-          )}
 
-          {!pendingMfa && view === "link-code" && (
-            <form onSubmit={verifyCode} className="flex flex-col gap-5">
-              <button type="button" onClick={() => goTo("link-request")} className="flex w-fit items-center gap-1.5 text-sm font-semibold text-navy">
-                <ArrowLeft className="h-4 w-4" /> Changer d'adresse
-              </button>
               <div className="flex flex-col gap-2">
-                <span className="flex h-12 w-12 items-center justify-center rounded-pill bg-success-bg">
-                  <MailCheck className="h-6 w-6 text-success" />
-                </span>
-                <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.5rem]">
-                  Vérifiez votre boîte mail
-                </h1>
-                <p className="text-base text-ink-secondary">
-                  Si un compte correspond à <strong className="text-ink">{email}</strong>, vous y avez reçu un message.
-                  Entrez le code reçu ou cliquez sur le lien.
-                </p>
+                <div className="flex justify-between">
+                  <label htmlFor="l-pw" className="text-base font-semibold text-ink">Mot de passe</label>
+                  <Link to="/mot-de-passe-oublie" className="text-base font-semibold text-navy underline decoration-navy/30 underline-offset-4 hover:decoration-navy">Mot de passe oublié ?</Link>
+                </div>
+                <div className="relative">
+                  <input
+                    id="l-pw"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`${fieldClass} pr-12`}
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-secondary hover:text-navy"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
-              {error && <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-sm text-error">{error}</div>}
-              <div className="flex flex-col gap-2">
-                <label htmlFor="lc-code" className="text-sm font-semibold text-ink">Code à 6 chiffres</label>
-                <input
-                  id="lc-code"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  autoFocus
-                  required
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="123456"
-                  className={`${fieldClass} text-center font-heading text-2xl font-bold tracking-[0.5em]`}
-                />
-              </div>
-              <Button type="submit" variant="primary" size="lg" className="rounded-xl text-[1.0625rem]" disabled={loading || code.length !== 6}>
+
+              <Button type="submit" variant="primary" shape="pill" size="lg" className="home-press w-full" disabled={loading}>
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Se connecter"}
               </Button>
-              <button
-                type="button"
-                disabled={resendIn > 0 || loading}
-                onClick={() => void sendLink()}
-                className="text-center text-[0.9375rem] font-semibold text-navy enabled:hover:underline disabled:text-ink-secondary"
-              >
-                {resendIn > 0 ? `Renvoyer un lien dans ${resendIn} s` : "Renvoyer un lien et un code"}
-              </button>
             </form>
+          ) : (
+            loading && <Loader2 className="mx-auto h-6 w-6 animate-spin text-ink-secondary" />
           )}
-        </div>
 
-        <span className="hidden text-[0.8125rem] text-ink-secondary lg:block">
-          © {new Date().getFullYear()} Model Technologie · <Link to="/contact">Aide</Link>
-        </span>
-      </div>
+          {linkEnabled && linkButton}
 
-      <div className="relative hidden flex-col justify-end gap-7 overflow-hidden bg-navy p-16 lg:flex">
-        <div className="absolute inset-x-16 top-16 flex h-[420px] flex-col gap-3.5 rounded-callout bg-navy-medium p-7">
-          <span className="text-[0.8125rem] font-bold uppercase tracking-[1px] text-cta-on-navy">
-            REPRENDRE OÙ VOUS EN ÉTIEZ
-          </span>
-          <span className="font-heading text-2xl font-bold text-white">Power BI · Module 3 — Mesures DAX</span>
-          <div className="flex flex-1 items-center justify-center rounded-[14px] bg-navy-dark">
-            <Play className="h-12 w-12 text-white" aria-hidden="true" />
+          <div className="mt-2 flex flex-col items-start gap-3 rounded-2xl bg-surface-sand p-5">
+            <p className="font-heading text-lg font-bold text-navy">{UI.newHere.title}</p>
+            <p className="text-base text-ink-secondary">{UI.newHere.text}</p>
+            <Button asChild variant="navy" shape="pill" className="home-press">
+              <Link to="/formations">{UI.newHere.cta}</Link>
+            </Button>
           </div>
-          <ProgressBar value={64} variant="accent-on-navy" aria-label="Progression de l'exemple" />
-          <span className="text-sm text-[#D5DEE8]">64 % terminé · 3 leçons restantes</span>
-        </div>
-        <p className="font-heading text-[1.875rem] font-bold leading-tight text-white">
-          « Mon reporting mensuel prenait 2 jours. Maintenant 2 heures. »
-        </p>
-        <span className="text-[0.9375rem] text-[#D5DEE8]">Emmanuel Bouadi — Data Analyst, Wave</span>
-      </div>
-    </div>
+        </>
+      )}
+
+      {!pendingMfa && view === "link-request" && (
+        <form onSubmit={sendLink} className="flex flex-col gap-5">
+          <button type="button" onClick={() => goTo("password")} className="flex min-h-11 w-fit items-center gap-1.5 text-base font-semibold text-navy">
+            <ArrowLeft className="h-4 w-4" /> Retour
+          </button>
+          <div className="flex flex-col gap-2">
+            <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.5rem]">
+              Recevoir un lien de connexion
+            </h1>
+            <p className="text-base text-ink-secondary">
+              Nous vous envoyons un lien et un code à 6 chiffres, valables 10 minutes. Aucun mot de passe nécessaire.
+            </p>
+          </div>
+          {error && <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-base text-error">{error}</div>}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ll-mail" className="text-base font-semibold text-ink">E-mail</label>
+            <input
+              id="ll-mail"
+              type="email"
+              required
+              autoFocus
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="vous@exemple.com"
+              className={fieldClass}
+            />
+          </div>
+          <Button type="submit" variant="primary" shape="pill" size="lg" className="home-press w-full" disabled={loading}>
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Envoyer le lien et le code"}
+          </Button>
+        </form>
+      )}
+
+      {!pendingMfa && view === "link-code" && (
+        <form onSubmit={verifyCode} className="flex flex-col gap-5">
+          <button type="button" onClick={() => goTo("link-request")} className="flex min-h-11 w-fit items-center gap-1.5 text-base font-semibold text-navy">
+            <ArrowLeft className="h-4 w-4" /> Changer d'adresse
+          </button>
+          <div className="flex flex-col gap-2">
+            <span className="flex h-12 w-12 items-center justify-center rounded-pill bg-success-bg">
+              <MailCheck className="h-6 w-6 text-success" />
+            </span>
+            <h1 className="font-heading text-[2rem] font-extrabold leading-tight tracking-[-1px] text-navy lg:text-[2.5rem]">
+              Vérifiez votre boîte mail
+            </h1>
+            <p className="text-base text-ink-secondary">
+              Si un compte correspond à <strong className="text-ink">{email}</strong>, vous y avez reçu un message.
+              Entrez le code reçu ou cliquez sur le lien.
+            </p>
+          </div>
+          {error && <div role="alert" className="rounded-xl bg-error-bg px-4 py-3 text-base text-error">{error}</div>}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="lc-code" className="text-base font-semibold text-ink">Code à 6 chiffres</label>
+            <input
+              id="lc-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              autoFocus
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="123456"
+              className={`${fieldClass} text-center font-heading text-2xl font-bold tracking-[0.5em]`}
+            />
+          </div>
+          <Button type="submit" variant="primary" shape="pill" size="lg" className="home-press w-full" disabled={loading || code.length !== 6}>
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Se connecter"}
+          </Button>
+          <button
+            type="button"
+            disabled={resendIn > 0 || loading}
+            onClick={() => void sendLink()}
+            className="text-center text-[0.9375rem] font-semibold text-navy enabled:hover:underline disabled:text-ink-secondary"
+          >
+            {resendIn > 0 ? `Renvoyer un lien dans ${resendIn} s` : "Renvoyer un lien et un code"}
+          </button>
+        </form>
+      )}
+    </AuthShell>
   );
 }

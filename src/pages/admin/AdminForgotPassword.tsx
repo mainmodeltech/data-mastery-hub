@@ -11,7 +11,7 @@ import { AuthCardLayout } from "@/components/layouts/AuthCardLayout";
 import { Button } from "@/components/shared";
 
 const fieldClass =
-  "w-full rounded-xl border border-[#D6CEC0] bg-white py-3.5 pl-11 pr-4 font-sans text-base text-ink outline-none focus:border-navy";
+  "w-full rounded-xl border border-[#D6CEC0] bg-white py-3.5 pl-11 pr-4 font-sans text-base text-ink focus-visible:border-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy";
 
 const AdminForgotPassword = () => {
   const [email, setEmail] = useState("");
